@@ -108,8 +108,10 @@ def main():
               'vs_previous', 'vs_e2', 'vs_e3', 'rmse_limitless', 'lr', 'selfplay_s', 'train_s']
     if os.path.exists(metrics_f):
         with open(metrics_f) as mf:
-            if mf.readline().strip().split(',') != header:
-                os.replace(metrics_f, os.path.join(run_dir, 'metrics_ancien_format.csv'))
+            old_header = mf.readline().strip().split(',')
+        # Renamed after closing it: Windows refuses to move a file that is still open.
+        if old_header != header:
+            os.replace(metrics_f, os.path.join(run_dir, 'metrics_ancien_format.csv'))
     new_metrics = not os.path.exists(metrics_f)
     with open(metrics_f, 'a', newline='') as mf:
         w = csv.writer(mf)
