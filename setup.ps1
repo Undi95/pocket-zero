@@ -4,6 +4,8 @@
 #
 #   setup.bat            (ou : powershell -ExecutionPolicy Bypass -File setup.ps1)
 
+param([switch]$SkipTorch)  # -SkipTorch : utilisé par le test automatique (CI), sans GPU
+
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
@@ -31,7 +33,10 @@ $vpy = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 
 # 3. PyTorch avec CUDA 12.8 (nécessaire pour les RTX 50xx / Blackwell)
 Step 'Installation de PyTorch (CUDA 12.8) et numpy dans .venv'
-& $vpy -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cu128
+if (-not $SkipTorch) {
+    & $vpy -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cu128
+    if ($LASTEXITCODE -ne 0) { throw "Échec de l'installation de PyTorch" }
+}
 & $vpy -m pip install --quiet numpy
 
 # 4. Binaires du moteur compilés par GitHub Actions (branche windows-bin)
@@ -51,6 +56,10 @@ Write-Host "Version des binaires : $(Get-Content $tmp\VERSION)"
 # 5. Vérifications
 Step 'Vérification'
 & .\bin\pocket-zero.exe info | Out-Null
-& $vpy -c "import torch, deckgym.deckgym as d; n = torch.cuda.device_count(); print(f'GPU : {n} -', ', '.join(torch.cuda.get_device_name(i) for i in range(n)) or 'aucun (le CPU sera utilisé)'); print('moteur Python : OK')"
+& $vpy -c "import deckgym.deckgym as d; print('moteur Python : OK')"
+if ($LASTEXITCODE -ne 0) { throw "Le module Python du moteur ne se charge pas" }
+if (-not $SkipTorch) {
+    & $vpy -c "import torch; n = torch.cuda.device_count(); print(f'GPU : {n} -', ', '.join(torch.cuda.get_device_name(i) for i in range(n)) or 'aucun (le CPU sera utilisé)')"
+}
 
 Write-Host "`nInstallation terminée. Lance l'entraînement avec :  run.bat train" -ForegroundColor Green

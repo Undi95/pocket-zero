@@ -6,7 +6,7 @@ name: Windows build (pocket-zero)
 on:
   push:
     branches: [main]
-    paths: ['src/**', 'Cargo.toml', 'Cargo.lock', 'pyproject.toml', 'database.json', '.github/workflows/windows-build.yml']
+    paths: ['src/**', 'setup.ps1', 'Cargo.toml', 'Cargo.lock', 'pyproject.toml', 'database.json', '.github/workflows/windows-build.yml']
   workflow_dispatch:
 
 permissions:
@@ -58,3 +58,6 @@ jobs:
           git add -A
           git commit -q -m "Windows build $sha"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" windows-bin
+      - name: Test setup.ps1 end to end (without PyTorch)
+        shell: pwsh
+        run: ./setup.ps1 -SkipTorch
