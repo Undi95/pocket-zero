@@ -1,0 +1,315 @@
+use log::debug;
+use std::cmp::min;
+
+use crate::{
+    actions::{
+        apply_action_helpers::{Mutation, Mutations},
+        apply_evolve, apply_place_card,
+        outcomes::Outcomes,
+    },
+    combinatorics::generate_combinations,
+    hooks::can_evolve_into,
+    models::{Card, EnergyType, TrainerType},
+    State,
+};
+
+pub(crate) fn pokemon_search_outcomes(
+    acting_player: usize,
+    state: &State,
+    basic_only: bool,
+) -> Outcomes {
+    card_search_outcomes_with_filter(acting_player, state, move |card: &&Card| {
+        if basic_only {
+            card.is_basic()
+        } else {
+            matches!(card, Card::Pokemon(_))
+        }
+    })
+}
+
+pub(crate) fn pokemon_search_outcomes_by_type(
+    state: &State,
+    basic_only: bool,
+    energy_type: EnergyType,
+) -> Outcomes {
+    pokemon_search_outcomes_by_type_for_player(state.current_player, state, basic_only, energy_type)
+}
+
+pub(crate) fn pokemon_search_outcomes_by_type_for_player(
+    acting_player: usize,
+    state: &State,
+    basic_only: bool,
+    energy_type: EnergyType,
+) -> Outcomes {
+    card_search_outcomes_with_filter(acting_player, state, move |card: &&Card| {
+        // The card is in the deck, so no Ability of its own is active: its *printed* type is
+        // what a typed search looks at.
+        let type_matches = card.is_type(energy_type);
+        let basic_check = !basic_only || card.is_basic();
+        type_matches && basic_check
+    })
+}
+
+pub(crate) fn search_to_hand_by_evolves_from(state: &State, name: String) -> Outcomes {
+    card_search_outcomes_with_filter(
+        state.current_player,
+        state,
+        move |card: &&Card| matches!(card, Card::Pokemon(pokemon_card) if pokemon_card.evolves_from.as_deref() == Some(name.as_str())),
+    )
+}
+
+pub(crate) fn item_search_outcomes(acting_player: usize, state: &State) -> Outcomes {
+    card_search_outcomes_with_filter(
+        acting_player,
+        state,
+        |card: &&Card| matches!(card, Card::Trainer(t) if t.trainer_card_type == TrainerType::Item),
+    )
+}
+
+pub(crate) fn tool_search_outcomes(acting_player: usize, state: &State) -> Outcomes {
+    card_search_outcomes_with_filter(
+        acting_player,
+        state,
+        |card: &&Card| matches!(card, Card::Trainer(t) if t.trainer_card_type == TrainerType::Tool),
+    )
+}
+
+pub(crate) fn gladion_search_outcomes(acting_player: usize, state: &State) -> Outcomes {
+    card_search_outcomes_with_filter(acting_player, state, move |card: &&Card| {
+        let name = card.get_name();
+        name == "Type: Null" || name == "Silvally"
+    })
+}
+
+pub(crate) fn supporter_search_outcomes(acting_player: usize, state: &State) -> Outcomes {
+    card_search_outcomes_with_filter(
+        acting_player,
+        state,
+        move |card: &&Card| matches!(card, Card::Trainer(trainer_card) if trainer_card.trainer_card_type == crate::models::TrainerType::Supporter),
+    )
+}
+
+fn card_search_outcomes_with_filter<F>(
+    acting_player: usize,
+    state: &State,
+    card_filter: F,
+) -> Outcomes
+where
+    F: Fn(&&Card) -> bool + Clone + 'static,
+{
+    card_search_outcomes_with_filter_multiple(acting_player, state, 1, card_filter)
+}
+
+/// Draw up to `num_to_draw` cards from deck that match the filter, using unordered combinations
+pub(crate) fn card_search_outcomes_with_filter_multiple<F>(
+    acting_player: usize,
+    state: &State,
+    num_to_draw: usize,
+    card_filter: F,
+) -> Outcomes
+where
+    F: Fn(&&Card) -> bool + Clone + 'static,
+{
+    let eligible_pokemon: Vec<Card> = state.decks[acting_player]
+        .cards
+        .iter()
+        .filter(|c| card_filter(c))
+        .cloned()
+        .collect();
+
+    let num_eligible = eligible_pokemon.len();
+
+    if num_eligible == 0 {
+        // No eligible Pokemon in deck, just shuffle
+        return Outcomes::single_fn(|rng, state, action| {
+            state.decks[action.actor].shuffle(false, rng);
+        });
+    }
+
+    let actual_draw_count = min(num_to_draw, num_eligible);
+
+    // Generate all possible unordered combinations
+    let draw_combinations = generate_combinations(&eligible_pokemon, actual_draw_count);
+    let num_outcomes = draw_combinations.len();
+    let probabilities = vec![1.0 / (num_outcomes as f64); num_outcomes];
+    let mut outcomes: Mutations = vec![];
+
+    for combo in draw_combinations {
+        outcomes.push(Box::new(move |rng, state, _action| {
+            // Transfer each Pokemon from the combination to hand
+            for pokemon in &combo {
+                state.transfer_card_from_deck_to_hand(acting_player, pokemon);
+            }
+
+            state.decks[acting_player].shuffle(false, rng);
+        }));
+    }
+
+    Outcomes::from_parts(probabilities, outcomes)
+}
+
+/// Generates outcomes for Caterpie's Quick Growth ability: pick a random card from
+/// `player`'s deck that evolves from their current active Pokémon and evolve it.
+/// Returns a no-op (just shuffle) when no eligible evolution exists in the deck.
+pub(crate) fn quick_growth_evolution_outcomes_for_player(player: usize, state: &State) -> Outcomes {
+    let active = state.get_active(player);
+    let evolution_cards: Vec<Card> = state.decks[player]
+        .cards
+        .iter()
+        .filter(|card| can_evolve_into(card, active))
+        .cloned()
+        .collect();
+
+    if evolution_cards.is_empty() {
+        return Outcomes::single_fn(move |rng, state, _action| {
+            state.decks[player].shuffle(false, rng);
+        });
+    }
+
+    let n = evolution_cards.len();
+    let probabilities = vec![1.0 / n as f64; n];
+    let mutations: Mutations = evolution_cards
+        .into_iter()
+        .map(
+            |evo_card| -> crate::actions::apply_action_helpers::Mutation {
+                Box::new(move |rng, state, _action| {
+                    apply_evolve(player, state, &evo_card, 0, true);
+                    state.decks[player].shuffle(false, rng);
+                })
+            },
+        )
+        .collect();
+
+    Outcomes::from_parts(probabilities, mutations)
+}
+
+pub(crate) fn search_and_bench_by_name(state: &State, card_name: String) -> Outcomes {
+    search_and_bench_with_filter(
+        state,
+        move |card: &Card| card.get_name() == card_name,
+        "Card should be in deck",
+    )
+}
+
+/// Silcoon's & Cascoon's Cocoon Collector: put up to `count` random cards named after any of
+/// `names` from the deck onto the Bench (capped by the deck's contents and the Bench space).
+pub(crate) fn search_and_bench_multiple_by_names(
+    state: &State,
+    names: Vec<String>,
+    count: usize,
+) -> Outcomes {
+    let acting_player = state.current_player;
+    let eligible_cards: Vec<Card> = state.decks[acting_player]
+        .cards
+        .iter()
+        .filter(|card| names.contains(&card.get_name()))
+        .cloned()
+        .collect();
+    let free_slots = state.in_play_pokemon[acting_player]
+        .iter()
+        .filter(|slot| slot.is_none())
+        .count();
+    let num_to_place = min(count, min(eligible_cards.len(), free_slots));
+
+    if num_to_place == 0 {
+        // Nothing to fetch (or nowhere to put it), so just shuffle the deck.
+        return Outcomes::single_fn(|rng, state, action| {
+            state.decks[action.actor].shuffle(false, rng);
+        });
+    }
+
+    let combinations = generate_combinations(&eligible_cards, num_to_place);
+    let probabilities = vec![1.0 / (combinations.len() as f64); combinations.len()];
+    let mutations: Mutations = combinations
+        .into_iter()
+        .map(|combo| -> Mutation {
+            Box::new(move |rng, state, action| {
+                for card in &combo {
+                    let Some(bench_idx) = state.in_play_pokemon[action.actor]
+                        .iter()
+                        .position(|slot| slot.is_none())
+                    else {
+                        debug!("No bench space available, skipping remaining cards");
+                        break;
+                    };
+                    debug!(
+                        "Fetched {card:?} from deck for player {} to place on bench",
+                        action.actor
+                    );
+                    apply_place_card(state, action.actor, card, bench_idx, true);
+                }
+                state.decks[action.actor].shuffle(false, rng);
+            })
+        })
+        .collect();
+
+    Outcomes::from_parts(probabilities, mutations)
+}
+
+pub(crate) fn search_and_bench_basic(state: &State) -> Outcomes {
+    search_and_bench_with_filter(
+        state,
+        |card: &Card| card.is_basic(),
+        "Basic card should be in deck",
+    )
+}
+
+fn search_and_bench_with_filter<F>(
+    state: &State,
+    card_filter: F,
+    missing_card_msg: &'static str,
+) -> Outcomes
+where
+    F: Fn(&Card) -> bool + Clone + 'static,
+{
+    let num_cards_in_deck = state.decks[state.current_player]
+        .cards
+        .iter()
+        .filter(|c| card_filter(c))
+        .count();
+
+    if num_cards_in_deck == 0 {
+        Outcomes::single_fn({
+            |rng, state, action| {
+                // If there are no matching cards in the deck, just shuffle it
+                state.decks[action.actor].shuffle(false, rng);
+            }
+        })
+    } else {
+        let probabilities = vec![1.0 / (num_cards_in_deck as f64); num_cards_in_deck];
+        let mut outcomes: Mutations = vec![];
+
+        for i in 0..num_cards_in_deck {
+            let card_filter = card_filter.clone();
+            outcomes.push(Box::new(move |rng, state, action| {
+                let bench_space = state.in_play_pokemon[action.actor]
+                    .iter()
+                    .position(|x| x.is_none());
+                if bench_space.is_none() {
+                    debug!("No bench space available, shuffling deck without placing card");
+                    state.decks[action.actor].shuffle(false, rng);
+                    return;
+                }
+
+                let card = state.decks[action.actor]
+                    .cards
+                    .iter()
+                    .filter(|c| card_filter(c))
+                    .nth(i)
+                    .cloned()
+                    .expect(missing_card_msg);
+
+                debug!(
+                    "Fetched {card:?} from deck for player {} to place on bench",
+                    action.actor
+                );
+
+                let bench_idx = bench_space.unwrap();
+                apply_place_card(state, action.actor, &card, bench_idx, true);
+
+                state.decks[action.actor].shuffle(false, rng);
+            }));
+        }
+        Outcomes::from_parts(probabilities, outcomes)
+    }
+}

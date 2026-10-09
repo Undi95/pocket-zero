@@ -1,0 +1,832 @@
+// This code is initially generated from the database.json by card_enum_generator.rs.
+// but needs to be manually filled in with actual implementations.
+
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
+use crate::actions::abilities::AbilityMechanic;
+use crate::effects::CardEffect;
+use crate::models::{Card, EnergyType, StatusCondition};
+
+/// Map from ability effect text to its AbilityMechanic.
+pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<HashMap<&'static str, AbilityMechanic>> =
+    LazyLock::new(|| {
+        let mut map: HashMap<&'static str, AbilityMechanic> = HashMap::new();
+        map.insert(
+            "Each of your evolved Pokémon can use any attack from its previous Evolutions. (You still need the necessary Energy to use each attack.)",
+            AbilityMechanic::TimeRecall,
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost 1 [C] more.",
+            AbilityMechanic::IncreaseAttackCostForOpponentActive { amount: 1 },
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do -20 damage.",
+            AbilityMechanic::ReduceOpponentActiveDamage { amount: 20 },
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, it can evolve during your first turn or the turn you play it.",
+            AbilityMechanic::CanEvolveOnFirstTurnIfActive,
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, whenever you attach an Energy from your Energy Zone to it, it is now Asleep.",
+            AbilityMechanic::SleepOnZoneAttachToSelfWhileActive,
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, whenever your opponent attaches an Energy from their Energy Zone to 1 of their Pokémon, do 20 damage to that Pokémon.",
+            AbilityMechanic::ElectromagneticWall,
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, your opponent can't use any Supporter cards from their hand.",
+            AbilityMechanic::NoOpponentSupportInActive,
+        );
+        map.insert(
+            "As long as this Pokémon is in the Active Spot, your opponent can't play any Stadium cards from their hand.",
+            AbilityMechanic::NoOpponentStadiumInActive,
+        );
+        map.insert(
+            "As long as this Pokémon is on your Bench, attacks used by your Pokémon that evolve from Poliwhirl do +40 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageForEvolvesFromWhileBenched {
+                evolves_from: "Poliwhirl".to_string(),
+                amount: 40,
+            },
+        );
+        map.insert(
+            "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks.",
+            AbilityMechanic::PreventDamageWhileBenched,
+        );
+        map.insert(
+            "As long as this Pokémon is on your Bench, your Active Basic Pokémon's Retreat Cost is 1 less.",
+            AbilityMechanic::ReduceRetreatCostOfYourActiveBasicFromBench { amount: 1 },
+        );
+        map.insert(
+            "As often as you like during your turn, you may choose 1 of your Pokémon that has damage on it, and move all of its damage to this Pokémon.",
+            AbilityMechanic::MoveDamageFromOneYourPokemonToThisPokemon,
+        );
+        map.insert(
+            "As often as you like during your turn, you may move a [W] Energy from 1 of your Benched [W] Pokémon to your Active [W] Pokémon.",
+            AbilityMechanic::MoveTypedEnergyFromBenchToActive {
+                energy_type: EnergyType::Water,
+            },
+        );
+        map.insert(
+            "At the beginning of your turn, if this Pokémon is in the Active Spot, put a random [P] Pokémon from your deck into your hand.",
+            AbilityMechanic::StartTurnRandomPokemonToHand {
+                energy_type: EnergyType::Psychic,
+            },
+        );
+        map.insert(
+            "At the end of your first turn, take a [L] Energy from your Energy Zone and attach it to this Pokémon.",
+            AbilityMechanic::EndFirstTurnAttachEnergyToSelf {
+                energy_type: EnergyType::Lightning,
+            },
+        );
+        map.insert(
+            "At the end of your turn, if this Pokémon is in the Active Spot, draw a card.",
+            AbilityMechanic::EndTurnDrawCardIfActive { amount: 1 },
+        );
+        map.insert(
+            "At the end of your turn, if this Pokémon is in the Active Spot, heal 20 damage from it.",
+            AbilityMechanic::EndTurnHealSelfIfActive { amount: 20 },
+        );
+        map.insert(
+            "Attacks used by your [F] Pokémon do +20 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageForTypeInPlay {
+                energy_type: EnergyType::Fighting,
+                amount: 20,
+            },
+        );
+        map.insert(
+            "Attacks used by your [P] Pokémon and [M] Pokémon do +30 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageForTwoTypesInPlay {
+                energy_type_a: EnergyType::Psychic,
+                energy_type_b: EnergyType::Metal,
+                amount: 30,
+            },
+        );
+        // map.insert("Basic Pokémon in play (both yours and your opponent's) have no Abilities.", todo_implementation);
+        map.insert(
+            "During Pokémon Checkup, if this Pokémon is in the Active Spot, do 10 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::CheckupDamageToOpponentActive { amount: 10 },
+        );
+        map.insert(
+            "During your first turn, this Pokémon has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostDuringFirstTurn,
+        );
+        map.insert(
+            "Each [G] Energy attached to your [G] Pokémon provides 2 [G] Energy. This effect doesn't stack.",
+            AbilityMechanic::DoubleGrassEnergy,
+        );
+        map.insert(
+            "Each of your Pokémon that has any Energy attached recovers from all Special Conditions and can't be affected by any Special Conditions.",
+            AbilityMechanic::SoothingWind { energy_type: None },
+        );
+        map.insert(
+            "Each of your Pokémon that has any [P] Energy attached recovers from all Special Conditions and can't be affected by any Special Conditions.",
+            AbilityMechanic::SoothingWind {
+                energy_type: Some(EnergyType::Psychic),
+            },
+        );
+        map.insert(
+            "Each of your [G] Pokémon gets +20 HP.",
+            AbilityMechanic::IncreaseHpOfYourTypedPokemon {
+                energy_type: EnergyType::Grass,
+                amount: 20,
+            },
+        );
+        map.insert(
+            "If a Stadium is in play, this Pokémon has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostIfStadiumInPlay,
+        );
+        map.insert(
+            "If any damage is done to this Pokémon by attacks, flip a coin. If heads, prevent that damage.",
+            AbilityMechanic::CoinFlipToPreventDamage,
+        );
+        map.insert(
+            "If any damage is done to this Pokémon by attacks, flip a coin. If heads, this Pokémon takes -100 damage from that attack.",
+            AbilityMechanic::CoinFlipToReduceDamage { amount: 100 },
+        );
+        map.insert(
+            "If any damage is done to this Pokémon by attacks, flip a coin. If heads, this Pokémon takes -80 damage from that attack.",
+            AbilityMechanic::CoinFlipToReduceDamage { amount: 80 },
+        );
+        map.insert(
+            "If this Pokémon has a Pokémon Tool attached, attacks used by this Pokémon cost 1 less [G] Energy.",
+            AbilityMechanic::ReduceTypedAttackCostIfHasTool {
+                energy_type: EnergyType::Grass,
+                amount: 1,
+            },
+        );
+        map.insert(
+            "If this Pokémon has any Energy attached, it has no Retreat Cost.",
+            AbilityMechanic::NoRetreatIfHasEnergy,
+        );
+        map.insert(
+            "If this Pokémon has full HP, it takes -40 damage from attacks from your opponent's Pokémon.",
+            AbilityMechanic::ReduceDamageFromAttacksIfFullHp { amount: 40 },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, do 10 damage to each of your opponent's Pokémon.",
+            AbilityMechanic::DamageEachOpponentPokemonOnKnockout { amount: 10 },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, do 50 damage to the Attacking Pokémon.",
+            AbilityMechanic::DamageAttackerOnKnockout { amount: 50 },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out.",
+            AbilityMechanic::CoinFlipKnockOutAttackerOnKnockout,
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move all [F] Energy from this Pokémon to 1 of your Benched Pokémon.",
+            AbilityMechanic::MoveAllTypedEnergyToBenchOnKnockout {
+                energy_type: EnergyType::Fighting,
+            },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon, do 20 damage to the Attacking Pokémon.",
+            AbilityMechanic::CounterattackDamage { amount: 20 },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon, take a [W] Energy from your Energy Zone and attach it to 1 of your Benched Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToBenchedOnDamaged {
+                energy_type: EnergyType::Water,
+            },
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon, the Attacking Pokémon is now Poisoned.",
+            AbilityMechanic::PoisonAttackerOnDamaged,
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot, once during your turn, you may switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot.",
+            AbilityMechanic::VictreebelFragranceTrap,
+        );
+        map.insert(
+            "If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.",
+            AbilityMechanic::CoinFlipToSurviveKnockOut,
+        );
+        map.insert(
+            "If you have Arceus or Arceus ex in play, attacks used by this Pokémon cost 1 less [C] Energy.",
+            AbilityMechanic::ReduceAttackCostIfArceusInPlay { amount: 1 },
+        );
+        map.insert(
+            "If you have Arceus or Arceus ex in play, attacks used by this Pokémon do +30 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageIfArceusInPlay { amount: 30 },
+        );
+        map.insert(
+            "If you have Arceus or Arceus ex in play, this Pokémon has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostIfNamedPokemonInPlay {
+                names: vec!["Arceus".to_string(), "Arceus ex".to_string()],
+            },
+        );
+        map.insert(
+            "If you have Arceus or Arceus ex in play, this Pokémon takes -30 damage from attacks.",
+            AbilityMechanic::ReduceDamageFromAttacksIfArceusInPlay { amount: 30 },
+        );
+        map.insert(
+            "If you have Latias in play, this Pokémon has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostIfNamedPokemonInPlay {
+                names: vec!["Latias".to_string()],
+            },
+        );
+        map.insert(
+            "If you have another Falinks in play, this Pokémon's attacks do +20 damage to your opponent's Active Pokémon, and this Pokémon takes -20 damage from attacks from your opponent's Pokémon.",
+            AbilityMechanic::BuffIfAnotherSameNameInPlay {
+                damage_bonus: 20,
+                damage_reduction: 20,
+            },
+        );
+        map.insert(
+            "If your opponent's Pokémon is Knocked Out by damage from this Pokémon's attacks, during your opponent's next turn, prevent all damage from—and effects of—attacks done to this Pokémon.",
+            AbilityMechanic::ProtectSelfNextTurnAfterAttackKnockout,
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may heal 30 damage from 1 of your Pokémon.",
+            AbilityMechanic::HealOneYourPokemon { amount: 30 },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon has a Pokémon Tool attached, you may heal 30 damage from 1 of your Pokémon.",
+            AbilityMechanic::HealOneYourPokemonIfHasTool { amount: 30 },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may look at a random Supporter card from your opponent's hand. Use the effect of that card as the effect of this Ability.",
+            AbilityMechanic::UseRandomOpponentSupporterEffect,
+        );
+        map.insert("Once during your turn, if this Pokémon is in the Active Spot, you may make your opponent's Active Pokémon Poisoned.", AbilityMechanic::PoisonOpponentActive);
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may draw a card.",
+            AbilityMechanic::DrawCardIfActive { amount: 1 },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may switch in 1 of your opponent's Benched Pokémon that has damage on it to the Active Spot.",
+            AbilityMechanic::SwitchDamagedOpponentBenchToActive,
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may take a [G] Energy from your Energy Zone and attach it to 1 of your [G] Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToYourTypedPokemon {
+                energy_type: EnergyType::Grass,
+            },
+        );
+        map.insert(
+            "This Pokémon may have up to 2 Pokémon Tool cards attached to it.",
+            AbilityMechanic::ExtraToolSlots { amount: 1 },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is on your Bench, you may discard all Pokémon Tools from your opponent's Active Pokémon. If you do, discard this Pokémon.",
+            AbilityMechanic::DiscardOpponentActiveToolsAndDiscardSelf,
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is on your Bench, you may switch it with your Active Pokémon.",
+            AbilityMechanic::SwitchThisBenchWithActive,
+        );
+        map.insert(
+            "Once during your turn, if you have Arceus or Arceus ex in play, you may do 30 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::DamageOpponentActiveIfArceusInPlay { amount: 30 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may discard a random Energy from your opponent's Active Pokémon.",
+            AbilityMechanic::DiscardRandomEnergyFromOpponentActiveOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may draw 2 cards.",
+            AbilityMechanic::DrawCardsOnEvolve { amount: 2 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may make your opponent's Active Pokémon Poisoned and Burned.",
+            AbilityMechanic::PoisonAndBurnOpponentActiveOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may move a random Energy from your opponent's Active Pokémon to this Pokémon.",
+            AbilityMechanic::MoveRandomEnergyFromOpponentActiveToSelfOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
+            AbilityMechanic::CoinFlipParalyzeOpponentActiveOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may have your opponent shuffle their hand into their deck. For each remaining point that your opponent needs to win, they draw a card.",
+            AbilityMechanic::OpponentShuffleHandAndDrawPerRemainingPointOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may heal 60 damage from 1 of your [W] Pokémon.",
+            AbilityMechanic::HealTypedPokemonOnEvolve {
+                energy_type: EnergyType::Water,
+                amount: 60,
+            },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put 2 random Pokémon Tool cards from your discard pile into your hand.",
+            AbilityMechanic::PutRandomToolsFromDiscardToHandOnEvolve { amount: 2 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put a Supporter card from your discard pile into your hand.",
+            AbilityMechanic::PutSupporterFromDiscardToHandOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may take a [R] Energy from your Energy Zone and attach it to your Active [R] Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToActiveTypedOnEvolve {
+                energy_type: EnergyType::Fire,
+            },
+        );
+        map.insert(
+            "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may have your opponent reveal their hand.",
+            AbilityMechanic::InfiltratingInspection,
+        );
+        map.insert(
+            "Once during your turn, you may attach a [R] Energy from your discard pile to this Pokémon. If you do, do 20 damage to this Pokémon.",
+            AbilityMechanic::AttachEnergyFromDiscardToSelfAndDamage {
+                energy_type: EnergyType::Fire,
+                self_damage: 20,
+            },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is on your Bench, you may attach an Energy from your discard pile to your Active [N] Pokémon.",
+            AbilityMechanic::AttachEnergyFromDiscardToActiveFromBench,
+        );
+        map.insert(
+            "Once during your turn, you may choose either player. Look at the top card of that player's deck.",
+            AbilityMechanic::LookAtCardsNoop,
+        );
+        map.insert(
+            "Once during your turn, you may discard the top card of your opponent's deck.",
+            AbilityMechanic::DiscardTopCardOpponentDeck,
+        );
+        map.insert(
+            "Once during your turn, you may do 20 damage to 1 of your opponent's Pokémon.",
+            AbilityMechanic::DamageOneOpponentPokemon { amount: 20 },
+        );
+        map.insert(
+            "Once during your turn, you may flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+            AbilityMechanic::CoinFlipSwitchOpponentBenchToActive,
+        );
+        map.insert("Once during your turn, you may flip a coin. If heads, your opponent's Active Pokémon is now Asleep.", AbilityMechanic::CoinFlipSleepOpponentActive);
+        map.insert(
+            "Once during your turn, you may flip a coin. If heads, your opponent's Active Pokémon is now Poisoned.",
+            AbilityMechanic::CoinFlipPoisonOpponentActive,
+        );
+        map.insert(
+            "Once during your turn, you may heal 10 damage from each of your Pokémon.",
+            AbilityMechanic::HealAllYourPokemon {
+                amount: 10,
+                energy_type: None,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may heal 20 damage from each of your Pokémon.",
+            AbilityMechanic::HealAllYourPokemon {
+                amount: 20,
+                energy_type: None,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may heal 20 damage from your Active Pokémon.",
+            AbilityMechanic::HealActiveYourPokemon { amount: 20 },
+        );
+        map.insert(
+            "Once during your turn, you may heal 30 damage from each of your [W] Pokémon.",
+            AbilityMechanic::HealAllYourPokemon {
+                amount: 30,
+                energy_type: Some(EnergyType::Water),
+            },
+        );
+        map.insert(
+            "Once during your turn, you may look at the top card of your deck.",
+            AbilityMechanic::LookAtCardsNoop,
+        );
+        map.insert(
+            "Once during your turn, you may make your opponent's Active Pokémon Burned.",
+            AbilityMechanic::BurnOpponentActive,
+        );
+        map.insert(
+            "Once during your turn, you may move all [D] Energy from each of your Pokémon to this Pokémon.",
+            AbilityMechanic::MoveAllTypedEnergyFromAllYourPokemonToSelf {
+                energy_type: EnergyType::Darkness,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may move all [P] Energy from 1 of your Benched [P] Pokémon to your Active Pokémon.",
+            AbilityMechanic::MoveAllTypedEnergyFromBenchToActive {
+                energy_type: EnergyType::Psychic,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may put a random Pokémon Tool card from your deck into your hand.",
+            AbilityMechanic::SearchRandomToolFromDeck,
+        );
+        map.insert(
+            "Once during your turn, you may put a random Pokémon from your deck into your hand.",
+            AbilityMechanic::SearchRandomPokemonFromDeck,
+        );
+        map.insert(
+            "Once during your turn, you may switch out your opponent's Active Basic Pok\u{e9}mon to the Bench.\u{a0}(Your opponent chooses the new Active Pok\u{e9}mon.)",
+            AbilityMechanic::SwitchOutOpponentActiveToBench {
+                require_active: false,
+                require_target_basic: true,
+            },
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+            AbilityMechanic::SwitchOutOpponentActiveToBench {
+                require_active: true,
+                require_target_basic: false,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may switch out your opponent's Active Pok\u{e9}mon to the Bench.\u{a0}(Your opponent chooses the new Active Pok\u{e9}mon.)",
+            AbilityMechanic::SwitchOutOpponentActiveToBench {
+                require_active: false,
+                require_target_basic: false,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may switch your Active Ultra Beast with 1 of your Benched Ultra Beasts.",
+            AbilityMechanic::SwitchActiveUltraBeastWithBench,
+        );
+        map.insert("Once during your turn, you may switch your Active [W] Pokémon with 1 of your Benched Pokémon.", AbilityMechanic::SwitchActiveTypedWithBench { energy_type: EnergyType::Water });
+        map.insert(
+            "Once during your turn, you may take 2 [D] Energy from your Energy Zone and attach it to this Pokémon. If you do, do 30 damage to this Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToSelfAndDamage {
+                energy_type: EnergyType::Darkness,
+                amount: 2,
+                self_damage: 30,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may take a [L] Energy from your Energy Zone and attach it to this Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToSelf {
+                energy_type: EnergyType::Lightning,
+                amount: 1,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may take a [W] Energy from your Energy Zone and attach it to this Pokémon.",
+            AbilityMechanic::AttachEnergyFromZoneToSelf {
+                energy_type: EnergyType::Water,
+                amount: 1,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may take a [P] Energy from your Energy Zone and attach it to the [P] Pokémon in the Active Spot.",
+            AbilityMechanic::AttachEnergyFromZoneToActiveTypedPokemon {
+                energy_type: EnergyType::Psychic,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may take a [P] Energy from your Energy Zone and attach it to this Pokémon. If you use this Ability, your turn ends.",
+            AbilityMechanic::AttachEnergyFromZoneToSelfAndEndTurn {
+                energy_type: EnergyType::Psychic,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may use this Ability. 1 Special Condition from among Burned, Confused, and Poisoned is chosen at random, and your opponent's Active Pokémon is now affected by that Special Condition. Any Special Conditions already affecting that Pokémon will not be chosen.",
+            AbilityMechanic::RandomStatusConditionToOpponentActive {
+                options: vec![
+                    StatusCondition::Burned,
+                    StatusCondition::Confused,
+                    StatusCondition::Poisoned,
+                ],
+            },
+        );
+        map.insert(
+            "Pokémon (both yours and your opponent's) can't be healed.",
+            AbilityMechanic::NoHealingForAnyone,
+        );
+        map.insert(
+            "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex.",
+            AbilityMechanic::PreventAllDamageFromEx,
+        );
+        map.insert(
+            "Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon.",
+            AbilityMechanic::PreventOpponentAttackEffectsOnSelf,
+        );
+        map.insert(
+            "This Ability works if you have any Unown in play with an Ability other than GUARD. All of your Pokémon take -10 damage from attacks from your opponent's Pokémon.",
+            AbilityMechanic::ReduceDamageToAllYourPokemonWithOtherUnown { amount: 10 },
+        );
+        map.insert(
+            "This Ability works if you have any Unown in play with an Ability other than POWER. Attacks used by your Pokémon do +10 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageOfYourPokemonWithOtherUnown { amount: 10 },
+        );
+        map.insert(
+            "This Pokémon can evolve into any Pokémon that evolves from Eevee if you play it from your hand onto this Pokémon. (This Pokémon can't evolve during your first turn or the turn you play it.)",
+            AbilityMechanic::CanEvolveIntoEeveeEvolution,
+        );
+        map.insert(
+            "This Pokémon can't be Asleep.",
+            AbilityMechanic::ImmuneToStatusCondition {
+                condition: StatusCondition::Asleep,
+            },
+        );
+        map.insert(
+            "This Pokémon can't be affected by any Special Conditions.",
+            AbilityMechanic::ImmuneToStatusConditions,
+        );
+        map.insert(
+            "This Pokémon gets +30 HP for each [P] Energy attached to it.",
+            AbilityMechanic::IncreaseHpPerAttachedEnergy {
+                energy_type: EnergyType::Psychic,
+                amount: 30,
+            },
+        );
+        map.insert(
+            "This Pokémon gets +30 HP for each [G] Energy attached to it.",
+            AbilityMechanic::IncreaseHpPerAttachedEnergy {
+                energy_type: EnergyType::Grass,
+                amount: 30,
+            },
+        );
+        map.insert(
+            "This Pokémon takes -10 damage from attacks.",
+            AbilityMechanic::ReduceDamageFromAttacks { amount: 10 },
+        );
+        map.insert(
+            "This Pokémon takes -20 damage from attacks from [R] or [W] Pokémon.",
+            AbilityMechanic::ReduceDamageFromAttacksByAttackerType {
+                amount: 20,
+                attacker_types: vec![EnergyType::Fire, EnergyType::Water],
+            },
+        );
+        map.insert(
+            "This Pokémon takes -20 damage from attacks.",
+            AbilityMechanic::ReduceDamageFromAttacks { amount: 20 },
+        );
+        map.insert(
+            "This Pokémon takes -30 damage from attacks from [F] Pokémon.",
+            AbilityMechanic::ReduceDamageFromAttacksByAttackerType {
+                amount: 30,
+                attacker_types: vec![EnergyType::Fighting],
+            },
+        );
+        map.insert(
+            "This Pokémon takes -30 damage from attacks from [R] or [W] Pokémon.",
+            AbilityMechanic::ReduceDamageFromAttacksByAttackerType {
+                amount: 30,
+                attacker_types: vec![EnergyType::Fire, EnergyType::Water],
+            },
+        );
+        map.insert(
+            "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't get any points for it.",
+            AbilityMechanic::CoinFlipDenyPointsOnKnockout,
+        );
+        map.insert(
+            "When this Pokémon is first damaged by an attack after coming into play, prevent that damage.",
+            AbilityMechanic::PreventFirstAttack,
+        );
+        map.insert(
+            "Whenever you attach a [D] Energy from your Energy Zone to this Pokémon, do 20 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::DamageOpponentActiveOnZoneAttachToSelf {
+                energy_type: EnergyType::Darkness,
+                amount: 20,
+                only_turn_energy: true,
+            },
+        );
+        map.insert(
+            "Whenever you attach a [P] Energy from your Energy Zone to this Pokémon, heal 20 damage from this Pokémon.",
+            AbilityMechanic::HealSelfOnZoneAttach {
+                energy_type: EnergyType::Psychic,
+                amount: 20,
+            },
+        );
+        map.insert(
+            "Whenever you attach an Energy from your Energy Zone to this Pokémon, put a random card from your deck that evolves from this Pokémon onto this Pokémon to evolve it.",
+            AbilityMechanic::EvolveFromDeckOnZoneEnergyAttachToSelf,
+        );
+        map.insert(
+            "You must discard a card from your hand in order to use this Ability. Once during your turn, you may draw a card.",
+            AbilityMechanic::DiscardFromHandToDrawCard,
+        );
+        map.insert(
+            "Your Active Dondozo has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostForYourActive {
+                pokemon_name: Some("Dondozo".to_string()),
+            },
+        );
+        map.insert(
+            "Your Active Pokémon has no Retreat Cost.",
+            AbilityMechanic::NoRetreatCostForYourActive { pokemon_name: None },
+        );
+        map.insert(
+            "Your opponent can't play any Pokémon from their hand to evolve their Active Pokémon.",
+            AbilityMechanic::PreventOpponentActiveEvolution,
+        );
+        map.insert(
+            "Your opponent's Active Pokémon takes +10 damage from being Poisoned.",
+            AbilityMechanic::IncreasePoisonDamage { amount: 10 },
+        );
+        map.insert(
+            "Your opponent's Active Pokémon's Retreat Cost is 1 more.",
+            AbilityMechanic::IncreaseRetreatCostForOpponentActive { amount: 1 },
+        );
+
+        // B2 and B2a mechanics
+        map.insert(
+            "Basic Pokémon in play (both yours and your opponent's) have no Abilities.",
+            AbilityMechanic::BasicPokemonHaveNoAbilities,
+        );
+        map.insert(
+            "If this Pokémon's remaining HP is 50 or less, attacks used by this Pokémon do +60 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::IncreaseDamageWhenRemainingHpAtMost {
+                amount: 60,
+                hp_threshold: 50,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may discard 1 [R] Energy from this Pokémon in order to use this Ability. During this turn, attacks used by your [R] Pokémon do +50 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::DiscardEnergyToIncreaseTypeDamage {
+                discard_energy: EnergyType::Fire,
+                attack_type: EnergyType::Fire,
+                amount: 50,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may heal 60 damage from 1 of your Pokémon ex that has any Energy attached. If you do, discard a random Energy from that Pokémon.",
+            AbilityMechanic::HealOneYourPokemonExAndDiscardRandomEnergy { amount: 60 },
+        );
+        // map.insert("Once during your turn, you may switch out your opponent's Active Basic Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)", todo_implementation);
+        // map.insert("Once during your turn, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)", todo_implementation);
+        map.insert(
+            "Once during your turn, you may take a [W] Energy from your Energy Zone and attach it to the [W] Pokémon in the Active Spot.",
+            AbilityMechanic::AttachEnergyFromZoneToActiveTypedPokemon {
+                energy_type: EnergyType::Water,
+            },
+        );
+        map.insert(
+            "This Pokémon takes -30 damage from attacks.",
+            AbilityMechanic::ReduceDamageFromAttacks { amount: 30 },
+        );
+
+        // b2b mechanics
+        map.insert(
+            "At the end of each turn, if your opponent's Active Pokémon is Asleep, do 20 damage to that Pokémon.",
+            AbilityMechanic::BadDreamsEndOfTurn { amount: 20 },
+        );
+        map.insert("Once during your turn, you may switch your Active [M] Pokémon with 1 of your Benched Pokémon.", AbilityMechanic::SwitchActiveTypedWithBench { energy_type: EnergyType::Metal });
+
+        // b3a mechanics
+        map.insert(
+            "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon.",
+            AbilityMechanic::LegendaryDrive,
+        );
+        map.insert(
+            "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+            AbilityMechanic::AncientRoar,
+        );
+        map.insert(
+            "Attacks used by your Future Pokémon cost 1 less [C] Energy.",
+            AbilityMechanic::FutureSystem,
+        );
+
+        // b3 mechanics
+        // Urshifu's Double Type. The printed type is unioned in by
+        // `PlayedCard::get_energy_types`, so the listed types are what the card *adds*; listing
+        // the printed one again is harmless (it is deduplicated).
+        map.insert(
+            "As long as this Pokémon is in play, it is [F] and [D] type.",
+            AbilityMechanic::GrantedTypes {
+                energy_types: vec![EnergyType::Fighting, EnergyType::Darkness],
+            },
+        );
+        map.insert(
+            "As long as this Pokémon is in play, it is [W] and [F] type.",
+            AbilityMechanic::GrantedTypes {
+                energy_types: vec![EnergyType::Water, EnergyType::Fighting],
+            },
+        );
+        map.insert(
+            "As long as this Pokémon is on your Bench, your Active [D] Pokémon's Retreat Cost is 1 less.",
+            AbilityMechanic::ReduceRetreatCostOfYourActiveTypedFromBench {
+                energy_type: EnergyType::Darkness,
+                amount: 1,
+            },
+        );
+        map.insert(
+            "During Pokémon Checkup, if this Pokémon is in the Active Spot, do 10 damage to each of your opponent's Pokémon.",
+            AbilityMechanic::CheckupDamageToAllOpponentPokemon { amount: 10 },
+        );
+        map.insert(
+            "If you don't have Regirock, Regice, and Registeel on your Bench, this Pokémon can't attack.",
+            AbilityMechanic::CannotAttackUnlessNamedOnBench {
+                names: vec![
+                    "Regirock".to_string(),
+                    "Regice".to_string(),
+                    "Registeel".to_string(),
+                ],
+            },
+        );
+        map.insert(
+            "Once during your turn, after you flip any coins for an attack of 1 of your [R] Pokémon, you may ignore all results of those coin flips and begin flipping those coins again. You can't use more than 1 Victory Star Ability each turn.",
+            AbilityMechanic::VictoryStarReflip,
+        );
+        map.insert(
+            "Once during your turn, if this Pokémon is in the Active Spot, you may make your opponent's Active Pokémon Confused.",
+            AbilityMechanic::ConfuseOpponentActive,
+        );
+        // map.insert("Once during your turn, if this Pokémon is in the Active Spot, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)", todo_implementation);
+        map.insert(
+            "Once during your turn, if this Pokémon is on your Bench, you may move 30 damage that your Active Pokémon has on it to this Pokémon.",
+            AbilityMechanic::MoveFixedDamageFromActiveToThisBenched { amount: 30 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 20 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::DamageOpponentActiveOnEvolve { amount: 20 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 30 damage to your opponent's Active Pokémon.",
+            AbilityMechanic::DamageOpponentActiveOnEvolve { amount: 30 },
+        );
+        map.insert(
+            "Once during your turn, you may remove a random Special Condition from your Active Pokémon.",
+            AbilityMechanic::RemoveRandomSpecialConditionFromActive,
+        );
+
+        // b3b mechanics
+        map.insert(
+            "At the end of your opponent's turn, if this Pokémon is in the Active Spot, put a random card from your deck that evolves from this Pokémon onto this Pokémon to evolve it.",
+            AbilityMechanic::QuickGrowth,
+        );
+
+        // b3a mechanics
+        map.insert(
+            "During Pokémon Checkup, heal 10 damage from each of your Pokémon.",
+            AbilityMechanic::HealAllYourPokemonDuringCheckup { amount: 10 },
+        );
+
+        // b4 / b4a mechanics
+        map.insert(
+            "Once during your turn, when you flip any coins for an effect of your Trainer cards, you may ignore all results of those coin flips and begin flipping those coins again. You can't use more than 1 Luxury Coin Ability each turn.",
+            AbilityMechanic::LuxuryCoinReflip,
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may look at the top 4 cards of your deck and put all Item cards you find there into your hand. Shuffle the other cards back into your deck.",
+            AbilityMechanic::TakeItemsFromTopOfDeckOnEvolve { amount: 4 },
+        );
+        map.insert(
+            "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may prevent all damage from—and effects of—attacks from your opponent's Pokémon done to this Pokémon until the end of your opponent's next turn.",
+            AbilityMechanic::PreventAllDamageAndEffectsOnEvolve,
+        );
+        map.insert(
+            "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may heal 20 damage from your Active [G] Pokémon.",
+            AbilityMechanic::HealActiveTypedOnBench {
+                energy_type: EnergyType::Grass,
+                amount: 20,
+            },
+        );
+        map.insert(
+            "Once during your turn, you may look at a random card from your opponent's hand.",
+            AbilityMechanic::LookAtCardsNoop,
+        );
+        map.insert(
+            "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, do 70 damage to the Attacking Pokémon.",
+            AbilityMechanic::DamageAttackerOnKnockout { amount: 70 },
+        );
+        map.insert(
+            "If you have another Beldum in play, this Pokémon's Retreat Cost is 2 less.",
+            AbilityMechanic::ReduceRetreatCostIfAnotherSameNameInPlay { amount: 2 },
+        );
+        map
+    });
+
+pub fn ability_mechanic_from_effect(effect: &str) -> Option<&'static AbilityMechanic> {
+    EFFECT_ABILITY_MECHANIC_MAP.get(effect)
+}
+
+pub fn get_ability_mechanic(card: &Card) -> Option<&'static AbilityMechanic> {
+    let Card::Pokemon(pokemon) = card else {
+        return None;
+    };
+
+    pokemon
+        .ability
+        .as_ref()
+        .and_then(|ability| ability_mechanic_from_effect(&ability.effect))
+}
+
+pub fn has_ability_mechanic(card: &Card, mechanic: &AbilityMechanic) -> bool {
+    get_ability_mechanic(card) == Some(mechanic)
+}
+
+/// Translate a *self-scoped defensive* passive ability mechanic into the `CardEffect` it presents
+/// as while the holder is in play. This is the core of the "abilities-as-effects" model: rather
+/// than scanning the board for these abilities, damage code reads a Pokémon's effect list (see
+/// `PlayedCard::get_effective_card_effects`), which merges stored effects with the effects derived
+/// here. Returns `None` for mechanics that are not effects-on-this-Pokémon (activated abilities,
+/// opponent-restrictions like Gengar/Snorlax, auras like Serperior, lifecycle triggers, etc.).
+pub fn card_effect_from_ability_mechanic(mechanic: &AbilityMechanic) -> Option<CardEffect> {
+    match mechanic {
+        AbilityMechanic::ReduceDamageFromAttacks { amount } => {
+            Some(CardEffect::ReduceDamageFromAttacks { amount: *amount })
+        }
+        AbilityMechanic::ReduceOpponentActiveDamage { amount } => {
+            Some(CardEffect::ReduceOpponentActiveDamage { amount: *amount })
+        }
+        AbilityMechanic::PreventAllDamageFromEx => Some(CardEffect::PreventAllDamageFromEx),
+        AbilityMechanic::PreventDamageWhileBenched => Some(CardEffect::PreventDamageWhileBenched),
+        AbilityMechanic::CoinFlipToPreventDamage => {
+            Some(CardEffect::CoinFlipToPreventIncomingDamage)
+        }
+        AbilityMechanic::CoinFlipToReduceDamage { amount } => {
+            Some(CardEffect::CoinFlipToReduceIncomingDamage { amount: *amount })
+        }
+        _ => None,
+    }
+}

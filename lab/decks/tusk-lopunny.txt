@@ -1,0 +1,15 @@
+Energy: Fighting
+1 Giovanni A1 223
+2 Giant Cape A2 147
+1 Rocky Helmet A2 148
+1 Pokémon Center Lady A2b 70
+1 May B1 223
+1 Copycat B1 225
+2 Mega Lopunny ex B1a 42
+1 Buneary B1a 62
+1 Korrina B3 149
+2 Arena of Antiquity B3 154
+2 Great Tusk B3a 34
+1 Potion P-A 001
+2 Poké Ball P-A 005
+2 Professor's Research P-A 007

@@ -1,0 +1,1241 @@
+use core::panic;
+
+use log::debug;
+use rand::{rngs::StdRng, Rng};
+
+use crate::{
+    actions::{
+        abilities::AbilityMechanic,
+        apply_action_helpers::{
+            apply_activate, handle_damage, handle_knockouts, Mutation, Mutations, Probabilities,
+        },
+        apply_trainer_action::forecast_trainer_action,
+        effect_ability_mechanic_map::ability_mechanic_from_effect,
+        outcomes::Outcomes,
+        shared_mutations::{pokemon_search_outcomes, tool_search_outcomes},
+        Action, SimpleAction,
+    },
+    combinatorics::generate_combinations,
+    effects::{CardEffect, TurnEffect},
+    hooks::is_ultra_beast,
+    models::{Card, EnergyType, PlayedCard, StatusCondition, TrainerCard, TrainerType},
+    move_generation::trainer_move_generation_implementation,
+    State,
+};
+
+/// Points needed to win a game of Pokémon TCG Pocket.
+const POINTS_TO_WIN: u8 = 3;
+
+// This is a reducer of all actions relating to abilities.
+pub(crate) fn forecast_ability(state: &State, action: &Action, in_play_idx: usize) -> Outcomes {
+    let pokemon = state.in_play_pokemon[action.actor][in_play_idx]
+        .as_ref()
+        .expect("Pokemon should be there if using ability");
+
+    let mechanic = pokemon
+        .ability()
+        .and_then(|a| ability_mechanic_from_effect(&a.effect))
+        .expect("Pokemon should have ability implemented");
+
+    forecast_ability_by_mechanic(mechanic, state, action, in_play_idx)
+}
+
+fn forecast_ability_by_mechanic(
+    mechanic: &AbilityMechanic,
+    state: &State,
+    action: &Action,
+    in_play_idx: usize,
+) -> Outcomes {
+    match mechanic {
+        AbilityMechanic::VictreebelFragranceTrap => Outcomes::single_fn(victreebel_ability),
+        AbilityMechanic::HealAllYourPokemon {
+            amount,
+            energy_type,
+        } => heal_all_your_pokemon(*amount, *energy_type),
+        AbilityMechanic::HealOneYourPokemon { amount } => heal_one_your_pokemon(*amount),
+        AbilityMechanic::HealOneYourPokemonIfHasTool { amount } => heal_one_your_pokemon(*amount),
+        AbilityMechanic::HealOneYourPokemonExAndDiscardRandomEnergy { amount } => {
+            heal_one_your_pokemon_ex_and_discard_random_energy(*amount)
+        }
+        AbilityMechanic::DamageOneOpponentPokemon { amount } => damage_one_opponent(*amount),
+        AbilityMechanic::IncreaseDamageIfArceusInPlay { .. } => {
+            panic!("IncreaseDamageIfArceusInPlay is a passive ability")
+        }
+        AbilityMechanic::DamageOpponentActiveIfArceusInPlay { amount } => {
+            damage_opponent_active_if_arceus_in_play(*amount)
+        }
+        AbilityMechanic::SwitchDamagedOpponentBenchToActive => {
+            Outcomes::single_fn(umbreon_dark_chase)
+        }
+        AbilityMechanic::SwitchThisBenchWithActive => Outcomes::single(rising_road(in_play_idx)),
+        AbilityMechanic::SwitchActiveTypedWithBench { .. } => {
+            switch_active_typed_with_bench_outcome()
+        }
+        AbilityMechanic::SwitchActiveUltraBeastWithBench => {
+            Outcomes::single_fn(celesteela_ultra_thrusters)
+        }
+        AbilityMechanic::MoveTypedEnergyFromBenchToActive { .. } => {
+            Outcomes::single_fn(vaporeon_wash_out)
+        }
+        AbilityMechanic::MoveAllTypedEnergyFromBenchToActive { energy_type } => {
+            let energy_type = *energy_type;
+            Outcomes::single_fn(move |_rng, state, action| {
+                move_all_typed_energy_from_bench_to_active(state, action, energy_type);
+            })
+        }
+        AbilityMechanic::AttachEnergyFromZoneToActiveTypedPokemon { energy_type } => {
+            attach_energy_from_zone_to_active_typed_outcome(*energy_type)
+        }
+        AbilityMechanic::AttachEnergyFromZoneToYourTypedPokemon { energy_type } => {
+            attach_energy_from_zone_to_your_typed_outcome(*energy_type)
+        }
+        AbilityMechanic::AttachEnergyFromZoneToSelf {
+            energy_type,
+            amount,
+        } => Outcomes::single(attach_energy_from_zone_to_self(
+            in_play_idx,
+            *energy_type,
+            *amount,
+        )),
+        AbilityMechanic::AttachEnergyFromZoneToSelfAndEndTurn { energy_type } => Outcomes::single(
+            attach_energy_from_zone_to_self_and_end_turn(in_play_idx, *energy_type),
+        ),
+        AbilityMechanic::AttachEnergyFromZoneToSelfAndDamage {
+            energy_type,
+            amount,
+            self_damage,
+        } => Outcomes::single(attach_energy_from_zone_to_self_and_damage(
+            in_play_idx,
+            *energy_type,
+            *amount,
+            *self_damage,
+        )),
+        AbilityMechanic::DamageOpponentActiveOnZoneAttachToSelf { .. } => {
+            panic!("DamageOpponentActiveOnZoneAttachToSelf is a passive ability")
+        }
+        AbilityMechanic::EvolveFromDeckOnZoneEnergyAttachToSelf => {
+            panic!("EvolveFromDeckOnZoneEnergyAttachToSelf is a passive ability")
+        }
+        AbilityMechanic::AttachEnergyFromDiscardToSelfAndDamage {
+            energy_type,
+            self_damage,
+        } => Outcomes::single_fn({
+            let energy_type = *energy_type;
+            let self_damage = *self_damage;
+            move |_rng, state, action| {
+                attach_energy_from_discard_to_self_and_damage(
+                    state,
+                    action,
+                    energy_type,
+                    self_damage,
+                )
+            }
+        }),
+        AbilityMechanic::AttachEnergyFromDiscardToActiveFromBench => {
+            Outcomes::single_fn(dragonair_dragons_blessing)
+        }
+        AbilityMechanic::ReduceDamageFromAttacks { .. } => {
+            panic!("ReduceDamageFromAttacks is a passive ability")
+        }
+        AbilityMechanic::ReduceDamageFromAttacksIfArceusInPlay { .. } => {
+            panic!("ReduceDamageFromAttacksIfArceusInPlay is a passive ability")
+        }
+        AbilityMechanic::ReduceAttackCostIfArceusInPlay { .. } => {
+            panic!("ReduceAttackCostIfArceusInPlay is a passive ability")
+        }
+        AbilityMechanic::ReduceDamageFromAttacksByAttackerType { .. } => {
+            panic!("ReduceDamageFromAttacksByAttackerType is a passive ability")
+        }
+        AbilityMechanic::ReduceOpponentActiveDamage { .. } => {
+            panic!("ReduceOpponentActiveDamage is a passive ability")
+        }
+        AbilityMechanic::ReduceDamageFromAttacksIfFullHp { .. }
+        | AbilityMechanic::BuffIfAnotherSameNameInPlay { .. }
+        | AbilityMechanic::ReduceDamageToAllYourPokemonWithOtherUnown { .. }
+        | AbilityMechanic::IncreaseDamageOfYourPokemonWithOtherUnown { .. }
+        | AbilityMechanic::IncreaseDamageForEvolvesFromWhileBenched { .. } => {
+            panic!("Board-dependent damage modifier mechanics are passive abilities")
+        }
+        AbilityMechanic::IncreaseDamageWhenRemainingHpAtMost { .. } => {
+            panic!("IncreaseDamageWhenRemainingHpAtMost is a passive ability")
+        }
+        AbilityMechanic::IncreaseDamageForTypeInPlay { .. }
+        | AbilityMechanic::IncreaseDamageForTwoTypesInPlay { .. } => {
+            panic!("Type damage bonus mechanics are passive abilities")
+        }
+        AbilityMechanic::StartTurnRandomPokemonToHand { .. } => {
+            panic!("StartTurnRandomPokemonToHand is a passive ability")
+        }
+        AbilityMechanic::SearchRandomPokemonFromDeck => {
+            pokemon_search_outcomes(action.actor, state, false)
+        }
+        AbilityMechanic::MoveDamageFromOneYourPokemonToThisPokemon => {
+            Outcomes::single(dusknoir_shadow_void(in_play_idx))
+        }
+        AbilityMechanic::DiscardOpponentActiveToolsAndDiscardSelf => dismantling_keys(in_play_idx),
+        AbilityMechanic::PreventFirstAttack => {
+            panic!("PreventFirstAttack is a passive ability")
+        }
+        AbilityMechanic::ElectromagneticWall => {
+            panic!("ElectromagneticWall is a passive ability")
+        }
+        AbilityMechanic::InfiltratingInspection => {
+            panic!("InfiltratingInspection is triggered when played to bench")
+        }
+        AbilityMechanic::DiscardTopCardOpponentDeck => discard_top_card_opponent_deck(),
+        AbilityMechanic::CoinFlipToPreventDamage => {
+            panic!("CoinFlipToPreventDamage is a passive ability")
+        }
+        AbilityMechanic::CoinFlipToReduceDamage { .. } => {
+            panic!("CoinFlipToReduceDamage is a passive ability")
+        }
+        AbilityMechanic::CoinFlipToSurviveKnockOut => {
+            panic!("CoinFlipToSurviveKnockOut is a passive ability")
+        }
+        AbilityMechanic::MoveAllTypedEnergyToBenchOnKnockout { .. } => {
+            panic!("MoveAllTypedEnergyToBenchOnKnockout is a passive ability")
+        }
+        AbilityMechanic::CheckupDamageToOpponentActive { .. } => {
+            panic!("CheckupDamageToOpponentActive is a passive ability")
+        }
+        AbilityMechanic::CheckupDamageToAllOpponentPokemon { .. } => {
+            panic!("CheckupDamageToAllOpponentPokemon is a passive ability")
+        }
+        AbilityMechanic::BadDreamsEndOfTurn { .. } => {
+            panic!("BadDreamsEndOfTurn is a passive ability")
+        }
+        AbilityMechanic::EndTurnDrawCardIfActive { .. } => {
+            panic!("EndTurnDrawCardIfActive is triggered at end of turn")
+        }
+        AbilityMechanic::EndTurnHealSelfIfActive { .. } => {
+            panic!("EndTurnHealSelfIfActive is triggered at end of turn")
+        }
+        AbilityMechanic::DiscardEnergyToIncreaseTypeDamage {
+            discard_energy,
+            attack_type,
+            amount,
+        } => discard_energy_to_increase_type_damage(*discard_energy, *attack_type, *amount),
+        AbilityMechanic::PoisonOpponentActive => poison_opponent_active(),
+        AbilityMechanic::ConfuseOpponentActive => confuse_opponent_active(),
+        AbilityMechanic::BurnOpponentActive => burn_opponent_active(),
+        AbilityMechanic::DrawCardIfActive { amount } => draw_card_if_active(*amount),
+        AbilityMechanic::RandomStatusConditionToOpponentActive { options } => {
+            random_status_condition_to_opponent_active(state, action.actor, options)
+        }
+        AbilityMechanic::RemoveRandomSpecialConditionFromActive => {
+            remove_random_special_condition_from_active()
+        }
+        AbilityMechanic::HealActiveYourPokemon { amount } => heal_active_your_pokemon(*amount),
+        AbilityMechanic::SwitchOutOpponentActiveToBench { .. } => {
+            switch_out_opponent_active_to_bench()
+        }
+        AbilityMechanic::LookAtCardsNoop => Outcomes::single_fn(|_, _, _| {}),
+        AbilityMechanic::UseRandomOpponentSupporterEffect => {
+            use_random_opponent_supporter_effect(action.actor, state)
+        }
+        AbilityMechanic::CoinFlipPoisonOpponentActive => coin_flip_poison_opponent_active(),
+        AbilityMechanic::CoinFlipSwitchOpponentBenchToActive => {
+            coin_flip_switch_opponent_bench_to_active()
+        }
+        AbilityMechanic::MoveAllTypedEnergyFromAllYourPokemonToSelf { energy_type } => {
+            move_all_typed_energy_to_self(in_play_idx, *energy_type)
+        }
+        AbilityMechanic::SearchRandomToolFromDeck => tool_search_outcomes(action.actor, state),
+        AbilityMechanic::CoinFlipSleepOpponentActive => coin_flip_sleep_opponent_active(),
+        AbilityMechanic::DiscardFromHandToDrawCard => discard_from_hand_to_draw_card(),
+        AbilityMechanic::ImmuneToStatusConditions
+        | AbilityMechanic::ImmuneToStatusCondition { .. } => {
+            panic!("ImmuneToStatusConditions is a passive ability")
+        }
+        AbilityMechanic::ExtraToolSlots { .. } => panic!("ExtraToolSlots is a passive ability"),
+        AbilityMechanic::PreventOpponentAttackEffectsOnSelf => {
+            panic!("PreventOpponentAttackEffectsOnSelf is a passive ability")
+        }
+        AbilityMechanic::BasicPokemonHaveNoAbilities => {
+            panic!("BasicPokemonHaveNoAbilities is a passive ability")
+        }
+        AbilityMechanic::ReduceTypedAttackCostIfHasTool { .. }
+        | AbilityMechanic::IncreaseHpOfYourTypedPokemon { .. }
+        | AbilityMechanic::NoHealingForAnyone
+        | AbilityMechanic::CannotAttackUnlessNamedOnBench { .. } => {
+            panic!("Board-wide static mechanics are passive abilities")
+        }
+        AbilityMechanic::SoothingWind { .. } => {
+            panic!("SoothingWind is a passive ability")
+        }
+        AbilityMechanic::NoOpponentSupportInActive => {
+            panic!("NoOpponentSupportInActive is a passive ability")
+        }
+        AbilityMechanic::NoOpponentStadiumInActive => {
+            panic!("NoOpponentStadiumInActive is a passive ability")
+        }
+        AbilityMechanic::DoubleGrassEnergy => panic!("DoubleGrassEnergy is a passive ability"),
+        AbilityMechanic::GrantedTypes { .. } => panic!("GrantedTypes is a passive ability"),
+        AbilityMechanic::PreventOpponentActiveEvolution => {
+            panic!("PreventOpponentActiveEvolution is a passive ability")
+        }
+        AbilityMechanic::ReduceRetreatCostOfYourActiveBasicFromBench { .. } => {
+            panic!("ReduceRetreatCostOfYourActiveBasicFromBench is a passive ability")
+        }
+        AbilityMechanic::ReduceRetreatCostOfYourActiveTypedFromBench { .. } => {
+            panic!("ReduceRetreatCostOfYourActiveTypedFromBench is a passive ability")
+        }
+        AbilityMechanic::NoRetreatIfHasEnergy => {
+            panic!("NoRetreatIfHasEnergy is a passive ability")
+        }
+        AbilityMechanic::NoRetreatCostIfNamedPokemonInPlay { .. }
+        | AbilityMechanic::NoRetreatCostForYourActive { .. }
+        | AbilityMechanic::NoRetreatCostDuringFirstTurn
+        | AbilityMechanic::NoRetreatCostIfStadiumInPlay
+        | AbilityMechanic::ReduceRetreatCostIfAnotherSameNameInPlay { .. } => {
+            panic!("Retreat-cost mechanics are passive abilities")
+        }
+        AbilityMechanic::PreventAllDamageFromEx => {
+            panic!("PreventAllDamageFromEx is a passive ability")
+        }
+        AbilityMechanic::SleepOnZoneAttachToSelfWhileActive => {
+            panic!("SleepOnZoneAttachToSelfWhileActive is a passive ability")
+        }
+        AbilityMechanic::IncreasePoisonDamage { .. } => {
+            panic!("IncreasePoisonDamage is a passive ability")
+        }
+        AbilityMechanic::DrawCardsOnEvolve { .. } => {
+            panic!("DrawCardsOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::HealTypedPokemonOnEvolve { .. } => {
+            panic!("HealTypedPokemonOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::AttachEnergyFromZoneToActiveTypedOnEvolve { .. } => {
+            panic!("AttachEnergyFromZoneToActiveTypedOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::DamageOpponentActiveOnEvolve { .. } => {
+            panic!("DamageOpponentActiveOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::CoinFlipParalyzeOpponentActiveOnEvolve => {
+            coin_flip_paralyze_opponent_active()
+        }
+        AbilityMechanic::DiscardRandomEnergyFromOpponentActiveOnEvolve => {
+            panic!("DiscardRandomEnergyFromOpponentActiveOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::PoisonAndBurnOpponentActiveOnEvolve => {
+            panic!("PoisonAndBurnOpponentActiveOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::MoveRandomEnergyFromOpponentActiveToSelfOnEvolve => {
+            panic!("MoveRandomEnergyFromOpponentActiveToSelfOnEvolve is triggered on evolve")
+        }
+        AbilityMechanic::PutRandomToolsFromDiscardToHandOnEvolve { amount } => {
+            put_random_tools_from_discard_to_hand(action.actor, state, *amount)
+        }
+        AbilityMechanic::TakeItemsFromTopOfDeckOnEvolve { amount } => {
+            take_items_from_top_of_deck(*amount)
+        }
+        AbilityMechanic::PutSupporterFromDiscardToHandOnEvolve => {
+            put_supporter_from_discard_to_hand()
+        }
+        AbilityMechanic::OpponentShuffleHandAndDrawPerRemainingPointOnEvolve => {
+            opponent_shuffle_hand_and_draw_per_remaining_point()
+        }
+        AbilityMechanic::PreventAllDamageAndEffectsOnEvolve => {
+            prevent_all_damage_and_effects_on_self(in_play_idx)
+        }
+        AbilityMechanic::HealActiveTypedOnBench { amount, .. } => heal_active_your_pokemon(*amount),
+        AbilityMechanic::CanEvolveIntoEeveeEvolution => {
+            panic!("CanEvolveIntoEeveeEvolution is a passive ability")
+        }
+        AbilityMechanic::CanEvolveOnFirstTurnIfActive => {
+            panic!("CanEvolveOnFirstTurnIfActive is a passive ability")
+        }
+        AbilityMechanic::CounterattackDamage { .. } => {
+            panic!("CounterattackDamage is a passive ability")
+        }
+        AbilityMechanic::DamageAttackerOnKnockout { .. }
+        | AbilityMechanic::DamageEachOpponentPokemonOnKnockout { .. }
+        | AbilityMechanic::CoinFlipKnockOutAttackerOnKnockout
+        | AbilityMechanic::CoinFlipDenyPointsOnKnockout => {
+            panic!("Knockout retaliation mechanics are passive abilities")
+        }
+        AbilityMechanic::PoisonAttackerOnDamaged => {
+            panic!("PoisonAttackerOnDamaged is a passive ability")
+        }
+        AbilityMechanic::AttachEnergyFromZoneToBenchedOnDamaged { .. } => {
+            panic!("AttachEnergyFromZoneToBenchedOnDamaged is a passive ability")
+        }
+        AbilityMechanic::IncreaseAttackCostForOpponentActive { .. } => {
+            panic!("IncreaseAttackCostForOpponentActive is a passive ability")
+        }
+        AbilityMechanic::IncreaseRetreatCostForOpponentActive { .. } => {
+            panic!("IncreaseRetreatCostForOpponentActive is a passive ability")
+        }
+        AbilityMechanic::PreventDamageWhileBenched => {
+            panic!("PreventDamageWhileBenched is a passive ability")
+        }
+        AbilityMechanic::IncreaseHpPerAttachedEnergy { .. } => {
+            panic!("IncreaseHpPerAttachedEnergy is a passive ability")
+        }
+        AbilityMechanic::HealSelfOnZoneAttach { .. } => {
+            panic!("HealSelfOnZoneAttach is a passive ability")
+        }
+        AbilityMechanic::EndFirstTurnAttachEnergyToSelf { .. } => {
+            // This mechanic is resolved by the end-of-turn hook and is never a player choice.
+            // A queued choice can become stale when a Pokémon leaves play before the stack is
+            // reduced; consume it safely instead of taking down the simulator.
+            Outcomes::single_fn(|_, _, _| {})
+        }
+        AbilityMechanic::ProtectSelfNextTurnAfterAttackKnockout => {
+            panic!("ProtectSelfNextTurnAfterAttackKnockout is a passive ability")
+        }
+        AbilityMechanic::MoveFixedDamageFromActiveToThisBenched { amount } => {
+            move_fixed_damage_from_active_to_this_benched(in_play_idx, *amount)
+        }
+        AbilityMechanic::LegendaryDrive => legendary_drive(in_play_idx),
+        AbilityMechanic::AncientRoar => switch_out_opponent_active_to_bench(),
+        AbilityMechanic::FutureSystem => panic!("FutureSystem is a passive ability"),
+        AbilityMechanic::TimeRecall => panic!("TimeRecall is a passive ability"),
+        AbilityMechanic::QuickGrowth => {
+            panic!("QuickGrowth is triggered at the end of the opponent's turn")
+        }
+        AbilityMechanic::HealAllYourPokemonDuringCheckup { .. } => {
+            panic!("HealAllYourPokemonDuringCheckup is a passive ability triggered during Pokemon Checkup")
+        }
+        AbilityMechanic::VictoryStarReflip | AbilityMechanic::LuxuryCoinReflip => {
+            coin_reflip_ability()
+        }
+    }
+}
+
+/// Victini's Victory Star / Gholdengo's Luxury Coin, chosen from the reflip prompt: discard the
+/// parked coin result and resolve the same action again with fresh, independent coins.
+fn coin_reflip_ability() -> Outcomes {
+    Outcomes::single_fn(move |rng, state, _action| {
+        if let Some(pending) = state.take_pending_coin_reflip() {
+            crate::actions::resolve_pending_coin_reflip(rng, state, pending, true);
+        }
+    })
+}
+
+fn discard_energy_to_increase_type_damage(
+    discard_energy: EnergyType,
+    attack_type: EnergyType,
+    amount: u32,
+) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let SimpleAction::UseAbility { in_play_idx } = action.action else {
+            panic!("Ability should be triggered by UseAbility action");
+        };
+        state.discard_energy_from_in_play(action.actor, in_play_idx, &[discard_energy]);
+        state.add_turn_effect(
+            TurnEffect::IncreasedDamageForType {
+                amount,
+                energy_type: attack_type,
+            },
+            0,
+        );
+    })
+}
+
+fn heal_all_your_pokemon(amount: u32, energy_type: Option<EnergyType>) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        for pokemon in state.in_play_pokemon[action.actor].iter_mut().flatten() {
+            if energy_type.is_none_or(|t| pokemon.is_type(t)) {
+                pokemon.heal(amount);
+            }
+        }
+    })
+}
+
+fn heal_one_your_pokemon(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let choices = state
+            .enumerate_in_play_pokemon(action.actor)
+            .filter(|(_, pokemon)| pokemon.is_damaged())
+            .map(|(in_play_idx, _)| SimpleAction::Heal {
+                in_play_idx,
+                amount,
+                cure_status: false,
+            })
+            .collect::<Vec<_>>();
+        if !choices.is_empty() {
+            state.move_generation_stack.push((action.actor, choices));
+        }
+    })
+}
+
+fn heal_one_your_pokemon_ex_and_discard_random_energy(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let choices = state
+            .enumerate_in_play_pokemon(action.actor)
+            .filter(|(_, pokemon)| pokemon.card.is_ex())
+            .filter(|(_, pokemon)| pokemon.is_damaged())
+            .filter(|(_, pokemon)| !pokemon.attached_energy.is_empty())
+            .map(
+                |(in_play_idx, pokemon)| SimpleAction::HealAndDiscardEnergy {
+                    in_play_idx,
+                    heal_amount: amount,
+                    // Simplification: use last attached energy instead of true random to avoid
+                    // adding extra hidden-random branches to the move tree.
+                    discard_energies: vec![*pokemon
+                        .attached_energy
+                        .last()
+                        .expect("attached energy is not empty by filter")],
+                },
+            )
+            .collect::<Vec<_>>();
+        state.move_generation_stack.push((action.actor, choices));
+    })
+}
+
+fn damage_one_opponent(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let SimpleAction::UseAbility {
+            in_play_idx: attacking_idx,
+        } = action.action
+        else {
+            panic!("Ability should be triggered by UseAbility action");
+        };
+
+        let opponent = (action.actor + 1) % 2;
+        let possible_moves = state
+            .enumerate_in_play_pokemon(opponent)
+            .map(|(in_play_idx, _)| SimpleAction::ApplyDamage {
+                attacking_ref: (action.actor, attacking_idx),
+                targets: vec![(amount, opponent, in_play_idx)],
+                is_from_active_attack: false,
+            })
+            .collect::<Vec<_>>();
+        state
+            .move_generation_stack
+            .push((action.actor, possible_moves));
+    })
+}
+
+fn switch_active_typed_with_bench_outcome() -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let acting_player = action.actor;
+        let choices = state
+            .enumerate_bench_pokemon(acting_player)
+            .map(|(in_play_idx, _)| SimpleAction::Activate {
+                player: acting_player,
+                in_play_idx,
+            })
+            .collect::<Vec<_>>();
+        state.move_generation_stack.push((acting_player, choices));
+    })
+}
+
+fn attach_energy_from_zone_to_your_typed_outcome(energy_type: EnergyType) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let choices = state
+            .enumerate_in_play_pokemon(action.actor)
+            .filter(|(_, pokemon)| pokemon.is_type(energy_type))
+            .map(|(in_play_idx, _)| SimpleAction::Attach {
+                attachments: vec![(1, energy_type, in_play_idx)],
+                is_turn_energy: false,
+            })
+            .collect::<Vec<_>>();
+        if !choices.is_empty() {
+            state.move_generation_stack.push((action.actor, choices));
+        }
+    })
+}
+
+fn attach_energy_from_zone_to_active_typed_outcome(energy_type: EnergyType) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        state.attach_energy_from_zone(action.actor, 0, energy_type, 1, false);
+    })
+}
+
+fn attach_energy_from_zone_to_self(
+    in_play_idx: usize,
+    energy_type: EnergyType,
+    amount: u32,
+) -> Mutation {
+    Box::new(move |_, state, action| {
+        state.attach_energy_from_zone(action.actor, in_play_idx, energy_type, amount, false);
+    })
+}
+
+fn attach_energy_from_zone_to_self_and_end_turn(
+    in_play_idx: usize,
+    energy_type: EnergyType,
+) -> Mutation {
+    Box::new(move |_, state, action| {
+        let attached =
+            state.attach_energy_from_zone(action.actor, in_play_idx, energy_type, 1, false);
+        if let Some(pokemon) = &state.in_play_pokemon[action.actor][in_play_idx] {
+            if attached && !pokemon.is_knocked_out() {
+                state
+                    .move_generation_stack
+                    .push((action.actor, vec![SimpleAction::EndTurn]));
+            }
+        }
+    })
+}
+
+fn attach_energy_from_zone_to_self_and_damage(
+    in_play_idx: usize,
+    energy_type: EnergyType,
+    amount: u32,
+    self_damage: u32,
+) -> Mutation {
+    Box::new(move |_, state, action| {
+        let attached =
+            state.attach_energy_from_zone(action.actor, in_play_idx, energy_type, amount, false);
+        if let Some(pokemon) = &state.in_play_pokemon[action.actor][in_play_idx] {
+            if attached && !pokemon.is_knocked_out() {
+                handle_damage(
+                    state,
+                    (action.actor, in_play_idx),
+                    &[(self_damage, action.actor, in_play_idx)],
+                    false,
+                    None,
+                );
+            }
+        }
+    })
+}
+
+fn attach_energy_from_discard_to_self_and_damage(
+    state: &mut State,
+    action: &Action,
+    energy_type: EnergyType,
+    self_damage: u32,
+) {
+    let SimpleAction::UseAbility { in_play_idx } = action.action else {
+        panic!("Ability should be triggered by UseAbility action");
+    };
+    state.attach_energy_from_discard(action.actor, in_play_idx, &[energy_type]);
+    handle_damage(
+        state,
+        (action.actor, in_play_idx),
+        &[(self_damage, action.actor, in_play_idx)],
+        false,
+        None,
+    );
+}
+
+fn damage_opponent_active_if_arceus_in_play(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let SimpleAction::UseAbility { in_play_idx } = action.action else {
+            panic!("Ability should be triggered by UseAbility action");
+        };
+        let opponent = (action.actor + 1) % 2;
+        handle_damage(
+            state,
+            (action.actor, in_play_idx),
+            &[(amount, opponent, 0)],
+            false,
+            None,
+        );
+    })
+}
+
+fn discard_top_card_opponent_deck() -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        if let Some(card) = state.decks[opponent].draw() {
+            state.discard_piles[opponent].push(card);
+        }
+    })
+}
+
+fn poison_opponent_active() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        state.apply_status_condition(opponent, 0, StatusCondition::Poisoned);
+    })
+}
+
+/// Team Rocket's Slowking ex's Evil Inspiration: draw `amount` cards.
+fn draw_card_if_active(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        for _ in 0..amount {
+            state.maybe_draw_card(action.actor);
+        }
+    })
+}
+
+fn confuse_opponent_active() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        state.apply_status_condition(opponent, 0, StatusCondition::Confused);
+    })
+}
+
+fn burn_opponent_active() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        state.apply_status_condition(opponent, 0, StatusCondition::Burned);
+    })
+}
+
+/// Dustox's Variety Powder: one Special Condition is drawn uniformly at random from the options
+/// that aren't already affecting the opponent's Active Pokémon. Each candidate gets its own branch
+/// so the random draw is visible in the forecast.
+fn random_status_condition_to_opponent_active(
+    state: &State,
+    actor: usize,
+    options: &[StatusCondition],
+) -> Outcomes {
+    let opponent = (actor + 1) % 2;
+    let candidates = selectable_status_conditions(state, opponent, options);
+    if candidates.is_empty() {
+        return Outcomes::single_fn(|_, _, _| {});
+    }
+
+    let probability = 1.0 / candidates.len() as f64;
+    let probabilities = vec![probability; candidates.len()];
+    let mutations = candidates
+        .into_iter()
+        .map(|condition| -> Mutation {
+            Box::new(move |_, state, action| {
+                let opponent = (action.actor + 1) % 2;
+                state.apply_status_condition(opponent, 0, condition);
+            })
+        })
+        .collect();
+    Outcomes::from_parts(probabilities, mutations)
+}
+
+/// The subset of `options` that the given player's Active Pokémon isn't already affected by.
+pub(crate) fn selectable_status_conditions(
+    state: &State,
+    player: usize,
+    options: &[StatusCondition],
+) -> Vec<StatusCondition> {
+    let Some(active) = state.maybe_get_active(player) else {
+        return vec![];
+    };
+    let applied = active_special_conditions(active);
+    options
+        .iter()
+        .copied()
+        .filter(|condition| !applied.contains(condition))
+        .collect()
+}
+
+fn remove_random_special_condition_from_active() -> Outcomes {
+    Outcomes::single_fn(|rng, state, action| {
+        let active = state.get_active_mut(action.actor);
+        let conditions = active_special_conditions(active);
+        if conditions.is_empty() {
+            return;
+        }
+        let condition = conditions[rng.gen_range(0..conditions.len())];
+        active.clear_status_condition(condition);
+    })
+}
+
+fn active_special_conditions(active: &PlayedCard) -> Vec<StatusCondition> {
+    [
+        active.is_poisoned().then_some(StatusCondition::Poisoned),
+        active.is_paralyzed().then_some(StatusCondition::Paralyzed),
+        active.is_asleep().then_some(StatusCondition::Asleep),
+        active.is_burned().then_some(StatusCondition::Burned),
+        active.is_confused().then_some(StatusCondition::Confused),
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+fn coin_flip_sleep_opponent_active() -> Outcomes {
+    Outcomes::binary_coin(
+        Box::new(|_, state, action| {
+            let opponent = (action.actor + 1) % 2;
+            state.apply_status_condition(opponent, 0, StatusCondition::Asleep);
+        }),
+        Box::new(|_, _, _| {}),
+    )
+}
+
+/// Galarian Perrserker's Dig Up: put `amount` random Pokémon Tool cards from the discard pile
+/// into hand. Every unordered combination of that size is its own equally likely branch, so the
+/// randomness is visible in the forecast (cf. `card_search_outcomes_with_filter_multiple`).
+fn put_random_tools_from_discard_to_hand(actor: usize, state: &State, amount: usize) -> Outcomes {
+    let tools: Vec<Card> = state.discard_piles[actor]
+        .iter()
+        .filter(|card| {
+            matches!(card, Card::Trainer(trainer) if trainer.trainer_card_type == TrainerType::Tool)
+        })
+        .cloned()
+        .collect();
+    if tools.is_empty() {
+        return Outcomes::single_fn(|_, _, _| {});
+    }
+
+    let combinations = generate_combinations(&tools, amount.min(tools.len()));
+    let probabilities = vec![1.0 / combinations.len() as f64; combinations.len()];
+    let mutations: Mutations = combinations
+        .into_iter()
+        .map(|combo| -> Mutation {
+            Box::new(move |_, state, action| {
+                for card in &combo {
+                    if let Some(idx) = state.discard_piles[action.actor]
+                        .iter()
+                        .position(|c| c == card)
+                    {
+                        state.discard_piles[action.actor].remove(idx);
+                        state.hands[action.actor].push(card.clone());
+                    }
+                }
+            })
+        })
+        .collect();
+    Outcomes::from_parts(probabilities, mutations)
+}
+
+/// Raticate's Treasure Collecting: look at the top `amount` cards of the deck, keep every Item
+/// card and shuffle the rest back in.
+fn take_items_from_top_of_deck(amount: usize) -> Outcomes {
+    Outcomes::single_fn(move |rng, state, action| {
+        let deck = &mut state.decks[action.actor];
+        let take = amount.min(deck.cards.len());
+        let looked_at: Vec<Card> = deck.cards.drain(..take).collect();
+        let mut put_back = Vec::new();
+        for card in looked_at {
+            match &card {
+                Card::Trainer(trainer) if trainer.trainer_card_type == TrainerType::Item => {
+                    state.hands[action.actor].push(card)
+                }
+                _ => put_back.push(card),
+            }
+        }
+        state.decks[action.actor].cards.extend(put_back);
+        state.decks[action.actor].shuffle(false, rng);
+    })
+}
+
+/// Delcatty's Search for Friends: the player picks which Supporter comes back from the discard
+/// pile, so each distinct candidate becomes a choice on the move-generation stack.
+fn put_supporter_from_discard_to_hand() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        let mut seen = std::collections::HashSet::new();
+        let choices: Vec<SimpleAction> = state.discard_piles[action.actor]
+            .iter()
+            .filter(|card| {
+                matches!(card, Card::Trainer(trainer) if trainer.trainer_card_type == TrainerType::Supporter)
+            })
+            .filter(|card| seen.insert((*card).clone()))
+            .map(|card| SimpleAction::PutDiscardCardInHand { card: card.clone() })
+            .collect();
+        if !choices.is_empty() {
+            state.move_generation_stack.push((action.actor, choices));
+        }
+    })
+}
+
+/// Polteageist's Refreshing Tea: the opponent shuffles their hand into their deck, then draws one
+/// card for each point they still need to win (3 points wins a game of Pocket).
+fn opponent_shuffle_hand_and_draw_per_remaining_point() -> Outcomes {
+    Outcomes::single_fn(|rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        let hand: Vec<Card> = std::mem::take(&mut state.hands[opponent]);
+        state.decks[opponent].cards.extend(hand);
+        state.decks[opponent].shuffle(false, rng);
+        let remaining_points = POINTS_TO_WIN.saturating_sub(state.points[opponent]);
+        for _ in 0..remaining_points {
+            state.maybe_draw_card(opponent);
+        }
+    })
+}
+
+/// Samurott's Stance: prevent all damage from — and effects of — attacks done to this Pokémon
+/// until the end of the opponent's next turn.
+fn prevent_all_damage_and_effects_on_self(in_play_idx: usize) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        if let Some(pokemon) = state.in_play_pokemon[action.actor][in_play_idx].as_mut() {
+            pokemon.add_effect(CardEffect::PreventAllDamageAndEffects, 1);
+        }
+    })
+}
+
+/// Smeargle's Portrait: pick a Supporter uniformly at random from the opponent's hand and resolve
+/// its effect as this Ability's effect. Each candidate's own outcome distribution is folded into
+/// one flat distribution, scaled by the 1/n chance of drawing that card, so the forecast shows the
+/// full randomness. The opponent keeps the card.
+fn use_random_opponent_supporter_effect(actor: usize, state: &State) -> Outcomes {
+    let candidates = copyable_opponent_supporters(actor, state);
+    if candidates.is_empty() {
+        return Outcomes::single_fn(|_, _, _| {});
+    }
+
+    let pick_probability = 1.0 / candidates.len() as f64;
+    let mut probabilities: Probabilities = vec![];
+    let mut mutations: Mutations = vec![];
+    for supporter in candidates {
+        let (branch_probabilities, branch_mutations) =
+            forecast_trainer_action(actor, state, &supporter).into_branches();
+        for (probability, mutation) in branch_probabilities.into_iter().zip(branch_mutations) {
+            probabilities.push(probability * pick_probability);
+            mutations.push(mutation);
+        }
+    }
+    Outcomes::from_parts(probabilities, mutations)
+}
+
+/// Supporters in `actor`'s opponent's hand whose effect this engine can actually resolve right
+/// now: implemented (`trainer_move_generation_implementation` returns `Some`) and currently
+/// playable (it returns a non-empty action list). Duplicated copies are kept so that holding two
+/// of the same Supporter doubles its chance of being picked.
+fn copyable_opponent_supporters(actor: usize, state: &State) -> Vec<TrainerCard> {
+    let opponent = (actor + 1) % 2;
+    state.hands[opponent]
+        .iter()
+        .filter_map(|card| match card {
+            Card::Trainer(trainer_card)
+                if trainer_card.trainer_card_type == TrainerType::Supporter =>
+            {
+                Some(trainer_card.clone())
+            }
+            _ => None,
+        })
+        .filter(|trainer_card| {
+            trainer_move_generation_implementation(state, trainer_card)
+                .is_some_and(|actions| !actions.is_empty())
+        })
+        .collect()
+}
+
+fn coin_flip_poison_opponent_active() -> Outcomes {
+    Outcomes::binary_coin(
+        Box::new(|_, state, action| {
+            let opponent = (action.actor + 1) % 2;
+            state.apply_status_condition(opponent, 0, StatusCondition::Poisoned);
+        }),
+        Box::new(|_, _, _| {}),
+    )
+}
+
+/// Rillaboom's Captivating Rhythm: on heads the acting player chooses which of the opponent's
+/// Benched Pokémon is dragged into the Active Spot.
+fn coin_flip_switch_opponent_bench_to_active() -> Outcomes {
+    Outcomes::binary_coin(
+        Box::new(|_, state, action| {
+            let opponent = (action.actor + 1) % 2;
+            let choices = state
+                .enumerate_bench_pokemon(opponent)
+                .map(|(in_play_idx, _)| SimpleAction::Activate {
+                    player: opponent,
+                    in_play_idx,
+                })
+                .collect::<Vec<_>>();
+            if !choices.is_empty() {
+                state.move_generation_stack.push((action.actor, choices));
+            }
+        }),
+        Box::new(|_, _, _| {}),
+    )
+}
+
+/// Tyranitar's Energy Plunder: gather every `energy_type` Energy attached to the acting player's
+/// Pokémon onto the ability's holder.
+fn move_all_typed_energy_to_self(self_idx: usize, energy_type: EnergyType) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let mut gathered = 0usize;
+        for (idx, pokemon) in state.in_play_pokemon[action.actor].iter_mut().enumerate() {
+            if idx == self_idx {
+                continue;
+            }
+            let Some(pokemon) = pokemon else { continue };
+            let before = pokemon.attached_energy.len();
+            pokemon.attached_energy.retain(|&e| e != energy_type);
+            gathered += before - pokemon.attached_energy.len();
+        }
+        if let Some(pokemon) = state.in_play_pokemon[action.actor][self_idx].as_mut() {
+            pokemon
+                .attached_energy
+                .extend(std::iter::repeat_n(energy_type, gathered));
+        }
+    })
+}
+
+fn coin_flip_paralyze_opponent_active() -> Outcomes {
+    Outcomes::binary_coin(
+        Box::new(|_, state, action| {
+            let opponent = (action.actor + 1) % 2;
+            state.apply_status_condition(opponent, 0, StatusCondition::Paralyzed);
+        }),
+        Box::new(|_, _, _| {}),
+    )
+}
+
+fn heal_active_your_pokemon(amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let active = state.get_active_mut(action.actor);
+        active.heal(amount);
+    })
+}
+
+fn move_fixed_damage_from_active_to_this_benched(self_idx: usize, amount: u32) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        state.get_active_mut(action.actor).heal(amount);
+        let targets = vec![(amount, action.actor, self_idx)];
+        handle_damage(state, (action.actor, 0), &targets, false, None);
+    })
+}
+
+fn legendary_drive(bench_idx: usize) -> Outcomes {
+    Outcomes::single(Box::new(move |_, state, action| {
+        let player = action.actor;
+        debug!(
+            "Legendary Drive: switching bench index {bench_idx} to active and moving all energy"
+        );
+        apply_activate(player, state, bench_idx);
+        let mut gathered: Vec<EnergyType> = Vec::new();
+        for i in 1..state.in_play_pokemon[player].len() {
+            if let Some(pokemon) = state.in_play_pokemon[player][i].as_mut() {
+                gathered.append(&mut pokemon.attached_energy);
+            }
+        }
+        if let Some(active) = state.in_play_pokemon[player][0].as_mut() {
+            active.attached_energy.extend(gathered);
+        }
+    }))
+}
+
+fn switch_out_opponent_active_to_bench() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        let mut choices = Vec::new();
+        for (in_play_idx, _) in state.enumerate_bench_pokemon(opponent) {
+            choices.push(SimpleAction::Activate {
+                player: opponent,
+                in_play_idx,
+            });
+        }
+        if choices.is_empty() {
+            return;
+        }
+        state.move_generation_stack.push((opponent, choices));
+    })
+}
+
+fn rising_road(index: usize) -> Mutation {
+    Box::new(move |_, state, action| {
+        // Once during your turn, if this Pokémon is on your Bench, you may switch it with your Active Pokémon.
+        debug!("Solgaleo's ability: Switching with active Pokemon");
+        let choices = vec![SimpleAction::Activate {
+            player: action.actor,
+            in_play_idx: index,
+        }];
+        state.move_generation_stack.push((action.actor, choices));
+    })
+}
+
+fn victreebel_ability(_: &mut StdRng, state: &mut State, action: &Action) {
+    // Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot.
+    debug!("Victreebel's ability: Switching opponent's benched basic Pokemon to active");
+    let acting_player = action.actor;
+    let opponent_player = (acting_player + 1) % 2;
+    let possible_moves = state
+        .enumerate_bench_pokemon(opponent_player)
+        .filter(|(_, pokemon)| pokemon.card.is_basic())
+        .map(|(in_play_idx, _)| SimpleAction::Activate {
+            player: opponent_player,
+            in_play_idx,
+        })
+        .collect::<Vec<_>>();
+    if possible_moves.is_empty() {
+        return;
+    }
+    state
+        .move_generation_stack
+        .push((acting_player, possible_moves));
+}
+
+fn celesteela_ultra_thrusters(_: &mut StdRng, state: &mut State, action: &Action) {
+    // Once during your turn, you may switch your Active Ultra Beast with 1 of your Benched Ultra Beasts.
+    debug!("Celesteela's Ultra Thrusters: Switching to a benched Ultra Beast");
+    let acting_player = action.actor;
+    let choices = state
+        .enumerate_bench_pokemon(acting_player)
+        .filter(|(_, pokemon)| is_ultra_beast(&pokemon.get_name()))
+        .map(|(in_play_idx, _)| SimpleAction::Activate {
+            player: acting_player,
+            in_play_idx,
+        })
+        .collect::<Vec<_>>();
+    if choices.is_empty() {
+        return;
+    }
+    state.move_generation_stack.push((acting_player, choices));
+}
+
+fn dusknoir_shadow_void(dusknoir_idx: usize) -> Mutation {
+    Box::new(move |_, state, action| {
+        let choices: Vec<SimpleAction> = state
+            .enumerate_in_play_pokemon(action.actor)
+            .filter(|(i, p)| p.is_damaged() && *i != dusknoir_idx)
+            .map(|(i, _)| SimpleAction::MoveAllDamage {
+                from: i,
+                to: dusknoir_idx,
+            })
+            .collect();
+
+        if !choices.is_empty() {
+            state.move_generation_stack.push((action.actor, choices));
+        }
+    })
+}
+
+fn dismantling_keys(klefki_idx: usize) -> Outcomes {
+    Outcomes::single_fn(move |_rng, state, action| {
+        let opponent = (action.actor + 1) % 2;
+        if state
+            .maybe_get_active(opponent)
+            .is_none_or(|active| !active.has_tool_attached())
+        {
+            return;
+        }
+
+        state.discard_all_tools(opponent, 0);
+        handle_knockouts(state, (action.actor, klefki_idx), false);
+
+        if state.in_play_pokemon[action.actor][klefki_idx].is_some() {
+            state.discard_from_play(action.actor, klefki_idx);
+        }
+    })
+}
+
+fn umbreon_dark_chase(_: &mut StdRng, state: &mut State, action: &Action) {
+    // Once during your turn, if this Pokémon is in the Active Spot, you may switch in 1 of your opponent's Benched Pokémon that has damage on it to the Active Spot.
+    debug!("Umbreon ex's Dark Chase: Switching in opponent's damaged benched Pokemon");
+    let acting_player = action.actor;
+    let opponent_player = (acting_player + 1) % 2;
+    let possible_moves = state
+        .enumerate_bench_pokemon(opponent_player)
+        .filter(|(_, pokemon)| pokemon.is_damaged())
+        .map(|(in_play_idx, _)| SimpleAction::Activate {
+            player: opponent_player,
+            in_play_idx,
+        })
+        .collect::<Vec<_>>();
+    state
+        .move_generation_stack
+        .push((acting_player, possible_moves));
+}
+
+fn discard_from_hand_to_draw_card() -> Outcomes {
+    Outcomes::single_fn(|_rng, state, action| {
+        // Queue draw first (LIFO: will execute after the discard choice resolves)
+        state.queue_draw_action(action.actor, 1);
+        // Push discard choices (executed first since pushed last onto LIFO stack)
+        let hand_cards: Vec<Card> = state.hands[action.actor].to_vec();
+        let mut seen = std::collections::HashSet::new();
+        let choices: Vec<SimpleAction> = hand_cards
+            .into_iter()
+            .filter(|card| seen.insert(card.clone()))
+            .map(|card| SimpleAction::DiscardOwnCards { cards: vec![card] })
+            .collect();
+        if !choices.is_empty() {
+            state.move_generation_stack.push((action.actor, choices));
+        }
+    })
+}
+
+fn vaporeon_wash_out(_: &mut StdRng, state: &mut State, action: &Action) {
+    // As often as you like during your turn, you may move a [W] Energy from 1 of your Benched [W] Pokémon to your Active [W] Pokémon.
+    debug!("Vaporeon's Wash Out: Moving Water Energy from benched Water Pokemon to active");
+    let acting_player = action.actor;
+    let possible_moves = state
+        .enumerate_bench_pokemon(acting_player)
+        .filter(|(_, pokemon)| {
+            pokemon.is_type(EnergyType::Water)
+                && pokemon.attached_energy.contains(&EnergyType::Water)
+        })
+        .map(|(in_play_idx, _)| SimpleAction::MoveEnergy {
+            from_in_play_idx: in_play_idx,
+            to_in_play_idx: 0, // Active spot
+            energy_type: EnergyType::Water,
+            amount: 1,
+        })
+        .collect::<Vec<_>>();
+    if possible_moves.is_empty() {
+        return; // No benched Water Pokémon with Water Energy
+    }
+    state
+        .move_generation_stack
+        .push((acting_player, possible_moves));
+}
+
+/// Dragonair's Dragon's Blessing: attach an Energy from the discard pile to the Active Pokémon.
+/// The player chooses which discarded Energy type to attach when more than one is available.
+fn dragonair_dragons_blessing(_: &mut StdRng, state: &mut State, action: &Action) {
+    let player = action.actor;
+    let mut energy_types: Vec<EnergyType> = state.discard_energies[player].clone();
+    energy_types.sort();
+    energy_types.dedup();
+
+    let possible_attachments: Vec<SimpleAction> = energy_types
+        .into_iter()
+        .map(|energy_type| SimpleAction::AttachTypedFromDiscard {
+            in_play_idx: 0,
+            energy_type,
+            count: 1,
+        })
+        .collect();
+
+    if !possible_attachments.is_empty() {
+        state
+            .move_generation_stack
+            .push((player, possible_attachments));
+    }
+}
+
+/// Lunala ex's Psychic Connect: move all `energy_type` Energy from 1 chosen Benched `energy_type`
+/// Pokémon to the Active Pokémon (any type). The player picks which benched Pokémon to drain.
+fn move_all_typed_energy_from_bench_to_active(
+    state: &mut State,
+    action: &Action,
+    energy_type: EnergyType,
+) {
+    let acting_player = action.actor;
+    let possible_moves = state
+        .enumerate_bench_pokemon(acting_player)
+        .filter_map(|(in_play_idx, pokemon)| {
+            if !pokemon.is_type(energy_type) {
+                return None;
+            }
+            let amount = pokemon
+                .attached_energy
+                .iter()
+                .filter(|&&energy| energy == energy_type)
+                .count() as u32;
+            (amount > 0).then_some(SimpleAction::MoveEnergy {
+                from_in_play_idx: in_play_idx,
+                to_in_play_idx: 0, // Active spot
+                energy_type,
+                amount,
+            })
+        })
+        .collect::<Vec<_>>();
+    if possible_moves.is_empty() {
+        return; // No benched Pokémon of this type with matching Energy
+    }
+    state
+        .move_generation_stack
+        .push((acting_player, possible_moves));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stale_end_first_turn_ability_action_is_consumed_without_panicking() {
+        let state = State::default();
+        let action = Action {
+            actor: 0,
+            action: SimpleAction::UseAbility { in_play_idx: 1 },
+            is_stack: true,
+        };
+        let mechanic = AbilityMechanic::EndFirstTurnAttachEnergyToSelf {
+            energy_type: EnergyType::Lightning,
+        };
+
+        let result = std::panic::catch_unwind(|| {
+            forecast_ability_by_mechanic(&mechanic, &state, &action, 1);
+        });
+        assert!(result.is_ok());
+    }
+}

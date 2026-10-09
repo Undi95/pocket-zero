@@ -1,0 +1,92 @@
+13:05:32 A: 960 lignées
+13:05:34 A 0/960 best=0.000
+13:07:45 A 50/960 best=0.527
+13:09:58 A 100/960 best=0.555
+12:33:36 A: 960 lignées
+12:33:36 A 0/960 best=0.000
+12:33:36 A 50/960 best=0.527
+12:33:50 A 100/960 best=0.555
+12:35:14 A 150/960 best=0.562
+12:36:39 A 200/960 best=0.662
+12:38:07 A 250/960 best=0.662
+12:39:39 A 300/960 best=0.704
+12:41:09 A 350/960 best=0.704
+12:42:38 A 400/960 best=0.704
+12:44:01 A 450/960 best=0.704
+12:45:22 A 500/960 best=0.704
+12:46:52 A 550/960 best=0.872
+12:48:20 A 600/960 best=0.872
+12:49:40 A 650/960 best=0.872
+12:51:05 A 700/960 best=0.872
+12:52:32 A 750/960 best=0.872
+12:54:02 A 800/960 best=0.872
+12:55:26 A 850/960 best=0.872
+12:56:54 A 900/960 best=0.872
+12:58:26 A 950/960 best=0.872
+12:58:43 A terminé (25 min) top: Dragalge ex, Mega Gardevoir ex, Tauros ex, Mega Sceptile ex, Crustle ex, Vikavolt, Zygarde ex, Vanilluxe
+13:00:39 B 1/30 best=0.747
+13:02:31 B 2/30 best=0.811
+13:04:05 B 3/30 best=0.811
+13:05:45 B 4/30 best=0.811
+13:07:20 B 5/30 best=0.885
+13:08:52 B 6/30 best=0.885
+13:10:32 B 7/30 best=0.885
+13:11:54 B 8/30 best=0.885
+13:13:21 B 9/30 best=0.885
+13:14:45 B 10/30 best=0.885
+13:16:13 B 11/30 best=0.885
+13:17:27 B 12/30 best=0.885
+13:18:40 B 13/30 best=0.885
+13:19:43 B 14/30 best=0.885
+13:20:39 B 15/30 best=0.893
+13:21:42 B 16/30 best=0.893
+13:22:39 B 17/30 best=0.893
+13:23:29 B 18/30 best=0.893
+13:24:15 B 19/30 best=0.893
+13:24:52 B 20/30 best=0.893
+13:25:33 B 21/30 best=0.893
+13:26:04 B 22/30 best=0.893
+13:26:29 B 23/30 best=0.893
+13:26:56 B 24/30 best=0.893
+13:27:16 B 25/30 best=0.893
+13:27:33 B 26/30 best=0.893
+13:27:44 B 27/30 best=0.893
+13:27:52 B 28/30 best=0.893
+13:27:56 B 29/30 best=0.893
+13:27:56 B 30/30 best=0.893
+13:27:56 B terminé (54 min) top: Mega Sableye ex + Mega Sharpedo ex | Crustle ex + Mega Lucario ex | Greninja ex + Alolan Ninetales ex | Vikavolt + Mega Sableye ex | Mega Gardevoir ex + Flutter Mane ex
+13:31:33 C gen 1/30 best=0.833 (136 parties) | 2xTreecko, 2xGrovyle, 2xMega Sceptile ex, 2xProfessor's Research, 2xPoké Ball, 2xCopycat
+13:35:08 C gen 2/30 best=0.824 (136 parties) | 2xTreecko, 2xGrovyle, 2xMega Sceptile ex, 2xRare Candy, 2xProfessor's Research, 2xPoké Ball
+13:38:39 C gen 3/30 best=0.865 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 2xPoké Ball, 2xCopycat
+13:42:09 C gen 4/30 best=0.843 (204 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 2xPoké Ball, 2xCopycat
+13:45:30 C gen 5/30 best=0.856 (136 parties) | 2xDwebble, 2xCrustle ex, 2xRiolu, 2xMega Lucario ex, 2xProfessor's Research, 2xCopycat
+13:48:50 C gen 6/30 best=0.918 (136 parties) | 2xFroakie, 2xAlolan Vulpix, 2xAlolan Ninetales ex, 2xProfessor's Research, 2xCopycat, 1xFrogadier
+13:52:19 C gen 7/30 best=0.829 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 2xCopycat, 2xSabrina
+13:55:50 C gen 8/30 best=0.821 (136 parties) | 2xDwebble, 2xCrustle ex, 2xRiolu, 2xMega Lucario ex, 2xProfessor's Research, 2xCopycat
+13:59:06 C gen 9/30 best=0.867 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 2xSabrina, 1xRiolu
+14:02:34 C gen 10/30 best=0.823 (136 parties) | 2xCrustle ex, 2xCopycat, 2xSabrina, 1xDwebble, 1xTraining Area, 1xRiolu
+14:06:07 C gen 11/30 best=0.842 (136 parties) | 2xDwebble, 2xCrustle ex, 2xPoké Ball, 1xRiolu, 1xCabbie, 1xMega Lucario ex
+14:09:32 C gen 12/30 best=0.755 (204 parties) | 2xDwebble, 2xCrustle ex, 2xCabbie, 2xMega Lucario ex, 2xSabrina, 1xRiolu
+14:13:07 C gen 13/30 best=0.819 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 2xSabrina, 1xRiolu
+14:16:56 C gen 14/30 best=0.839 (136 parties) | 2xRiolu, 2xMega Lucario ex, 2xProfessor's Research, 2xSophocles, 1xCelestic Town Elder, 1xDwebble
+14:20:04 C gen 15/30 best=0.819 (136 parties) | 2xDwebble, 2xCrustle ex, 2xRiolu, 2xMega Lucario ex, 1xCabbie, 1xBonsly
+14:23:34 C gen 16/30 best=0.847 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 1xRiolu, 1xSitrus Berry, 1xProfessor's Research
+14:28:08 C gen 17/30 best=0.956 (136 parties) | 2xDwebble, 2xCrustle ex, 2xPoké Ball, 2xMega Lucario ex, 2xProfessor's Research, 1xRiolu
+14:31:54 C gen 18/30 best=0.818 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xProfessor's Research, 1xRiolu, 1xSitrus Berry
+14:35:08 C gen 19/30 best=0.800 (136 parties) | 2xDwebble, 2xCrustle ex, 2xPoké Ball, 2xMega Lucario ex, 2xProfessor's Research, 1xRiolu
+14:38:15 C gen 20/30 best=0.762 (136 parties) | 2xMega Lucario ex, 2xBeast Wall, 2xSabrina, 1xCelestic Town Elder, 1xDwebble, 1xCrustle ex
+14:41:28 C gen 21/30 best=0.744 (204 parties) | 2xMega Lucario ex, 2xBeast Wall, 2xSabrina, 1xCelestic Town Elder, 1xDwebble, 1xCrustle ex
+14:44:37 C gen 22/30 best=0.826 (136 parties) | 2xCrustle ex, 2xMega Lucario ex, 2xArven, 1xDrayden, 1xDwebble, 1xRiolu
+14:47:28 C gen 23/30 best=0.915 (136 parties) | 2xDwebble, 2xCrustle ex, 2xMega Lucario ex, 2xArea Zero, 1xRiolu, 1xHala
+14:50:36 C gen 24/30 best=0.814 (204 parties) | 2xCrustle ex, 2xRiolu, 2xSitrus Berry, 2xMega Lucario ex, 1xElectric Generator, 1xDwebble
+14:53:46 C gen 25/30 best=0.808 (136 parties) | 2xCrustle ex, 2xRiolu, 2xMega Lucario ex, 2xArven, 1xElectric Generator, 1xDwebble
+14:57:22 C gen 26/30 best=0.966 (136 parties) | 2xDwebble, 2xCrustle ex, 2xLucky Ice Pop, 2xMega Lucario ex, 2xProfessor's Research, 2xRed
+15:00:37 C gen 27/30 best=0.875 (204 parties) | 2xDwebble, 2xCrustle ex, 2xLucky Ice Pop, 2xMega Lucario ex, 2xProfessor's Research, 2xRed
+15:03:49 C gen 28/30 best=0.829 (272 parties) | 2xDwebble, 2xCrustle ex, 2xLucky Ice Pop, 2xMega Lucario ex, 2xProfessor's Research, 2xRed
+15:07:01 C gen 29/30 best=0.782 (340 parties) | 2xDwebble, 2xCrustle ex, 2xLucky Ice Pop, 2xMega Lucario ex, 2xProfessor's Research, 2xRed
+15:10:02 C gen 30/30 best=0.819 (136 parties) | 2xKoga, 2xCrustle ex, 2xLucky Ice Pop, 2xMega Lucario ex, 2xRed, 1xDwebble
+15:11:00 D: e3 0.450 (510 parties)
+15:11:47 D: e3 0.284 (510 parties)
+15:12:22 D: e3 0.222 (510 parties)
+15:13:11 D: e3 0.399 (510 parties)
+15:13:36 D: e3 0.174 (510 parties)

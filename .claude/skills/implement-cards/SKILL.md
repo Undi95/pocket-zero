@@ -1,0 +1,209 @@
+---
+name: implement-cards
+description: Fill out the implementation of effects of different attacks, abilities, and trainer cards in this Pokemon TCG Pocket engine codebase.
+---
+
+# Implementing Cards
+
+To implement cards, first read the `models` module and the `state` module. Cards
+are not implemented if they are a Pokemon that is missing an Ability or Attack implementation,
+or a Trainer card (be it a tool or a normal one) missig implementation.
+
+Use TDD for every new card implementation:
+
+- Before changing the production implementation, add 1 or 2 focused tests for the new card behavior.
+- Write those tests at the same abstraction level as `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs`.
+- Keep the tests at the public `Game` API level, driving behavior through calls like `game.apply_action(...)`, `generate_possible_actions()`, `get_state_clone()`, and observable game state changes.
+- Do not start implementation until those tests exist.
+
+If the user hasn't specified what card to implement, you can use the tool:
+
+```bash
+cargo run --bin card_status
+```
+
+to see what cards are missing, and choose one. You can also that tool
+to see what is missing from the specified card.
+
+## Abilities
+
+- Get the details of all the cards that have the ability you want to implement by using the following script:
+  - For a single card or name lookup:
+
+  ```bash
+  cargo run --bin search "Venusaur"
+  ```
+
+- Copy the ids of cards to implement (including full art versions) in the given JSON. Only choose the ones with the ability you want to implement.
+- All abilities should use the `AbilityMechanic` pathway.
+  - Find the ability effect text in the JSON and search for it in `effect_ability_mechanic_map.rs`.
+  - Re-use an existing `AbilityMechanic` when possible. If not, add a new variant in `src/actions/abilities/mechanic.rs`.
+  - Add or uncomment all matching `map.insert(...)` lines in `effect_ability_mechanic_map.rs` and map them to the correct `AbilityMechanic` with parameters.
+  - Implement the mechanic logic in `forecast_ability_by_mechanic` in `src/actions/apply_abilities_action.rs`.
+    - Return an `Outcomes` struct (see `src/actions/outcomes.rs`).
+    - For deterministic effects: `Outcomes::single_fn(|rng, state, action| { ... })`
+    - For coin-flip effects, use the appropriate `Outcomes` constructor:
+      - `Outcomes::binary_coin(heads_mutation, tails_mutation)` for a single coin flip
+      - `Outcomes::binomial_by_heads(n, |heads| mutation)` for N flips grouped by heads count
+      - `Outcomes::geometric_until_tails(max, |heads| mutation)` for flip-until-tails effects
+    - Keep `match` arms as one-liners by moving logic into helpers.
+  - Implement move generation logic in `can_use_ability_by_mechanic` in `src/move_generation/move_generation_abilities.rs`.
+    - Keep `match` arms as one-liners by moving logic into helpers.
+- If the ability is passive or hook-driven:
+  - Prefer a mechanic + hook combination.
+  - Put the mechanic-to-hook wiring in the relevant hook file, usually under `src/hooks/`.
+  - `forecast_ability_by_mechanic` should `panic!` for passive mechanics, and `can_use_ability_by_mechanic` should return `false`.
+- Add 1 or 2 logic tests before implementation at the `Game` public API level.
+  - Prefer the folder-matched integration test layout under `tests/`, for example `tests/pokemon/...`, `tests/tools/...`, `tests/stadiums/...`, or `tests/mechanics/...`.
+  - Follow `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs` in style and abstraction level.
+  - Drive behavior through public APIs like `game.apply_action(...)` instead of internal helpers or private implementation details.
+  - Do not assert on `.move_generation_stack`; drive behavior through public actions and resulting game state.
+
+## Attack
+
+- Get the details of the card with the attack you want to implement by using the following script:
+
+  ```bash
+  cargo run --bin search "Venusaur" --attack "Giant Bloom"
+  ```
+
+- Search for the effect text in the above JSON in the `effect_mechanic_map.rs` file.
+- Decide if we should introduce a new Mechanic or re-use or generalize an existing one. Try to re-use existing ones first.
+- Identify all the cards that have the same effect text template, and just differ by parameters.
+- Uncomment all the `// map.insert("` lines that pertain to the mechanic, and add the correct value (an `Mechanic` enum variant with the corresponding parameters).
+- Implement the mechanic logic in `forecast_effect_attack_by_mechanic` in `src/actions/apply_attack_action.rs`.
+  - Return an `Outcomes` struct (see `src/actions/outcomes.rs`).
+  - For deterministic effects: `Outcomes::single_fn(|rng, state, action| { ... })`
+  - For coin-flip effects, use the appropriate `Outcomes` constructor:
+    - `Outcomes::binary_coin(heads_mutation, tails_mutation)` - single coin flip
+    - `Outcomes::binomial_by_heads(n, |heads| mutation)` - flip N coins, group by heads count
+    - `Outcomes::geometric_until_tails(max, |heads| mutation)` - flip until tails
+  - Keep the code as a simple one-liner in the match statement by using helper functions
+  - Review similar attacks in `src/actions/apply_attack_action.rs` to ensure consistency in implementation.
+- Add 1 or 2 Game-level logic tests in the matching `tests/` subfolder before implementation when the attack has non-trivial behavior.
+  - Match the abstraction level of `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs`.
+  - Exercise the `Game` public API, especially `game.apply_action(...)` and the resulting public game state.
+
+## Tool
+
+- Get the details of the tool card that you want to implement by using the following script:
+
+  ```bash
+  cargo run --bin search "Leaf Cape"
+  ```
+
+- Copy the ids of cards to implement (including full art versions) in the given JSON.
+- In `tools.rs`:
+- In `src/tools.rs`:
+  - Add a `static EFFECT_NAME_EFFECT: LazyLock<String>` constant using `tool_effect_text_from_card_id(CardId::...)`.
+  - Add the effect to `is_tool_effect_implemented()` match expression.
+  - If the tool has attachment restrictions (e.g., only Grass pokemon), add a check in `can_attach_tool_to()`.
+- Implement any immediate effects in the tool's core logic rather than a dedicated "on attach" hook.
+  - For HP modifiers, prefer dynamic calculation in `PlayedCard::get_effective_total_hp()`.
+  - For other immediate effects, add a focused helper in the relevant hook file and call it from the appropriate action handler.
+- Ensure Tool is correctly handled by `forecast_trainer_action`.
+- For tools with ongoing effects (not just on-attach):
+  - Implement hooks in `hooks/core.rs` or other appropriate hook files.
+  - Use `has_tool(played_card, CardId::...)` to check if a pokemon has a specific tool attached.
+  - Examples: Rocky Helmet deals damage when the holder is attacked.
+- Add 1 or 2 Game-level integration tests under `tests/tools/` before implementation for the observable effect.
+  - Match the abstraction level of `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs`.
+  - Exercise the `Game` public API, especially `game.apply_action(...)` and the resulting public game state.
+
+## Trainer Cards
+
+- Get the details of the trainer card that you want to implement by using the following script:
+
+  ```bash
+  cargo run --bin search "Rare Candy"
+  ```
+
+- Copy the ids of cards to implement (including full art versions) in the given JSON.
+- Implement the "move generation" logic.
+  - In `move_generation_trainer.rs` implement the switch branch. Its often the case the Trainer/Support can always be played, so just add to this case in the switch.
+- Implement the "apply action" logic.
+  - This is the code that actually runs when the card is played.
+  - Visit `src/actions/apply_trainer_action.rs`.
+  - Return an `Outcomes` struct (see `src/actions/outcomes.rs`):
+    - For deterministic effects: `Outcomes::single_fn(|rng, state, action| { ... })`
+    - For coin-flip effects, use `Outcomes::binary_coin(...)` or other coin constructors
+  - Often its just "applying an effect" in the field (like Leaf).
+    - If the turn is something that affects all pokemon in play for a given turn use
+      the `.turn_effects` field in the state. You can use to for effects that apply to
+      this turn, or a future one.
+    - Some cards might be fairly unique and might need architectural changes to the engine. For cards with considerable custom logic,
+      try to find a generalizing pattern that can be presented as a "hook" in the `hooks.rs`. The idea of `hooks.rs` is to try to encapsulate
+      most custom logic that goes outside of the normal business logic. Also consider adding new
+      pieces of state to the `State` struct if necessary.
+
+  - Try to keep the `match trainer_id` cases as one-liners (using helper functions if necessary).
+
+- Add 1 or 2 Game-level integration tests in the appropriate `tests/` area before implementation if the trainer has logic beyond a trivial draw/search path.
+  - Match the abstraction level of `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs`.
+  - Exercise the `Game` public API, especially `game.apply_action(...)` and the resulting public game state.
+
+## Stadium
+
+- Get the details of the stadium card that you want to implement by using the following script:
+
+  ```bash
+  cargo run --bin search "Peculiar Plaza"
+  ```
+
+- Copy the ids of cards to implement (including full art versions) in the given JSON.
+- In `src/stadiums.rs`:
+  - Add a static `LazyLock<String>` constant for the stadium's effect text.
+  - Add the stadium to `is_stadium_effect_implemented()`.
+  - Add a helper function to query the stadium's effect (e.g., `get_peculiar_plaza_retreat_reduction`).
+- Add Stadium move generation:
+  - Move generation is already handled generically in `move_generation_trainer.rs` via `can_play_stadium()`.
+  - No per-stadium logic needed unless the stadium has unique play conditions.
+- Hook the stadium effect into the appropriate game mechanic:
+  - Retreat cost effects: `hooks/retreat.rs` in `get_retreat_cost()`
+  - Damage bonuses: `hooks/core.rs` in `modify_damage()`
+  - HP bonuses: May need to modify `get_effective_total_hp()` or damage calculation
+- Stadium effects apply to BOTH players equally.
+- Test using `cargo run --bin card_test -- "CardId"`.
+- Add 1 or 2 Game-level integration tests under `tests/stadiums/` before implementation.
+  - Match the abstraction level of `test_raikou_rocky_helmet_promotion_order` in `tests/tools/raikou_rocky_helmet_order_test.rs`.
+  - Exercise the `Game` public API, especially `game.apply_action(...)` and the resulting public game state.
+
+## Multiple Cards Requested At Once
+
+When the user asks to implement several cards in the same request (e.g. "implement Serperior, Delphox, Tinkaton, and Weezing ex"):
+
+- Treat this as a single PR containing one commit per card, all on the same feature branch.
+- Implement the cards one at a time, fully finishing each one (tests written first, implementation, targeted tests passing, `cargo fmt`, `cargo clippy --all-targets --all-features -- -D warnings`) before moving to the next.
+- Commit each card's changes separately, right after finishing it, with a commit message scoped to that one card (e.g. "Implement Serperior's Giant Leaves attack"). Do not bundle multiple cards' changes into a single commit, and do not wait until all cards are done to start committing.
+- If two requested cards touch the same generated/shared file (e.g. `attack_ids.rs`, `effect_mechanic_map.rs`, `effect_ability_mechanic_map.rs`), that's expected — just make sure each commit only contains the hunks relevant to the card it's for when practical, or note in the commit message that shared infra was touched.
+- After all cards are implemented, run the full relevant test suites (per-area, as described in Appendix) once more before pushing, then push the branch with all commits.
+- Only open/update a single PR for the whole batch, not one PR per card.
+
+## Appendix
+
+### Testing Your Implementation
+
+After implementing a card, test it like so:
+
+Run the integrated card test command (it generates a temp deck and runs 10,000 random games against all decks in `example_decks/`):
+
+```bash
+cargo run --bin card_test -- "Card ID"
+```
+
+Review the results to ensure the games complete without errors.
+
+Run the targeted automated checks for the code you touched:
+
+```bash
+cargo test --features test-utils --test pokemon
+cargo test --features test-utils --test tools
+cargo test --features test-utils --test stadiums
+cargo test --features test-utils --test mechanics
+```
+
+Pick the relevant test target(s) for your change rather than always running all four.
+
+### Code Quality
+
+Make sure to run `cargo fmt` and `cargo clippy --all-targets --all-features -- -D warnings`. Also run the relevant targeted tests for the area you changed.

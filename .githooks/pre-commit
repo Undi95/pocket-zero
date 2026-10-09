@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Pre-commit hook for deckgym-core
+# This hook ensures code quality by verifying formatting, linting, and tests
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# 1. Run clippy (check only, no auto-fix)
+echo "→ Running cargo clippy..."
+cargo clippy --features tui -- -D warnings
+
+# 2. Check formatting (verify only, no changes)
+echo "→ Checking cargo fmt..."
+cargo fmt -- --check
+
+# 3. Run all tests
+echo "→ Running cargo test..."
+cargo test --features "tui test-utils"
+
+echo "✓ All pre-commit checks passed!"

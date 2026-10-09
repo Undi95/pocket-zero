@@ -1,0 +1,1272 @@
+mod energy;
+pub mod observation;
+mod played_card;
+
+use log::{debug, trace};
+use rand::rngs::StdRng;
+use rand::{seq::SliceRandom, Rng};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
+use std::hash::Hash;
+
+use crate::{
+    actions::abilities::AbilityMechanic,
+    actions::SimpleAction,
+    deck::Deck,
+    effects::{CardEffect, TurnEffect},
+    models::{Card, EnergyType, StatusCondition},
+    move_generation,
+    stadiums::is_starting_plains_active,
+    tools::has_tool,
+};
+
+pub use played_card::{has_serperior_jungle_totem, PlayedCard};
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GameOutcome {
+    Win(usize),
+    Tie,
+}
+
+/// A player's energy zone. The zone holds two slots:
+/// - `current`: the energy attachable this turn (None on the player going first's turn 1,
+///   and None after the player has already attached this turn).
+/// - `next`: the energy that will rotate into `current` at the start of this player's next turn.
+///   Visible to the player as a preview.
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct EnergyZone {
+    pub current: Option<EnergyType>,
+    pub next: Option<EnergyType>,
+}
+
+/// A coin-flip attack that has been flipped but not yet committed, parked while the acting player
+/// decides whether to use Victini's Victory Star to re-flip it.
+///
+/// Deliberately plain data: the attack is re-forecast from `attack` when the decision resolves,
+/// rather than storing a closure, so that `State` remains `Clone`/`Hash`/`Eq` for the
+/// search-based players (ExpectiMiniMax, MCTS) that clone and memoize states.
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PendingCoinReflip {
+    /// The player who took the action (and who may use the reflip Ability).
+    pub actor: usize,
+    /// The action whose coins were flipped (an attack for Victini's Victory Star, a Trainer card
+    /// for Gholdengo's Luxury Coin), so it can be re-forecast on either branch.
+    pub action: SimpleAction,
+    /// The exact coin sequence that was originally flipped. Replayed verbatim if the player
+    /// declines, so declining is a faithful "keep what happened" rather than a second draw.
+    pub original_flips: Vec<bool>,
+    /// In-play index of the Pokémon offering the reflip.
+    pub reflipper_idx: usize,
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct State {
+    // Turn State
+    pub winner: Option<GameOutcome>,
+    pub points: [u8; 2],
+    pub turn_count: u8, // Global turn count. Matches TCGPocket app.
+    // Player that needs to select from playable actions. Might not be aligned
+    // with coin toss and the parity, see Sabrina.
+    pub current_player: usize,
+    pub(crate) end_turn_pending: bool,
+    pub move_generation_stack: Vec<(usize, Vec<SimpleAction>)>,
+    /// Actions applied so far this turn (any actor, including pending choices). See
+    /// `MAX_ACTIONS_PER_TURN`.
+    #[serde(default)]
+    pub actions_this_turn: u16,
+
+    // Core state
+    pub energy_zone: [EnergyZone; 2],
+    pub hands: [Vec<Card>; 2],
+    pub decks: [Deck; 2],
+    pub discard_piles: [Vec<Card>; 2],
+    pub discard_energies: [Vec<EnergyType>; 2],
+    // 0 index is the active pokemon, 1..4 are the bench
+    pub in_play_pokemon: [[Option<PlayedCard>; 4]; 2],
+    // Stadium card currently in play (affects both players)
+    pub active_stadium: Option<Card>,
+    #[serde(default)]
+    pub active_stadium_owner: Option<usize>,
+
+    // Turn Flags (remember to reset these in reset_turn_states)
+    pub(crate) has_played_support: bool,
+    pub(crate) has_retreated: bool,
+    /// Only 1 Stadium card can be played per turn.
+    #[serde(default)]
+    pub(crate) has_played_stadium: bool,
+    pub has_used_stadium: [bool; 2], // Tracks if each player has used the stadium this turn
+    // Tracks if each player has used a Victory Star Ability (Victini) this turn. The card text
+    // says "You can't use more than 1 Victory Star Ability each turn.", so this is per-player and
+    // not per-Victini.
+    #[serde(default)]
+    pub(crate) has_used_victory_star: [bool; 2],
+    // Same, for Gholdengo's Luxury Coin ("You can't use more than 1 Luxury Coin Ability each
+    // turn.").
+    #[serde(default)]
+    pub(crate) has_used_luxury_coin: [bool; 2],
+    // Set when an eligible coin-flip attack has been flipped but not yet committed, while the
+    // acting player decides whether to invoke Victory Star. Holds plain data only (no closures),
+    // so `State` stays Clone/Hash/Eq for the search-based players.
+    #[serde(default)]
+    pub(crate) pending_coin_reflip: Option<PendingCoinReflip>,
+    pub(crate) knocked_out_by_opponent_attack_this_turn: bool,
+    pub(crate) knocked_out_by_opponent_attack_last_turn: bool,
+    // Energy types of the Pokemon Knocked Out by an opponent's attack during that turn (e.g. for
+    // Zarude's "Dark Vengeance", which only counts [D] Pokemon). A Knocked Out Fossil has no
+    // energy type, so these can be empty while the flags above are true.
+    pub(crate) knocked_out_types_this_turn: BTreeSet<EnergyType>,
+    pub(crate) knocked_out_types_last_turn: BTreeSet<EnergyType>,
+    // Name of the attack (if any) each player used during their current/previous own turn
+    // (e.g. for Vanilluxe's "Sweets Relay": "If 1 of your Pokémon used Sweets Relay during
+    // your last turn, this attack does more damage.").
+    pub(crate) attack_name_used_this_turn: [Option<String>; 2],
+    pub(crate) attack_name_used_last_turn: [Option<String>; 2],
+    // Number of times each player has used each named attack during the entire game (e.g. for
+    // Alcremie's "Sweets Overload": "This attack does 40 damage for each time your Pokémon used
+    // Sweets Relay during this game."). Using BTreeMap to keep State hashable.
+    pub(crate) attack_name_used_count: [BTreeMap<String, u32>; 2],
+    // Number of each player's OWN Pokemon that have been Knocked Out over the whole game, however
+    // it happened (e.g. for Kingambit's "Overlord's Blade": "This attack does 40 more damage for
+    // each time your Pokemon have been Knocked Out during this game.").
+    #[serde(default)]
+    pub(crate) own_knocked_out_count: [u32; 2],
+    // Each player's point total as it stood when their current turn began, and how many points
+    // they gained over their previous turn. Together these answer "points your opponent got during
+    // their last turn" (e.g. Hisuian Basculegion's "Soul Counter").
+    #[serde(default)]
+    pub(crate) points_at_own_turn_start: [u8; 2],
+    #[serde(default)]
+    pub(crate) points_gained_during_own_last_turn: [u8; 2],
+    // Maps turn to a vector of effects (cards) for that turn. Using BTreeMap to keep State hashable.
+    turn_effects: BTreeMap<u8, Vec<TurnEffect>>,
+}
+
+impl State {
+    pub fn new(deck_a: &Deck, deck_b: &Deck) -> Self {
+        Self {
+            winner: None,
+            points: [0, 0],
+            turn_count: 0,
+            current_player: 0,
+            end_turn_pending: false,
+            move_generation_stack: Vec::new(),
+            actions_this_turn: 0,
+            energy_zone: [EnergyZone::default(), EnergyZone::default()],
+            hands: [Vec::new(), Vec::new()],
+            decks: [deck_a.clone(), deck_b.clone()],
+            discard_piles: [Vec::new(), Vec::new()],
+            discard_energies: [Vec::new(), Vec::new()],
+            in_play_pokemon: [[None, None, None, None], [None, None, None, None]],
+            active_stadium: None,
+            active_stadium_owner: None,
+            has_played_support: false,
+            has_retreated: false,
+            has_played_stadium: false,
+            has_used_stadium: [false, false],
+            has_used_victory_star: [false, false],
+            has_used_luxury_coin: [false, false],
+            pending_coin_reflip: None,
+
+            knocked_out_by_opponent_attack_this_turn: false,
+            knocked_out_by_opponent_attack_last_turn: false,
+            knocked_out_types_this_turn: BTreeSet::new(),
+            knocked_out_types_last_turn: BTreeSet::new(),
+            attack_name_used_this_turn: [None, None],
+            attack_name_used_last_turn: [None, None],
+            attack_name_used_count: [BTreeMap::new(), BTreeMap::new()],
+            own_knocked_out_count: [0, 0],
+            points_at_own_turn_start: [0, 0],
+            points_gained_during_own_last_turn: [0, 0],
+            turn_effects: BTreeMap::new(),
+        }
+    }
+
+    pub fn get_active_stadium_name(&self) -> Option<String> {
+        self.active_stadium.as_ref().map(|c| c.get_name())
+    }
+
+    pub fn set_active_stadium(&mut self, stadium: Card) -> Option<Card> {
+        self.active_stadium_owner = None;
+        self.active_stadium.replace(stadium)
+    }
+
+    pub fn set_active_stadium_for_player(
+        &mut self,
+        player: usize,
+        stadium: Card,
+    ) -> Option<(Card, Option<usize>)> {
+        let old_stadium = self.active_stadium.replace(stadium);
+        let old_owner = self.active_stadium_owner.replace(player);
+        old_stadium.map(|stadium| (stadium, old_owner))
+    }
+
+    pub fn take_active_stadium(&mut self) -> Option<(Card, Option<usize>)> {
+        let stadium = self.active_stadium.take();
+        let owner = self.active_stadium_owner.take();
+        stadium.map(|stadium| (stadium, owner))
+    }
+
+    pub(crate) fn refresh_starting_plains_bonus_all(&mut self) {
+        let starting_plains_active = is_starting_plains_active(self);
+        for pokemon in self.in_play_pokemon.iter_mut().flatten().flatten() {
+            pokemon.refresh_starting_plains_bonus(starting_plains_active);
+        }
+    }
+
+    pub(crate) fn refresh_starting_plains_bonus_for_idx(&mut self, player: usize, index: usize) {
+        let starting_plains_active = is_starting_plains_active(self);
+        if let Some(pokemon) = self.in_play_pokemon[player][index].as_mut() {
+            pokemon.refresh_starting_plains_bonus(starting_plains_active);
+        }
+    }
+
+    /// Keeps every one of `player`'s in-play Pokemon's `double_grass_active` flag in sync with
+    /// whether Serperior's Jungle Totem is active for `player`. Must be called whenever
+    /// `player`'s board composition changes (a Pokemon enters or leaves play), since Jungle
+    /// Totem's effect doesn't require the Serperior itself to be Active.
+    pub(crate) fn refresh_double_grass_bonus_for_player(&mut self, player: usize) {
+        let jungle_totem_active = has_serperior_jungle_totem(self, player);
+        for pokemon in self.in_play_pokemon[player].iter_mut().flatten() {
+            pokemon.refresh_double_grass_active(jungle_totem_active);
+        }
+        // A board change can also change the other ability-derived board bonuses, and this is the
+        // one refresh every board mutation already funnels through.
+        self.refresh_ability_board_bonuses();
+    }
+
+    /// Recomputes the cached, board-dependent ability bonuses on every in-play Pokémon: Alolan
+    /// Muk's Power of Alchemy (Basics on either side have no Abilities), Lilligant's Toughness
+    /// Aroma (+HP for the owner's Pokémon of a type) and Claydol's Heal Block (no Pokémon on
+    /// either side can be healed).
+    pub(crate) fn refresh_ability_board_bonuses(&mut self) {
+        // Power of Alchemy has to be resolved first: it decides which Abilities the scans below
+        // are even allowed to see. `suppresses_basic_abilities` reads the card-level Ability, so
+        // it neither depends on the flags being written here nor recurses through them.
+        let power_of_alchemy_active = self
+            .in_play_pokemon
+            .iter()
+            .flatten()
+            .flatten()
+            .any(|pokemon| pokemon.suppresses_basic_abilities());
+        for pokemon in self.in_play_pokemon.iter_mut().flatten().flatten() {
+            pokemon.refresh_basic_abilities_suppressed(power_of_alchemy_active);
+        }
+
+        let heal_blocked = (0..2).any(|player| {
+            self.enumerate_in_play_pokemon(player)
+                .any(|(_, pokemon)| pokemon.has_ability(&AbilityMechanic::NoHealingForAnyone))
+        });
+        let typed_hp_bonuses: [Vec<(EnergyType, u32)>; 2] = [
+            collect_typed_hp_bonuses(self, 0),
+            collect_typed_hp_bonuses(self, 1),
+        ];
+        for (board, bonuses) in self.in_play_pokemon.iter_mut().zip(&typed_hp_bonuses) {
+            for pokemon in board.iter_mut().flatten() {
+                pokemon.refresh_ability_board_bonuses(bonuses, heal_blocked);
+            }
+        }
+    }
+
+    pub(crate) fn refresh_double_grass_bonus_all(&mut self) {
+        self.refresh_double_grass_bonus_for_player(0);
+        self.refresh_double_grass_bonus_for_player(1);
+    }
+
+    pub fn debug_string(&self) -> String {
+        format!(
+            "P1 Hand:\t{:?}\n\
+            P1 InPlay:\t{:?}\n\
+            P2 InPlay:\t{:?}\n\
+            P2 Hand:\t{:?}",
+            to_canonical_names(self.hands[0].as_slice()),
+            format_cards(&self.in_play_pokemon[0]),
+            format_cards(&self.in_play_pokemon[1]),
+            to_canonical_names(self.hands[1].as_slice())
+        )
+    }
+
+    pub fn initialize(deck_a: &Deck, deck_b: &Deck, rng: &mut impl Rng) -> Self {
+        let mut state = Self::new(deck_a, deck_b);
+
+        // Shuffle the decks before starting the game and have players
+        //  draw 5 cards each to start
+        for deck in &mut state.decks {
+            deck.shuffle(true, rng);
+        }
+        for _ in 0..5 {
+            state.maybe_draw_card(0);
+            state.maybe_draw_card(1);
+        }
+        // Flip a coin to determine the starting player
+        state.current_player = rng.gen_range(0..2);
+
+        // Pre-populate each player's `next` energy. On turn 1, neither player has rotated yet,
+        // so both keep `current = None`. The player going second's queue will rotate at turn 2,
+        // promoting `next` into `current`; the player going first's queue rotates at turn 3.
+        state.energy_zone[0].next = Some(roll_energy(&state.decks[0], rng));
+        state.energy_zone[1].next = Some(roll_energy(&state.decks[1], rng));
+
+        state
+    }
+
+    pub fn get_remaining_hp(&self, player: usize, index: usize) -> u32 {
+        self.in_play_pokemon[player][index]
+            .as_ref()
+            .unwrap()
+            .get_remaining_hp()
+    }
+
+    pub(crate) fn remove_card_from_hand(&mut self, current_player: usize, card: &Card) {
+        let index = self.hands[current_player]
+            .iter()
+            .position(|x| x == card)
+            .expect("Player hand should contain card to remove");
+        self.hands[current_player].swap_remove(index);
+    }
+
+    pub(crate) fn remove_card_from_deck(&mut self, player: usize, card: &Card) {
+        let pos = self.decks[player]
+            .cards
+            .iter()
+            .position(|c| c == card)
+            .expect("Evolution card should be in deck");
+        self.decks[player].cards.remove(pos);
+    }
+
+    pub(crate) fn discard_card_from_hand(&mut self, current_player: usize, card: &Card) {
+        self.remove_card_from_hand(current_player, card);
+        self.discard_piles[current_player].push(card.clone());
+    }
+
+    /// Returns an iterator over supporter cards in a player's hand
+    pub(crate) fn iter_hand_supporters(&self, player: usize) -> impl Iterator<Item = &Card> {
+        self.hands[player].iter().filter(|card| card.is_support())
+    }
+
+    pub(crate) fn maybe_draw_card(&mut self, player: usize) {
+        if self.hands[player].len() >= 10 {
+            debug!(
+                "Player {} cannot draw a card, hand is full (10 cards)",
+                player + 1
+            );
+            return;
+        }
+        if let Some(card) = self.decks[player].draw() {
+            self.hands[player].push(card.clone());
+            debug!(
+                "Player {} drew: {:?}, now hand is: {:?} and deck has {} cards",
+                player + 1,
+                canonical_name(&card),
+                to_canonical_names(&self.hands[player]),
+                self.decks[player].cards.len()
+            );
+        } else {
+            debug!("Player {} cannot draw a card, deck is empty", player + 1);
+        }
+    }
+
+    pub(crate) fn transfer_card_from_deck_to_hand(&mut self, player: usize, card: &Card) {
+        // Remove from deck and add to hand
+        let pos = self.decks[player]
+            .cards
+            .iter()
+            .position(|c| c == card)
+            .expect("Card must exist in deck to transfer to hand");
+        self.decks[player].cards.remove(pos);
+        self.hands[player].push(card.clone());
+    }
+
+    pub(crate) fn transfer_card_from_hand_to_deck(&mut self, player: usize, card: &Card) {
+        // Remove from hand and add to deck
+        let pos = self.hands[player]
+            .iter()
+            .position(|c| c == card)
+            .expect("Card must exist in hand to transfer to deck");
+        self.hands[player].remove(pos);
+        self.decks[player].cards.push(card.clone());
+    }
+
+    pub(crate) fn iter_deck_pokemon(&self, player: usize) -> impl Iterator<Item = &Card> {
+        self.decks[player]
+            .cards
+            .iter()
+            .filter(|card| matches!(card, Card::Pokemon(_)))
+    }
+
+    pub fn iter_hand_pokemon(&self, player: usize) -> impl Iterator<Item = &Card> {
+        self.hands[player]
+            .iter()
+            .filter(|card| matches!(card, Card::Pokemon(_)))
+    }
+
+    /// Rotates `player`'s energy zone: the previously-visible `next` becomes the new `current`
+    /// (the energy attachable this turn), and a fresh `next` is rolled from the deck's energy
+    /// types using the shared rng. Called from `advance_turn` for the player about to take their
+    /// turn.
+    pub(crate) fn rotate_energy_zone(&mut self, player: usize, rng: &mut impl Rng) {
+        self.energy_zone[player].current = self.energy_zone[player].next.take();
+        self.energy_zone[player].next = Some(roll_energy(&self.decks[player], rng));
+    }
+
+    pub(crate) fn end_turn_maintenance(&mut self) {
+        // Maintain PlayedCard state for _all_ players
+        for i in 0..2 {
+            self.in_play_pokemon[i].iter_mut().for_each(|x| {
+                if let Some(played_card) = x {
+                    played_card.end_turn_maintenance();
+                }
+            });
+        }
+
+        self.has_played_support = false;
+        self.has_retreated = false;
+        self.has_played_stadium = false;
+        self.has_used_stadium[self.current_player] = false;
+        self.has_used_victory_star[self.current_player] = false;
+        self.has_used_luxury_coin[self.current_player] = false;
+    }
+
+    /// Clear status conditions from energy-bearing Pokémon on a player's side.
+    /// `energy_type` restricts which Pokémon are cured:
+    ///   - `None`    → any energy (Soothing Wind / Ogerpon ex)
+    ///   - `Some(t)` → only Pokémon that have that specific energy type attached (Flower Shield / Comfey)
+    pub(crate) fn apply_soothing_wind_for_player(
+        &mut self,
+        player: usize,
+        energy_type: Option<&EnergyType>,
+    ) {
+        for slot in self.in_play_pokemon[player].iter_mut().flatten() {
+            let is_protected = match energy_type {
+                None => !slot.attached_energy.is_empty(),
+                Some(t) => slot.attached_energy.contains(t),
+            };
+            if is_protected {
+                slot.cure_status_conditions();
+            }
+        }
+    }
+
+    /// In-play index of a Pokémon whose coin-reflip Ability (`mechanic`) is available to `player`
+    /// this turn, if any. Neither Victory Star nor Luxury Coin has an Active-Spot restriction, so
+    /// a holder anywhere in play qualifies.
+    pub(crate) fn available_coin_reflip_idx(
+        &self,
+        player: usize,
+        mechanic: &AbilityMechanic,
+    ) -> Option<usize> {
+        if self.coin_reflip_used(player, mechanic)? {
+            return None;
+        }
+        self.enumerate_in_play_pokemon(player)
+            .find(|(_, pokemon)| pokemon.has_ability(mechanic))
+            .map(|(idx, _)| idx)
+    }
+
+    /// Whether `player` has already used this coin-reflip Ability this turn. `None` if `mechanic`
+    /// is not a coin-reflip Ability.
+    fn coin_reflip_used(&self, player: usize, mechanic: &AbilityMechanic) -> Option<bool> {
+        match mechanic {
+            AbilityMechanic::VictoryStarReflip => Some(self.has_used_victory_star[player]),
+            AbilityMechanic::LuxuryCoinReflip => Some(self.has_used_luxury_coin[player]),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn set_pending_coin_reflip(&mut self, pending: PendingCoinReflip) {
+        self.pending_coin_reflip = Some(pending);
+    }
+
+    pub(crate) fn take_pending_coin_reflip(&mut self) -> Option<PendingCoinReflip> {
+        self.pending_coin_reflip.take()
+    }
+
+    pub(crate) fn mark_coin_reflip_used(&mut self, player: usize, mechanic: &AbilityMechanic) {
+        match mechanic {
+            AbilityMechanic::VictoryStarReflip => self.has_used_victory_star[player] = true,
+            AbilityMechanic::LuxuryCoinReflip => self.has_used_luxury_coin[player] = true,
+            _ => {}
+        }
+    }
+
+    pub(crate) fn set_pending_will_first_heads(&mut self) {
+        self.add_turn_effect(TurnEffect::ForceFirstHeads, 0);
+    }
+
+    pub(crate) fn has_pending_will_first_heads(&self) -> bool {
+        self.get_current_turn_effects()
+            .iter()
+            .any(|effect| matches!(effect, TurnEffect::ForceFirstHeads))
+    }
+
+    pub(crate) fn consume_pending_will_first_heads(&mut self) -> bool {
+        if let Some(turn_effects) = self.turn_effects.get_mut(&self.turn_count) {
+            if let Some(pos) = turn_effects
+                .iter()
+                .position(|effect| matches!(effect, TurnEffect::ForceFirstHeads))
+            {
+                turn_effects.remove(pos);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Adds an effect card that will remain active for a specified number of turns.
+    ///
+    /// # Arguments
+    ///
+    /// * `effect` - The effect to be added.
+    /// * `duration` - The number of turns the effect should remain active.
+    ///   0 means current turn only,
+    ///   1 means current turn and the next turn, etc.
+    pub(crate) fn add_turn_effect(&mut self, effect: TurnEffect, duration: u8) {
+        for turn_offset in 0..(duration + 1) {
+            let target_turn = self.turn_count + turn_offset;
+            self.turn_effects
+                .entry(target_turn)
+                .or_default()
+                .push(effect.clone());
+            trace!(
+                "Adding effect {:?} for {} turns, current turn: {}, target turn: {}",
+                effect,
+                duration,
+                self.turn_count,
+                target_turn
+            );
+        }
+    }
+
+    /// Retrieves all effects scheduled for the current turn
+    pub(crate) fn get_current_turn_effects(&self) -> Vec<TurnEffect> {
+        self.turn_effects
+            .get(&self.turn_count)
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    pub fn enumerate_in_play_pokemon(
+        &self,
+        player: usize,
+    ) -> impl Iterator<Item = (usize, &PlayedCard)> {
+        self.in_play_pokemon[player]
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| x.is_some())
+            .map(|(i, x)| (i, x.as_ref().unwrap()))
+    }
+
+    // e.g. returns (1, Weezing) if player 1 has Weezing in 1st bench slot
+    pub fn enumerate_bench_pokemon(
+        &self,
+        player: usize,
+    ) -> impl Iterator<Item = (usize, &PlayedCard)> {
+        self.enumerate_in_play_pokemon(player)
+            .filter(|(i, _)| *i != 0)
+    }
+
+    pub(crate) fn queue_draw_action(&mut self, actor: usize, amount: u8) {
+        self.move_generation_stack
+            .push((actor, vec![SimpleAction::DrawCard { amount }]));
+    }
+
+    pub fn maybe_get_active(&self, player: usize) -> Option<&PlayedCard> {
+        self.in_play_pokemon[player][0].as_ref()
+    }
+
+    pub fn get_active(&self, player: usize) -> &PlayedCard {
+        self.in_play_pokemon[player][0]
+            .as_ref()
+            .expect("Active Pokemon should be there")
+    }
+
+    pub(crate) fn get_active_mut(&mut self, player: usize) -> &mut PlayedCard {
+        self.in_play_pokemon[player][0]
+            .as_mut()
+            .expect("Active Pokemon should be there")
+    }
+
+    /// "Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon."
+    /// Two cards share this wording and therefore this one predicate:
+    ///   - the Clear Veil Tool (B4 149), for the Pokémon it is attached to;
+    ///   - Regice's Crystal Body Ability (A2 034), for Regice itself.
+    ///
+    /// What counts as an "effect": the Special Conditions and the `CardEffect`s an attack imposes
+    /// on the targeted Pokémon — the two channels every attack uses to place something *on* a
+    /// Pokémon, i.e. `apply_status_condition` and `add_effect_to_in_play`. Damage, and the Knock
+    /// Out that may follow from it, are explicitly *not* effects, so a shielded Pokémon still
+    /// takes full damage and can still be Knocked Out.
+    ///
+    /// An attack's effects are applied while its user is `current_player`, so a target belonging
+    /// to the *other* player is exactly "done to it by the opponent's attack". Effects a player
+    /// applies to their own Pokémon (their own attack's self-buffs, their own Trainer cards, a
+    /// Tool like Poison Barb punishing them for attacking) are untouched, matching the card text.
+    pub(crate) fn is_shielded_from_opponent_attack_effects(
+        &self,
+        player: usize,
+        in_play_idx: usize,
+    ) -> bool {
+        if player == self.current_player {
+            return false;
+        }
+        self.in_play_pokemon[player][in_play_idx]
+            .as_ref()
+            .is_some_and(|pokemon| {
+                has_tool(pokemon, crate::card_ids::CardId::B4149ClearVeil)
+                    || pokemon.has_ability(&AbilityMechanic::PreventOpponentAttackEffectsOnSelf)
+            })
+    }
+
+    /// Adds a `CardEffect` to a Pokémon in play, honouring shields that block effects coming from
+    /// the opponent's attacks (Clear Veil / Crystal Body). Prefer this over calling
+    /// `PlayedCard::add_effect` directly whenever the effect is being imposed on a target rather
+    /// than chosen by its owner.
+    pub(crate) fn add_effect_to_in_play(
+        &mut self,
+        player: usize,
+        in_play_idx: usize,
+        effect: CardEffect,
+        duration: u8,
+    ) {
+        if self.is_shielded_from_opponent_attack_effects(player, in_play_idx) {
+            debug!("Clear Veil / Crystal Body: Preventing {effect:?} from the opponent's attack");
+            return;
+        }
+        if let Some(pokemon) = self.in_play_pokemon[player][in_play_idx].as_mut() {
+            pokemon.add_effect(effect, duration);
+        }
+    }
+
+    /// The three Special Conditions that are mutually exclusive. In-app Tips: "Asleep,
+    /// Paralyzed, and Confused cannot stack with each other. If one of these Special Conditions
+    /// is applied, it replaces any of the others." Poisoned and Burned are deliberately absent:
+    /// they "can stack with other Special Conditions".
+    const MUTUALLY_EXCLUSIVE_STATUSES: [StatusCondition; 3] = [
+        StatusCondition::Asleep,
+        StatusCondition::Paralyzed,
+        StatusCondition::Confused,
+    ];
+
+    /// Apply a status condition to a Pokémon in play, enforcing all immunity rules.
+    /// This is the single authoritative path for setting status conditions.
+    pub fn apply_status_condition(
+        &mut self,
+        player: usize,
+        in_play_idx: usize,
+        status: StatusCondition,
+    ) {
+        // In-app Tips, "Special Conditions": "Only Active Pokémon can have Special Conditions
+        // applied to them." Nothing may place one on the Bench — and `apply_activate` clears
+        // them again the moment a Pokémon leaves the Active Spot.
+        if in_play_idx != 0 {
+            debug!("Special Conditions only apply to the Active Pokémon; ignoring {status:?}");
+            return;
+        }
+
+        let Some(pokemon) = self.in_play_pokemon[player][in_play_idx].as_ref() else {
+            return;
+        };
+
+        if pokemon.has_ability(&AbilityMechanic::ImmuneToStatusConditions) {
+            debug!("Fabled Luster: Pokémon is immune to status conditions");
+            return;
+        }
+
+        // Hoothoot's Insomnia: immune to one specific Special Condition.
+        if pokemon.has_ability(&AbilityMechanic::ImmuneToStatusCondition { condition: status }) {
+            debug!("Pokémon is immune to {status:?}");
+            return;
+        }
+
+        // Steel Apron: "The [M] Pokémon this card is attached to ... can't be affected by any
+        // Special Conditions." The immunity only applies to a [M] holder.
+        if has_tool(pokemon, crate::card_ids::CardId::A4153SteelApron)
+            && pokemon.is_type(EnergyType::Metal)
+        {
+            debug!("Steel Apron: Pokémon is immune to status conditions");
+            return;
+        }
+
+        if self.is_shielded_from_opponent_attack_effects(player, in_play_idx) {
+            debug!("Clear Veil / Crystal Body: Preventing a Special Condition from the opponent's attack");
+            return;
+        }
+
+        // SoothingWind (Ogerpon ex) / Flower Shield (Comfey): if any of this player's Pokémon
+        // has the ability, Pokémon meeting the energy requirement are immune to Special Conditions.
+        for p in self.in_play_pokemon[player].iter().flatten() {
+            if let Some(AbilityMechanic::SoothingWind { energy_type }) = p.ability_mechanic() {
+                let is_protected = match energy_type {
+                    None => !pokemon.attached_energy.is_empty(),
+                    Some(t) => pokemon.attached_energy.contains(t),
+                };
+                if is_protected {
+                    debug!(
+                        "SoothingWind: Pokémon with matching energy is immune to status conditions"
+                    );
+                    return;
+                }
+            }
+        }
+
+        let turn_count = self.turn_count;
+        let pokemon = self.in_play_pokemon[player][in_play_idx]
+            .as_mut()
+            .expect("Pokemon was present when the immunity checks ran");
+
+        // Asleep / Paralyzed / Confused replace one another; Poisoned and Burned are untouched.
+        if Self::MUTUALLY_EXCLUSIVE_STATUSES.contains(&status) {
+            for other in Self::MUTUALLY_EXCLUSIVE_STATUSES {
+                if other != status {
+                    pokemon.clear_status_condition(other);
+                }
+            }
+        }
+
+        pokemon.set_status_raw(status);
+
+        // Remember which turn a Paralysis landed on: it recovers at the Checkup that ends its
+        // owner's *next* turn, so the Checkup ending this turn must leave it alone.
+        if status == StatusCondition::Paralyzed {
+            pokemon.set_paralyzed_on_turn(turn_count);
+        }
+    }
+
+    // This function should be called only from turn 1 onwards
+    pub(crate) fn advance_turn(&mut self, rng: &mut StdRng) {
+        debug!(
+            "Ending turn moving from player {} to player {}",
+            self.current_player,
+            (self.current_player + 1) % 2
+        );
+        self.end_turn_pending = false;
+        self.actions_this_turn = 0;
+        self.attack_name_used_last_turn[self.current_player] =
+            self.attack_name_used_this_turn[self.current_player].take();
+        // Close out the ending player's point ledger before handing over, and open the incoming
+        // player's, so "points your opponent got during their last turn" is readable all turn.
+        self.points_gained_during_own_last_turn[self.current_player] = self.points
+            [self.current_player]
+            .saturating_sub(self.points_at_own_turn_start[self.current_player]);
+        self.current_player = (self.current_player + 1) % 2;
+        self.points_at_own_turn_start[self.current_player] = self.points[self.current_player];
+        self.turn_count += 1;
+        if self.turn_count > 30 {
+            self.winner = Some(GameOutcome::Tie);
+            return;
+        }
+        self.end_turn_maintenance();
+        self.queue_draw_action(self.current_player, 1);
+        self.rotate_energy_zone(self.current_player, rng);
+    }
+
+    pub(crate) fn is_game_over(&self) -> bool {
+        self.winner.is_some()
+    }
+
+    pub(crate) fn num_in_play_of_type(&self, player: usize, energy: EnergyType) -> usize {
+        self.enumerate_in_play_pokemon(player)
+            .filter(|(_, x)| x.is_type(energy))
+            .count()
+    }
+
+    pub(crate) fn is_users_first_turn(&self) -> bool {
+        self.turn_count <= 2
+    }
+
+    /// Discards a Pokemon from play, moving it, its evolution chain, and its energies
+    ///  to the discard pile.
+    pub(crate) fn discard_from_play(&mut self, ko_receiver: usize, ko_pokemon_idx: usize) {
+        let ko_pokemon = self.in_play_pokemon[ko_receiver][ko_pokemon_idx]
+            .as_ref()
+            .expect("There should be a Pokemon to discard");
+        let mut cards_to_discard = ko_pokemon.cards_behind.clone();
+        cards_to_discard.extend(ko_pokemon.attached_tools.iter().cloned());
+        cards_to_discard.push(ko_pokemon.card.clone());
+        debug!("Discarding: {cards_to_discard:?}");
+        self.discard_piles[ko_receiver].extend(cards_to_discard);
+        self.discard_energies[ko_receiver].extend(ko_pokemon.attached_energy.iter().cloned());
+        self.in_play_pokemon[ko_receiver][ko_pokemon_idx] = None;
+        self.refresh_double_grass_bonus_for_player(ko_receiver);
+    }
+
+    /// Like `discard_from_play`, but the Pokémon itself (and its evolution chain) goes to its
+    /// owner's hand instead of the discard pile. Any attached Tool and Energy still go to the
+    /// discard — only the Pokémon cards are rescued (e.g. Rescue Scarf).
+    pub(crate) fn return_from_play_to_hand(&mut self, player: usize, in_play_idx: usize) {
+        let played_card = self.in_play_pokemon[player][in_play_idx]
+            .take()
+            .expect("There should be a Pokemon to return to hand");
+        let mut cards_to_hand = played_card.cards_behind.clone();
+        cards_to_hand.push(played_card.card.clone());
+        self.hands[player].extend(cards_to_hand);
+        self.discard_piles[player].extend(played_card.attached_tools.iter().cloned());
+        self.discard_energies[player].extend(played_card.attached_energy.iter().cloned());
+        self.refresh_double_grass_bonus_for_player(player);
+    }
+
+    /// Removes every Tool attached to a Pokémon and puts them into the discard pile. This is the
+    /// "discard **all** Pokémon Tools" wording (Guzma, Klefki's Dismantling Keys, Weezing's
+    /// Poisonous Extermination). Returns how many Tools were discarded.
+    pub(crate) fn discard_all_tools(&mut self, player: usize, in_play_idx: usize) -> usize {
+        let pokemon = self.in_play_pokemon[player][in_play_idx]
+            .as_mut()
+            .expect("Pokemon should be there if discarding tools");
+        let tools = pokemon.take_tools();
+        let discarded = tools.len();
+        self.discard_piles[player].extend(tools);
+        discarded
+    }
+
+    /// Discards one specific attached Tool by slot. This is the "discard **a** Pokémon Tool card"
+    /// wording (Field Blower), where the player picks which one.
+    pub(crate) fn discard_tool_at(&mut self, player: usize, in_play_idx: usize, tool_idx: usize) {
+        let pokemon = self.in_play_pokemon[player][in_play_idx]
+            .as_mut()
+            .expect("Pokemon should be there if discarding tool");
+        assert!(
+            tool_idx < pokemon.attached_tools.len(),
+            "Expected tool slot {tool_idx} to be occupied when discarding tool"
+        );
+        let tool_card = pokemon.attached_tools.remove(tool_idx);
+        self.discard_piles[player].push(tool_card);
+    }
+
+    /// Discards the named Tool from a Pokémon, for Tools that remove *themselves* when they fire
+    /// (Lum Berry, Sitrus Berry) or on a timer (Metal Core Barrier). With two Tool slots the
+    /// sibling Tool has to survive, so these cannot go through `discard_all_tools`.
+    pub(crate) fn discard_tool_by_id(
+        &mut self,
+        player: usize,
+        in_play_idx: usize,
+        tool_id: crate::card_ids::CardId,
+    ) {
+        let pokemon = self.in_play_pokemon[player][in_play_idx]
+            .as_ref()
+            .expect("Pokemon should be there if discarding tool");
+        let tool_idx = crate::tools::tool_position(pokemon, tool_id)
+            .expect("Expected the tool to be attached when discarding it");
+        self.discard_tool_at(player, in_play_idx, tool_idx);
+    }
+
+    pub(crate) fn discard_from_active(&mut self, actor: usize, to_discard: &[EnergyType]) {
+        self.discard_energy_from_in_play(actor, 0, to_discard);
+    }
+
+    pub(crate) fn discard_energy_from_in_play(
+        &mut self,
+        actor: usize,
+        in_play_idx: usize,
+        to_discard: &[EnergyType],
+    ) {
+        let pokemon = self.in_play_pokemon[actor][in_play_idx]
+            .as_mut()
+            .expect("Pokemon should be there if discarding energy");
+        let mut discarded: Vec<EnergyType> = Vec::new();
+        for energy in to_discard {
+            if let Some(pos) = pokemon.attached_energy.iter().position(|e| *e == *energy) {
+                pokemon.attached_energy.swap_remove(pos);
+                discarded.push(*energy);
+            } else {
+                panic!("Pokemon does not have energy to discard");
+            }
+        }
+        if !discarded.is_empty() {
+            self.discard_energies[actor].extend(discarded);
+        }
+    }
+
+    /// Triggers promotion from bench or declares winner if no bench pokemon available.
+    /// This should be called when the active spot becomes empty (e.g., after KO or discard).
+    pub(crate) fn trigger_promotion_or_declare_winner(&mut self, player_with_empty_active: usize) {
+        let enumerated_bench_pokemon = self
+            .enumerate_bench_pokemon(player_with_empty_active)
+            .collect::<Vec<_>>();
+
+        if enumerated_bench_pokemon.is_empty() {
+            // If no bench pokemon, opponent wins
+            let opponent = (player_with_empty_active + 1) % 2;
+            self.winner = Some(GameOutcome::Win(opponent));
+            debug!("Player {player_with_empty_active} lost due to no bench pokemon");
+        } else {
+            // Queue up promotion actions
+            let possible_moves = self
+                .enumerate_bench_pokemon(player_with_empty_active)
+                .map(|(i, _)| SimpleAction::Activate {
+                    player: player_with_empty_active,
+                    in_play_idx: i,
+                })
+                .collect::<Vec<_>>();
+            debug!("Triggering Activate moves: {possible_moves:?} to player {player_with_empty_active}");
+
+            // Promotion must displace a queued EndTurn: processing that frame first
+            // can read an empty Active Spot. Other effect frames retain their
+            // established ordering so their follow-up choices are not skipped.
+            let queued_end_turn = self
+                .move_generation_stack
+                .last()
+                .is_some_and(|(_, choices)| {
+                    choices.len() == 1 && matches!(choices[0], SimpleAction::EndTurn)
+                });
+            if queued_end_turn {
+                self.move_generation_stack
+                    .push((player_with_empty_active, possible_moves));
+            } else {
+                self.move_generation_stack
+                    .insert(0, (player_with_empty_active, possible_moves));
+            }
+        }
+    }
+
+    // =========================================================================
+    // Test Helper Methods
+    // These methods are public for integration tests but should be used carefully
+    // =========================================================================
+
+    /// Set up multiple in-play pokemon for both players at once.
+    /// For each side: Index 0 = active, 1..3 = bench. Any board slot not provided is cleared
+    /// to `None` — this makes test setups deterministic regardless of what setup-phase
+    /// placements left behind.
+    pub fn set_board(&mut self, player_0: Vec<PlayedCard>, player_1: Vec<PlayedCard>) {
+        self.in_play_pokemon[0] = [None, None, None, None];
+        self.in_play_pokemon[1] = [None, None, None, None];
+        for (i, card) in player_0.into_iter().enumerate() {
+            self.in_play_pokemon[0][i] = Some(card);
+        }
+        for (i, card) in player_1.into_iter().enumerate() {
+            self.in_play_pokemon[1][i] = Some(card);
+        }
+        self.refresh_double_grass_bonus_all();
+    }
+
+    /// Set the flag indicating a Pokemon was KO'd by opponent's attack last turn.
+    /// Used for testing Marshadow's Revenge attack and similar mechanics. The KO'd Pokemon's
+    /// energy type is left unknown, so type-restricted mechanics (e.g. Zarude's Dark Vengeance)
+    /// won't consider it; test those by playing out an actual KO.
+    pub fn set_knocked_out_by_opponent_attack_last_turn(&mut self, value: bool) {
+        self.knocked_out_by_opponent_attack_last_turn = value;
+        if !value {
+            self.knocked_out_types_last_turn.clear();
+        }
+    }
+
+    /// Get the flag indicating a Pokemon was KO'd by opponent's attack last turn.
+    pub fn get_knocked_out_by_opponent_attack_last_turn(&self) -> bool {
+        self.knocked_out_by_opponent_attack_last_turn
+    }
+
+    /// Whether one of the current player's Pokemon was KO'd by an opponent's attack last turn.
+    /// `energy_type` optionally restricts the check to KO'd Pokemon of that type.
+    pub(crate) fn was_knocked_out_by_opponent_attack_last_turn(
+        &self,
+        energy_type: Option<EnergyType>,
+    ) -> bool {
+        match energy_type {
+            Some(energy_type) => self.knocked_out_types_last_turn.contains(&energy_type),
+            None => self.knocked_out_by_opponent_attack_last_turn,
+        }
+    }
+
+    pub(crate) fn record_knocked_out_by_opponent_attack(&mut self, energy_types: &[EnergyType]) {
+        self.knocked_out_by_opponent_attack_this_turn = true;
+        self.knocked_out_types_this_turn.extend(energy_types);
+    }
+
+    /// Records that one of `player`'s own Pokemon was Knocked Out (for Kingambit's Overlord's
+    /// Blade, which counts every such knockout over the whole game).
+    pub(crate) fn record_own_knockout(&mut self, player: usize) {
+        self.own_knocked_out_count[player] = self.own_knocked_out_count[player].saturating_add(1);
+    }
+
+    /// How many of `player`'s own Pokemon have been Knocked Out so far this game.
+    pub(crate) fn count_own_knockouts(&self, player: usize) -> u32 {
+        self.own_knocked_out_count[player]
+    }
+
+    /// How many points `player` gained during their own previous turn.
+    pub(crate) fn points_gained_during_last_turn(&self, player: usize) -> u32 {
+        self.points_gained_during_own_last_turn[player] as u32
+    }
+
+    /// Poisons `player`'s Pokemon at `in_play_idx` such that Checkup deals `amount` damage instead
+    /// of the usual 10 (e.g. Toxicroak's Toxic, Toxapex's Severe Poison). If the Pokemon turns out
+    /// to be immune to Special Conditions the override is not recorded either.
+    pub(crate) fn apply_poison_with_damage(
+        &mut self,
+        player: usize,
+        in_play_idx: usize,
+        amount: u32,
+    ) {
+        self.apply_status_condition(player, in_play_idx, StatusCondition::Poisoned);
+        if let Some(pokemon) = self.in_play_pokemon[player][in_play_idx].as_mut() {
+            if pokemon.is_poisoned() {
+                pokemon.set_poison_damage_override(amount);
+            }
+        }
+    }
+
+    pub(crate) fn record_attack_used(&mut self, player: usize, attack_name: String) {
+        *self.attack_name_used_count[player]
+            .entry(attack_name.clone())
+            .or_insert(0) += 1;
+        self.attack_name_used_this_turn[player] = Some(attack_name);
+    }
+
+    pub(crate) fn used_attack_during_own_last_turn(
+        &self,
+        player: usize,
+        attack_name: &str,
+    ) -> bool {
+        self.attack_name_used_last_turn[player].as_deref() == Some(attack_name)
+    }
+
+    pub(crate) fn count_attack_used_this_game(&self, player: usize, attack_name: &str) -> u32 {
+        self.attack_name_used_count[player]
+            .get(attack_name)
+            .copied()
+            .unwrap_or(0)
+    }
+
+    pub fn set_attack_name_used_last_turn(&mut self, player: usize, attack_name: Option<String>) {
+        self.attack_name_used_last_turn[player] = attack_name;
+    }
+
+    /// Generate all possible actions for the current game state.
+    /// Returns a tuple of (actor, actions) where actor is the player who must act.
+    pub fn generate_possible_actions(&self) -> (usize, Vec<crate::actions::Action>) {
+        move_generation::generate_possible_actions(self)
+    }
+}
+
+/// The (type, +HP) bonuses granted by `player`'s in-play Pokémon (Lilligant's Toughness Aroma).
+fn collect_typed_hp_bonuses(state: &State, player: usize) -> Vec<(EnergyType, u32)> {
+    state
+        .enumerate_in_play_pokemon(player)
+        .filter_map(|(_, pokemon)| match pokemon.ability_mechanic() {
+            Some(AbilityMechanic::IncreaseHpOfYourTypedPokemon {
+                energy_type,
+                amount,
+            }) => Some((*energy_type, *amount)),
+            _ => None,
+        })
+        .collect()
+}
+
+fn format_cards(played_cards: &[Option<PlayedCard>]) -> Vec<String> {
+    played_cards.iter().map(format_card).collect()
+}
+
+fn format_card(x: &Option<PlayedCard>) -> String {
+    match x {
+        Some(played_card) => format!(
+            "{}({}hp,{:?})",
+            played_card.get_name(),
+            played_card.get_remaining_hp(),
+            played_card.attached_energy.len(),
+        ),
+        None => "".to_string(),
+    }
+}
+
+fn canonical_name(card: &Card) -> &String {
+    match card {
+        Card::Pokemon(pokemon_card) => &pokemon_card.name,
+        Card::Trainer(trainer_card) => &trainer_card.name,
+    }
+}
+
+fn to_canonical_names(cards: &[Card]) -> Vec<&String> {
+    cards.iter().map(canonical_name).collect()
+}
+
+/// Picks a random energy type from the deck's declared energy set, using the supplied rng.
+/// Decks are guaranteed by `Deck::from_string` to have at least one energy type.
+fn roll_energy(deck: &Deck, rng: &mut impl Rng) -> EnergyType {
+    *deck
+        .energy_types
+        .choose(rng)
+        .expect("Decks should have at least 1 energy")
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        card_ids::CardId, database::get_card_by_enum, deck::is_basic, hooks::to_playable_card,
+        test_support::load_test_decks,
+    };
+
+    use super::*;
+
+    #[test]
+    fn promotion_is_prioritized_over_a_queued_end_turn() {
+        let mut state = State::default();
+        state.turn_count = 1;
+        state.in_play_pokemon[0][1] = Some(PlayedCard::from_id(CardId::A1001Bulbasaur));
+        state
+            .move_generation_stack
+            .push((0, vec![SimpleAction::EndTurn]));
+
+        state.trigger_promotion_or_declare_winner(0);
+
+        let (actor, actions) = state.generate_possible_actions();
+        assert_eq!(actor, 0);
+        assert!(actions.iter().all(|action| {
+            matches!(
+                action.action,
+                SimpleAction::Activate {
+                    player: 0,
+                    in_play_idx: 1
+                }
+            )
+        }));
+    }
+
+    #[test]
+    fn test_draw_transfers_to_hand() {
+        let (deck_a, deck_b) = load_test_decks();
+        let mut state = State::new(&deck_a, &deck_b);
+
+        assert_eq!(state.decks[0].cards.len(), 20);
+        assert_eq!(state.hands[0].len(), 0);
+
+        state.maybe_draw_card(0);
+
+        assert_eq!(state.decks[0].cards.len(), 19);
+        assert_eq!(state.hands[0].len(), 1);
+    }
+
+    #[test]
+    fn test_players_start_with_five_cards_one_of_which_is_basic() {
+        let (deck_a, deck_b) = load_test_decks();
+        let state = State::initialize(&deck_a, &deck_b, &mut rand::thread_rng());
+
+        assert_eq!(state.hands[0].len(), 5);
+        assert_eq!(state.hands[1].len(), 5);
+        assert_eq!(state.decks[0].cards.len(), 15);
+        assert_eq!(state.decks[1].cards.len(), 15);
+        assert!(state.hands[0].iter().any(is_basic));
+        assert!(state.hands[1].iter().any(is_basic));
+    }
+
+    #[test]
+    fn test_discard_from_play_basic_pokemon() {
+        // Arrange: Create a state with a basic Pokemon in play
+        let (deck_a, deck_b) = load_test_decks();
+        let mut state = State::new(&deck_a, &deck_b);
+
+        let bulbasaur_card = get_card_by_enum(CardId::A1001Bulbasaur);
+        let played_bulbasaur = to_playable_card(&bulbasaur_card, false);
+
+        // Place Bulbasaur in active slot for player 0
+        state.in_play_pokemon[0][0] = Some(played_bulbasaur.clone());
+
+        // Attach some energy to test energy discard
+        state.attach_energy_from_zone(0, 0, EnergyType::Grass, 2, false);
+
+        // Verify initial state
+        assert!(state.in_play_pokemon[0][0].is_some());
+        assert_eq!(state.discard_piles[0].len(), 0);
+        assert_eq!(state.discard_energies[0].len(), 0);
+
+        // Act: Discard the Pokemon from play
+        state.discard_from_play(0, 0);
+
+        // Assert: Pokemon slot is now empty
+        assert!(state.in_play_pokemon[0][0].is_none());
+
+        // Assert: Card is in discard pile
+        assert_eq!(state.discard_piles[0].len(), 1);
+        assert_eq!(state.discard_piles[0][0], bulbasaur_card);
+
+        // Assert: Energy is in discard energy pile
+        assert_eq!(state.discard_energies[0].len(), 2);
+        assert_eq!(state.discard_energies[0][0], EnergyType::Grass);
+        assert_eq!(state.discard_energies[0][1], EnergyType::Grass);
+    }
+
+    /// Both players' energy zones start with `current = None` (turn 1 has no energy to
+    /// attach for the player going first) but `next = Some(_)` so that each side can
+    /// preview the energy they'll receive on their first attaching turn.
+    #[test]
+    fn test_initialize_populates_next_energy_for_both_players() {
+        use rand::SeedableRng;
+        let (deck_a, deck_b) = load_test_decks();
+        let mut rng = StdRng::seed_from_u64(7);
+        let state = State::initialize(&deck_a, &deck_b, &mut rng);
+
+        assert!(state.energy_zone[0].current.is_none());
+        assert!(state.energy_zone[1].current.is_none());
+        assert!(state.energy_zone[0].next.is_some());
+        assert!(state.energy_zone[1].next.is_some());
+
+        // The rolled energies must come from each deck's declared energy set.
+        let n0 = state.energy_zone[0].next.unwrap();
+        let n1 = state.energy_zone[1].next.unwrap();
+        assert!(state.decks[0].energy_types.contains(&n0));
+        assert!(state.decks[1].energy_types.contains(&n1));
+    }
+
+    /// Rotating a queue promotes `next` into `current` and rolls a fresh `next`.
+    #[test]
+    fn test_rotate_energy_zone_shifts_queue() {
+        use rand::SeedableRng;
+        let (deck_a, deck_b) = load_test_decks();
+        let mut rng = StdRng::seed_from_u64(11);
+        let mut state = State::initialize(&deck_a, &deck_b, &mut rng);
+
+        let before = state.energy_zone[0].next.unwrap();
+        state.rotate_energy_zone(0, &mut rng);
+
+        assert_eq!(state.energy_zone[0].current, Some(before));
+        assert!(state.energy_zone[0].next.is_some());
+    }
+
+    /// Two independent runs with the same seed produce identical energy_zone trajectories.
+    /// This locks in the reproducibility guarantee.
+    #[test]
+    fn test_energy_generation_is_reproducible_under_shared_rng() {
+        use rand::SeedableRng;
+        let (deck_a, deck_b) = load_test_decks();
+
+        let mut rng_a = StdRng::seed_from_u64(123);
+        let mut state_a = State::initialize(&deck_a, &deck_b, &mut rng_a);
+        state_a.rotate_energy_zone(1, &mut rng_a);
+        state_a.rotate_energy_zone(0, &mut rng_a);
+
+        let mut rng_b = StdRng::seed_from_u64(123);
+        let mut state_b = State::initialize(&deck_a, &deck_b, &mut rng_b);
+        state_b.rotate_energy_zone(1, &mut rng_b);
+        state_b.rotate_energy_zone(0, &mut rng_b);
+
+        assert_eq!(state_a.energy_zone, state_b.energy_zone);
+    }
+
+    #[test]
+    fn test_maybe_draw_card_respects_10_card_hand_limit() {
+        let (deck_a, deck_b) = load_test_decks();
+        let mut state = State::new(&deck_a, &deck_b);
+
+        for _ in 0..10 {
+            state.maybe_draw_card(0);
+        }
+        assert_eq!(state.hands[0].len(), 10);
+
+        // 11th draw should be a no-op
+        state.maybe_draw_card(0);
+        assert_eq!(state.hands[0].len(), 10);
+        assert_eq!(state.decks[0].cards.len(), 10);
+    }
+
+    #[test]
+    fn test_advance_turn_declares_tie_after_turn_30() {
+        use rand::SeedableRng;
+        let (deck_a, deck_b) = load_test_decks();
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut state = State::initialize(&deck_a, &deck_b, &mut rng);
+
+        state.turn_count = 30;
+        state.advance_turn(&mut rng);
+
+        assert_eq!(state.winner, Some(GameOutcome::Tie));
+        assert!(state.is_game_over());
+    }
+}

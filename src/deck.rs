@@ -1,0 +1,391 @@
+use rand::seq::SliceRandom;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::fs;
+use std::hash::{Hash, Hasher};
+
+use crate::card_ids::CardId;
+use crate::database::get_card_by_enum;
+use crate::models::{Card, EnergyType};
+
+/// Represents a deck of cards.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct Deck {
+    pub cards: Vec<Card>,
+    pub(crate) energy_types: Vec<EnergyType>,
+}
+
+impl Hash for Deck {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.cards.hash(state);
+        // Normalize energy ordering so deck hashes are stable across processes.
+        let mut energy_types: Vec<_> = self.energy_types.iter().collect();
+        energy_types.sort();
+        energy_types.hash(state);
+    }
+}
+
+impl Deck {
+    /// Configured Energy Zone types, known to the deck's owner.
+    pub fn energy_types(&self) -> &[EnergyType] {
+        &self.energy_types
+    }
+
+    /// Parses a deck file and returns a `Deck` struct with cards flattened based on their counts.
+    pub fn from_file(file_path: &str) -> Result<Self, String> {
+        let contents = fs::read_to_string(file_path)
+            .map_err(|err| format!("Failed to read file {file_path}: {err}"))?;
+
+        Self::from_string(&contents)
+    }
+
+    pub fn from_string(contents: &str) -> Result<Self, String> {
+        let mut energy_types = HashSet::new();
+        let mut cards = Vec::new();
+        for line in contents.lines() {
+            // if line is empty or starts with "Pokemon:" or "Trainer:, skip it
+            let trimmed = line.trim();
+            if trimmed.is_empty()
+                || trimmed.starts_with("Pokémon:")
+                || trimmed.starts_with("Trainer:")
+            {
+                continue;
+            }
+            if trimmed.starts_with("Energy:") {
+                let energy_list = trimmed
+                    .strip_prefix("Energy:")
+                    .expect("Energy: line should start with Energy:")
+                    .trim();
+
+                if energy_list.is_empty() {
+                    return Err("Energy: line should have at least one energy type".to_string());
+                }
+
+                for energy_type in energy_list.split(',').map(str::trim) {
+                    if energy_type.is_empty() {
+                        continue;
+                    }
+
+                    energy_types
+                        .insert(EnergyType::from_str(energy_type).expect("Invalid energy type"));
+                }
+                continue;
+            }
+
+            let (count, card) = Card::from_str_with_count(trimmed)?;
+            cards.extend(vec![card; count as usize]);
+        }
+
+        // If empty energy types set, populate it with the energy types from the cards
+        if energy_types.is_empty() {
+            cards.iter().for_each(|x| {
+                if let Card::Pokemon(pokemon_card) = x {
+                    energy_types.insert(pokemon_card.energy_type);
+                }
+            });
+        }
+
+        let mut energy_types: Vec<_> = energy_types.into_iter().collect();
+        energy_types.sort();
+
+        Ok(Self {
+            cards,
+            energy_types,
+        })
+    }
+
+    pub fn is_valid(&self) -> bool {
+        let basic = self.cards.iter().filter(|x| x.is_basic()).count();
+        let has_correct_size = self.cards.len() == 20 && basic >= 1;
+
+        if !has_correct_size {
+            return false;
+        }
+
+        // The Energy Zone has to be able to generate what the deck declares, so every
+        // energy must be selectable (i.e. not Dragon or Colorless). A Dragon deck is
+        // legal, but it is built around the energy its attacks actually cost.
+        if self.energy_types.is_empty() || !self.energy_types.iter().all(EnergyType::is_selectable)
+        {
+            return false;
+        }
+
+        // Check that no card name appears more than twice
+        let mut card_counts = std::collections::HashMap::new();
+        for card in &self.cards {
+            let count = card_counts.entry(card.get_name()).or_insert(0);
+            *count += 1;
+            if *count > 2 {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Draws a card from the deck.
+    /// Returns `Some(Card)` if the deck is not empty, otherwise returns `None`.
+    pub fn draw(&mut self) -> Option<Card> {
+        if self.cards.is_empty() {
+            None
+        } else {
+            Some(self.cards.remove(0))
+        }
+    }
+
+    /// Shuffles the deck of cards.
+    pub fn shuffle(&mut self, initial_shuffle: bool, rng: &mut impl Rng) {
+        if initial_shuffle {
+            // Ensure there is at least 1 basic pokemon in the initial 5 cards
+            let (mut matching, mut non_matching): (Vec<_>, Vec<_>) =
+                self.cards.clone().into_iter().partition(is_basic);
+            matching.shuffle(rng);
+            non_matching.shuffle(rng);
+
+            let shuffled_cards: Vec<Card> =
+                vec![matching.pop().expect("Decks must have at least 1 basic")];
+
+            let mut remaining = [matching, non_matching].concat();
+            remaining.shuffle(rng);
+
+            self.cards = [shuffled_cards, remaining].concat();
+        } else {
+            self.cards.shuffle(rng);
+        }
+    }
+}
+
+impl Card {
+    /// Parses a line and returns a tuple of count and a `Card`.
+    pub fn from_str_with_count(line: &str) -> Result<(u32, Card), String> {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() < 3 {
+            return Err(format!("Invalid card format: {line}"));
+        }
+
+        let count = parts[0]
+            .parse::<u32>()
+            .map_err(|_| format!("Invalid count: {}", parts[0]))?;
+        let set = parts[parts.len() - 2];
+        // maybe pad number with 0 on the left if missing 0s
+        let number = parts[parts.len() - 1];
+        let padded_number = format!("{number:0>3}");
+        let id = format!("{set} {padded_number}");
+
+        let card_id =
+            CardId::from_card_id(&id).ok_or_else(|| format!("Card ID not found for id: {id}"))?;
+        let card = get_card_by_enum(card_id);
+
+        Ok((count, card.clone()))
+    }
+}
+
+pub fn is_basic(card: &Card) -> bool {
+    card.is_basic()
+}
+
+#[cfg(test)]
+mod tests {
+    use rand::thread_rng;
+
+    use super::*;
+
+    /// The Energy Zone cannot generate Dragon or Colorless energy, so a deck
+    /// declaring either is not buildable in-game. This is easy to get wrong when
+    /// energy is inferred from a deck's Pokemon types rather than its attack costs:
+    /// an all-Dragon deck yields `Energy: Dragon`, which is not playable.
+    #[test]
+    fn test_is_valid_rejects_non_selectable_energy() {
+        let cards = "\n1 A1 225\n1 A2 150\n1 A2b 70\n2 A3 66\n1 A4 66\n1 B1 223\n2 B1 225\n2 B2b 51\n2 B4 117\n1 B4 120\n2 B4 155\n2 P-A 5\n2 P-A 7";
+
+        for energy in ["Dragon", "Colorless"] {
+            let deck = Deck::from_string(&format!("Energy: {energy}{cards}"))
+                .expect("deck should still parse");
+            assert_eq!(deck.cards.len(), 20);
+            assert!(
+                deck.cards.iter().filter(|c| c.is_basic()).count() >= 1,
+                "deck should otherwise be legal, so only the energy is at fault"
+            );
+            assert!(!deck.is_valid(), "{energy} energy zone should be rejected");
+        }
+
+        // Same 20 cards, but declaring energy the Energy Zone can actually make.
+        let deck = Deck::from_string(&format!("Energy: Fire, Lightning{cards}")).unwrap();
+        assert!(deck.is_valid());
+
+        // A mix is only as valid as its worst member.
+        let deck = Deck::from_string(&format!("Energy: Fire, Dragon{cards}")).unwrap();
+        assert!(!deck.is_valid());
+    }
+
+    #[test]
+    fn test_energy_type_is_selectable() {
+        for energy in EnergyType::SELECTABLE {
+            assert!(energy.is_selectable(), "{energy:?} should be selectable");
+        }
+        assert!(!EnergyType::Dragon.is_selectable());
+        assert!(!EnergyType::Colorless.is_selectable());
+    }
+
+    #[test]
+    fn test_deck_from_file() {
+        let file_path = "example_decks/venusaur-exeggutor.txt";
+        let deck = Deck::from_file(file_path).expect("Failed to parse deck from file");
+
+        // Add assertions to verify the deck content
+        assert!(!deck.cards.is_empty(), "Deck should not be empty");
+
+        // Example assertion: Check if the first card is Bulbasaur
+        let first_card = &deck.cards[0];
+        if let Card::Pokemon(card) = first_card {
+            assert_eq!(card.name, "Bulbasaur");
+        } else {
+            panic!("Expected first card to be Bulbasaur");
+        }
+    }
+
+    #[test]
+    fn test_draw_card() {
+        let file_path = "example_decks/venusaur-exeggutor.txt";
+        let mut deck = Deck::from_file(file_path).expect("Failed to parse deck from file");
+
+        let initial_count = deck.cards.len();
+        let drawn_card = deck.draw();
+        assert!(drawn_card.is_some(), "Should draw a card");
+        assert_eq!(
+            deck.cards.len(),
+            initial_count - 1,
+            "Deck size should decrease by 1"
+        );
+    }
+
+    #[test]
+    fn test_initial_shuffle_deck() {
+        let file_path = "example_decks/venusaur-exeggutor.txt";
+        let mut deck = Deck::from_file(file_path).expect("Failed to parse deck from file");
+
+        let mut rng = thread_rng();
+        deck.shuffle(true, &mut rng);
+
+        // Ensure there is at least 1 basic pokemon in the initial 5 cards
+        let initial_five_cards = &deck.cards[..5];
+        assert!(
+            initial_five_cards.iter().any(is_basic),
+            "There should be at least 1 basic pokemon in the initial 5 cards"
+        );
+    }
+
+    #[test]
+    fn test_from_string() {
+        let string = r#"Pokémon: 8
+2 Ekans A1 164
+2 Arbok A1 165
+2 Koffing A1 176
+2 Weezing A1 177
+
+Trainer: 12
+2 Professor's Research P-A 007
+2 Koga A1 222
+2 Poké Ball P-A 005
+2 Sabrina A1 225
+2 Potion P-A 001
+1 X Speed P-A 002
+1 Giovanni A1 223"#;
+        let deck = Deck::from_string(string).expect("Failed to parse deck from string");
+
+        assert_eq!(deck.cards.len(), 20);
+    }
+
+    #[test]
+    fn test_from_string_with_energy() {
+        let string = r#"Energy: Grass
+Pokémon: 8
+2 Ekans A1 164
+2 Arbok A1 165
+2 Koffing A1 176
+2 Weezing A1 177
+
+Trainer: 12
+2 Professor's Research P-A 007
+2 Koga A1 222
+2 Poké Ball P-A 005
+2 Sabrina A1 225
+2 Potion P-A 001
+1 X Speed P-A 002
+1 Giovanni A1 223"#;
+        let deck = Deck::from_string(string).expect("Failed to parse deck from string");
+
+        assert_eq!(deck.cards.len(), 20);
+        assert_eq!(deck.energy_types.len(), 1);
+        assert_eq!(deck.energy_types[0], EnergyType::Grass);
+    }
+
+    #[test]
+    fn test_from_string_with_multiple_energy_types() {
+        let string = r#"Energy: Grass, Fire
+Pokémon: 8
+2 Bulbasaur A1 1
+2 Ivysaur A1 2
+2 Venusaur ex A1 4
+2 Exeggcute A1 21
+2 Exeggutor ex A1 23
+
+Trainer: 10
+1 Erika A1 219
+2 Sabrina A1 225
+2 X Speed P-A 002
+2 Poké Ball P-A 005
+2 Professor's Research P-A 007
+1 Potion P-A 001"#;
+        let deck = Deck::from_string(string).expect("Failed to parse deck from string");
+
+        assert_eq!(deck.cards.len(), 20);
+        assert_eq!(deck.energy_types, vec![EnergyType::Grass, EnergyType::Fire]);
+    }
+
+    #[test]
+    fn test_from_string_without_leading_zeros() {
+        let string = r#"Energy: Grass
+2 Weedle A1 8
+2 Kakuna A1 9
+2 Beedrill A1 10
+2 Cottonee A1 27
+2 Whimsicott A1 28
+1 Giovanni A1 270
+1 Sabrina A1 272
+2 Potion P-A 1
+2 X Speed P-A 2
+2 Poke Ball P-A 5
+2 Professor's Research P-A 7"#;
+        let deck = Deck::from_string(string).expect("Failed to parse deck from string");
+        assert_eq!(deck.cards.len(), 20);
+    }
+
+    #[test]
+    fn test_from_string_sorts_energy_types_deterministically() {
+        let string = r#"Pokémon: 6
+2 Froakie A1 87
+2 Darkrai ex A2 110
+2 Hitmonlee A1 154
+
+Trainer: 14
+2 Cyrus A2 150
+2 Professor's Research P-A 7
+2 Poké Ball P-A 5
+2 Pokémon Communication A2 146
+2 Leaf A1a 68
+2 Potion P-A 1
+2 X Speed P-A 2"#;
+
+        let deck = Deck::from_string(string).expect("Failed to parse deck from string");
+        assert_eq!(
+            deck.energy_types,
+            vec![
+                EnergyType::Water,
+                EnergyType::Fighting,
+                EnergyType::Darkness
+            ]
+        );
+    }
+}

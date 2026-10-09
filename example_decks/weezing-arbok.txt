@@ -1,0 +1,14 @@
+Pokémon: 8
+2 Ekans A1 164
+2 Arbok A1 165
+2 Koffing A1 176
+2 Weezing A1 177
+
+Trainer: 12
+2 Professor's Research P-A 007
+2 Koga A1 222
+2 Poké Ball P-A 005
+2 Sabrina A1 225
+2 Potion P-A 001
+1 X Speed P-A 002
+1 Giovanni A1 223

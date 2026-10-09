@@ -1,0 +1,42 @@
+name: CI for python
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_BUILD_JOBS: 1
+
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install Python dependencies
+        run: uv sync --no-install-project
+
+      - name: Install maturin into test venv
+        run: uv pip install --python .venv/bin/python maturin
+
+      - name: Build and install deckgym bindings into venv
+        run: .venv/bin/maturin develop --features python
+
+      - name: Run tests
+        run: .venv/bin/pytest python/deckgym/tests

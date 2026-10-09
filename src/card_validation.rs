@@ -1,0 +1,76 @@
+use crate::{
+    actions::{ability_mechanic_from_effect, EFFECT_MECHANIC_MAP},
+    card_ids::CardId,
+    database::get_card_by_enum,
+    models::{Card, TrainerType},
+    move_generation::trainer_move_generation_implementation,
+    state::State,
+    tools::is_tool_effect_implemented,
+};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImplementationStatus {
+    Complete,
+    CardNotFound,
+    MissingAttack,
+    MissingAbility,
+    MissingTrainer,
+    MissingTool,
+}
+
+impl ImplementationStatus {
+    pub fn is_complete(&self) -> bool {
+        matches!(self, ImplementationStatus::Complete)
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            ImplementationStatus::Complete => "Fully implemented",
+            ImplementationStatus::CardNotFound => "Card ID not found",
+            ImplementationStatus::MissingAttack => "Attack effect not implemented",
+            ImplementationStatus::MissingAbility => "Ability not implemented",
+            ImplementationStatus::MissingTrainer => "Trainer logic not implemented",
+            ImplementationStatus::MissingTool => "Tool not implemented",
+        }
+    }
+}
+
+pub fn get_implementation_status(card_id: CardId) -> ImplementationStatus {
+    let card = get_card_by_enum(card_id);
+
+    match card {
+        Card::Pokemon(pokemon) => {
+            // Verify attacks have no effects or effects are implemented
+            for attack in &pokemon.attacks {
+                if let Some(effect_text) = &attack.effect {
+                    if EFFECT_MECHANIC_MAP.get(&effect_text[..]).is_none() {
+                        return ImplementationStatus::MissingAttack;
+                    }
+                }
+            }
+
+            // Verify ability is implemented
+            if let Some(ability) = &pokemon.ability {
+                if ability_mechanic_from_effect(&ability.effect).is_none() {
+                    return ImplementationStatus::MissingAbility;
+                }
+            }
+        }
+        Card::Trainer(trainer_card) => {
+            if trainer_card.trainer_card_type == TrainerType::Tool
+                && !is_tool_effect_implemented(&trainer_card)
+            {
+                return ImplementationStatus::MissingTool;
+            }
+
+            // Verify it can generate moves
+            let moves = trainer_move_generation_implementation(&State::default(), &trainer_card);
+            if moves.is_none() {
+                return ImplementationStatus::MissingTrainer;
+            };
+        }
+    }
+
+    ImplementationStatus::Complete
+}

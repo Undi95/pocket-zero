@@ -1,0 +1,376 @@
+use core::fmt;
+use std::hash::{Hash, Hasher};
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    actions::{abilities::AbilityMechanic, has_ability_mechanic},
+    card_ids::CardId,
+};
+
+/// Represents the type of energy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+pub enum EnergyType {
+    Grass,
+    Fire,
+    Water,
+    Lightning,
+    Psychic,
+    Fighting,
+    Darkness,
+    Metal,
+    Dragon,
+    Colorless,
+}
+impl EnergyType {
+    /// The 8 Energy types the Energy Zone can generate, i.e. the ones a deck can be built
+    /// around. See `is_selectable`.
+    pub const SELECTABLE: [EnergyType; 8] = [
+        EnergyType::Grass,
+        EnergyType::Fire,
+        EnergyType::Water,
+        EnergyType::Lightning,
+        EnergyType::Psychic,
+        EnergyType::Fighting,
+        EnergyType::Darkness,
+        EnergyType::Metal,
+    ];
+
+    pub(crate) fn from_str(energy_type: &str) -> Option<Self> {
+        match energy_type {
+            "Grass" => Some(EnergyType::Grass),
+            "Fire" => Some(EnergyType::Fire),
+            "Water" => Some(EnergyType::Water),
+            "Lightning" => Some(EnergyType::Lightning),
+            "Psychic" => Some(EnergyType::Psychic),
+            "Fighting" => Some(EnergyType::Fighting),
+            "Darkness" => Some(EnergyType::Darkness),
+            "Metal" => Some(EnergyType::Metal),
+            "Dragon" => Some(EnergyType::Dragon),
+            "Colorless" => Some(EnergyType::Colorless),
+            _ => None,
+        }
+    }
+
+    /// Whether a deck can be built around this energy, i.e. whether the Energy Zone
+    /// can generate it.
+    ///
+    /// Dragon and Colorless cannot. Colorless only ever appears as an attack cost
+    /// (payable by any energy), and there is no Dragon energy in the game — Dragon
+    /// Pokemon are powered by other types.
+    pub fn is_selectable(&self) -> bool {
+        !matches!(self, EnergyType::Dragon | EnergyType::Colorless)
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            EnergyType::Grass => "Grass",
+            EnergyType::Fire => "Fire",
+            EnergyType::Water => "Water",
+            EnergyType::Lightning => "Lightning",
+            EnergyType::Psychic => "Psychic",
+            EnergyType::Fighting => "Fighting",
+            EnergyType::Darkness => "Darkness",
+            EnergyType::Metal => "Metal",
+            EnergyType::Dragon => "Dragon",
+            EnergyType::Colorless => "Colorless",
+        }
+    }
+}
+
+/// Represents an attack of a card.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Attack {
+    pub energy_required: Vec<EnergyType>,
+    pub title: String,
+    pub fixed_damage: u32,
+    pub effect: Option<String>,
+}
+
+/// Represents an attack of a card.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Ability {
+    pub title: String,
+    pub effect: String,
+}
+
+pub const BASIC_STAGE: u8 = 0;
+
+/// Represents the data of a single pokemon card.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct PokemonCard {
+    pub id: String,
+    pub name: String,
+    pub stage: u8, // 0 for Basic, 1 for Stage 1, 2 for Stage 2
+    pub evolves_from: Option<String>,
+    pub hp: u32,
+    pub energy_type: EnergyType,
+    pub ability: Option<Ability>,
+    pub attacks: Vec<Attack>,
+    pub weakness: Option<EnergyType>,
+    pub retreat_cost: Vec<EnergyType>,
+    pub rarity: String,
+    pub booster_pack: String,
+}
+impl PartialEq for PokemonCard {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for PokemonCard {}
+impl Hash for PokemonCard {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TrainerType {
+    Supporter,
+    Item,
+    Tool,
+    Fossil,
+    Stadium,
+}
+
+/// Represents the data of a single trainer card.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct TrainerCard {
+    pub id: String,
+    pub trainer_card_type: TrainerType,
+    pub name: String,
+    pub effect: String,
+    pub rarity: String,
+    pub booster_pack: String,
+}
+impl PartialEq for TrainerCard {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for TrainerCard {}
+impl Hash for TrainerCard {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Card {
+    Pokemon(PokemonCard),
+    Trainer(TrainerCard),
+}
+impl Hash for Card {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.id.hash(state),
+            Card::Trainer(trainer_card) => trainer_card.id.hash(state),
+        }
+    }
+}
+impl Card {
+    pub fn get_id(&self) -> String {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.id.clone(),
+            Card::Trainer(trainer_card) => trainer_card.id.clone(),
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.name.clone(),
+            Card::Trainer(trainer_card) => trainer_card.name.clone(),
+        }
+    }
+
+    pub(crate) fn get_attacks(&self) -> Vec<Attack> {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.attacks.clone(),
+            _ => vec![],
+        }
+    }
+
+    pub fn get_retreat_cost(&self) -> Option<Vec<EnergyType>> {
+        match self {
+            Card::Pokemon(pokemon_card) => Some(pokemon_card.retreat_cost.clone()),
+            _ => None, // Fossils
+        }
+    }
+
+    pub(crate) fn is_ex(&self) -> bool {
+        // A pokemon is EX if after splitting by spaces in the name, the last word is "EX"
+        match self {
+            Card::Pokemon(pokemon_card) => {
+                pokemon_card.name.to_lowercase().split(' ').next_back() == Some("ex")
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_mega(&self) -> bool {
+        // A pokemon is Mega if the name starts with "Mega "
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.name.starts_with("Mega "),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn get_knockout_points(&self) -> u8 {
+        // Mega pokemon are worth 3 points, ex pokemon are worth 2, regular pokemon are worth 1
+        if self.is_mega() {
+            3
+        } else if self.is_ex() {
+            2
+        } else {
+            1
+        }
+    }
+
+    pub(crate) fn get_ability(&self) -> Option<Ability> {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.ability.clone(),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn is_support(&self) -> bool {
+        match self {
+            Card::Trainer(trainer_card) => trainer_card.trainer_card_type == TrainerType::Supporter,
+            _ => false,
+        }
+    }
+
+    /// The Energy types this card is **printed** as.
+    ///
+    /// Today every printed Pokémon has exactly one type, so this is always a 0- or 1-element
+    /// vector. It is the single seam for printed dual-type Pokémon (e.g. Mega Mewtwo X ex,
+    /// [P] + [F]): when `PokemonCard` grows a second type, this method returns both and every
+    /// in-play type check downstream (which goes through `PlayedCard::get_energy_types` /
+    /// `PlayedCard::is_type`) picks them up with no further engine change.
+    ///
+    /// Note this is the *printed* type set — it deliberately knows nothing about Abilities, which
+    /// only apply while the card is in play. Use it for cards in a deck, hand or discard pile;
+    /// use `PlayedCard::get_energy_types` for cards on the board.
+    pub fn get_types(&self) -> Vec<EnergyType> {
+        match self {
+            Card::Pokemon(pokemon_card) => vec![pokemon_card.energy_type],
+            _ => vec![],
+        }
+    }
+
+    /// Whether this card's **printed** type set contains `energy_type`. Allocation-free
+    /// counterpart of `get_types().contains(..)`.
+    pub fn is_type(&self, energy_type: EnergyType) -> bool {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.energy_type == energy_type,
+            _ => false,
+        }
+    }
+
+    pub fn get_card_id(&self) -> CardId {
+        CardId::from_card_id(self.get_id().as_str()).expect("Card ID should be valid")
+    }
+
+    pub fn is_basic(&self) -> bool {
+        match self {
+            Card::Pokemon(pokemon_card) => pokemon_card.stage == BASIC_STAGE,
+            _ => false,
+        }
+    }
+
+    pub fn is_fossil(&self) -> bool {
+        match self {
+            Card::Trainer(trainer_card) => trainer_card.trainer_card_type == TrainerType::Fossil,
+            _ => false,
+        }
+    }
+
+    pub fn as_trainer(&self) -> TrainerCard {
+        match self {
+            Card::Trainer(trainer_card) => trainer_card.clone(),
+            _ => panic!("Card is not a Trainer"),
+        }
+    }
+
+    /// Check if this card can evolve into the given evolution card
+    /// This handles special evolution rules like Eevee ex's Veevee 'volve ability
+    ///
+    /// This is a card-level evolution-legality rule with no access to the board, so the Veevee
+    /// 'volve lookup below stays card-level too: it is deliberately *not* gated on Alolan Muk's
+    /// Power of Alchemy, even though Eevee ex is a Basic. Making it board-aware would mean
+    /// threading `State` (or a `PlayedCard`) through every evolution-legality caller.
+    pub fn can_evolve_into(&self, evolution_card: &Card) -> bool {
+        if let Card::Pokemon(evolution_pokemon) = evolution_card {
+            if let Some(evolves_from) = &evolution_pokemon.evolves_from {
+                // Normal evolution: the evolution card evolves from this card's name
+                if self.get_name() == *evolves_from {
+                    return true;
+                }
+
+                // Special case: Eevee ex's Veevee 'volve ability
+                // Allows Eevee ex to evolve into any Pokemon that evolves from "Eevee"
+                if has_ability_mechanic(self, &AbilityMechanic::CanEvolveIntoEeveeEvolution)
+                    && evolves_from == "Eevee"
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum StatusCondition {
+    Poisoned,
+    Paralyzed,
+    Asleep,
+    Burned,
+    Confused,
+}
+
+impl fmt::Display for Card {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Card::Pokemon(pokemon_card) => write!(f, "{}", pokemon_card.name),
+            Card::Trainer(trainer_card) => write!(f, "{}", trainer_card.name),
+        }
+    }
+}
+
+impl fmt::Display for EnergyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EnergyType::Grass => write!(f, "Grass"),
+            EnergyType::Fire => write!(f, "Fire"),
+            EnergyType::Water => write!(f, "Water"),
+            EnergyType::Lightning => write!(f, "Lightning"),
+            EnergyType::Psychic => write!(f, "Psychic"),
+            EnergyType::Fighting => write!(f, "Fighting"),
+            EnergyType::Darkness => write!(f, "Darkness"),
+            EnergyType::Metal => write!(f, "Metal"),
+            EnergyType::Dragon => write!(f, "Dragon"),
+            EnergyType::Colorless => write!(f, "Colorless"),
+        }
+    }
+}
+
+impl fmt::Debug for PokemonCard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{}", self.name)
+        } else {
+            write!(f, "{} {}", self.id, self.name)
+        }
+    }
+}
+
+impl fmt::Debug for TrainerCard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{}", self.name)
+        } else {
+            write!(f, "{} {}", self.id, self.name)
+        }
+    }
+}

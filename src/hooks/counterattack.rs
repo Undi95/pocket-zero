@@ -1,0 +1,47 @@
+use crate::{card_ids::CardId, effects::CardEffect, models::PlayedCard, tools::has_tool};
+
+/// Some cards counterattack either because of RockyHelmet or because of their own ability.
+pub(crate) fn get_counterattack_damage(card: &PlayedCard) -> u32 {
+    let mut total_damage = 0;
+    if has_tool(card, CardId::A2148RockyHelmet) {
+        total_damage += 20;
+    }
+
+    // Temporary counterattack effects (e.g. Alolan Sandslash's Spike Armor).
+    total_damage += card
+        .get_active_effects()
+        .iter()
+        .filter_map(|effect| match effect {
+            CardEffect::Counterattack { amount } => Some(*amount),
+            _ => None,
+        })
+        .sum::<u32>();
+
+    // Some cards have it as an ability
+    let card_id = CardId::from_card_id(&card.card.get_id());
+    match card_id {
+        Some(CardId::A1061Poliwrath)
+        | Some(CardId::A1a056Druddigon)
+        | Some(CardId::A2b028Pawmot)
+        | Some(CardId::A3a052Ferrothorn)
+        | Some(CardId::A4a065Zangoose)
+        | Some(CardId::B1297Poliwrath)
+        | Some(CardId::PA054Pawmot) => {
+            total_damage += 20;
+        }
+        _ => {}
+    }
+
+    total_damage
+}
+
+/// Check if the defending Pokemon should poison the attacker when damaged.
+/// Returns true if the attacker should be poisoned.
+pub(crate) fn should_poison_attacker(card: &PlayedCard) -> bool {
+    if has_tool(card, CardId::A3146PoisonBarb) {
+        return true;
+    }
+
+    // Some cards have it as an ability (Dragalge ex's Poison Point), on every print.
+    card.get_name() == "Dragalge ex"
+}
