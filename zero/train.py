@@ -1,4 +1,5 @@
 """Training step: fit the network to self-play targets (search policy + game result)."""
+import copy
 import struct
 import time
 
@@ -70,6 +71,7 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
     ma = buf['pi'].shape[1]
     arange = torch.arange(ma, device=device)
     stats = {'policy_loss': 0.0, 'value_loss': 0.0, 'steps': 0}
+    best = (float('inf'), 0, None)
     t0 = time.time()
     for epoch in range(epochs):
         model.train()
@@ -91,8 +93,14 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
         if val is not None:
             vp, vv = evaluate_losses(model, val, device, q_mix)
             msg += f' | parties de contrôle : politique {vp:.3f}, valeur {vv:.3f}'
+            # Early stopping: keep the epoch that does best on games never trained on.
+            if vp + vv < best[0]:
+                best = (vp + vv, epoch + 1, copy.deepcopy(model.state_dict()))
         log(msg + f' ({time.time() - t0:.0f} s)')
         stats = {'policy_loss': 0.0, 'value_loss': 0.0, 'steps': 0} if epoch + 1 < epochs else stats
+    if best[2] is not None and best[1] < epochs:
+        model.load_state_dict(best[2])
+        log(f'  meilleure époque sur les parties de contrôle : {best[1]} (gardée)')
     s = max(stats['steps'], 1)
     out = {'policy_loss': stats['policy_loss'] / s, 'value_loss': stats['value_loss'] / s,
            'samples': len(buf)}

@@ -24,6 +24,8 @@ class ZeroNet(nn.Module):
         self.p_state = nn.Linear(info['h'], info['ph'])
         self.p_action = nn.Linear(info['action_in'], info['ph'])
         self.p_out = nn.Linear(info['ph'], 1)
+        # Training-only regularisation (inactive in eval mode, so Rust needs no counterpart).
+        self.dropout = nn.Dropout(0.15)
         n_slots = info['n_slots']
         self.slot_tokens = n_slots + 1
         self.bags = [tuple(b) for b in info['bags']]
@@ -37,8 +39,8 @@ class ZeroNet(nn.Module):
             s = (self.card_emb(t) * mask).sum(1)
             parts.append(s / mask.sum(1).clamp(min=1.0))
         x = torch.cat(parts, 1)
-        h = F.relu(self.fc1(x))
-        h = F.relu(self.fc2(h))
+        h = self.dropout(F.relu(self.fc1(x)))
+        h = self.dropout(F.relu(self.fc2(h)))
         return F.relu(self.fc3(h))
 
     def forward(self, dense, tokens, adense, atok):

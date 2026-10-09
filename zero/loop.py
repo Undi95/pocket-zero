@@ -50,7 +50,7 @@ def main():
     ap.add_argument('--warmup-games', type=int, default=8000,
                     help="échauffement : parties où le réseau imite le bot e3 avant le self-play (0 = aucun)")
     ap.add_argument('--warmup-player', default='e3')
-    ap.add_argument('--warmup-epochs', type=int, default=6)
+    ap.add_argument('--warmup-epochs', type=int, default=4)
     ap.add_argument('--threads', type=int, default=0, help='0 = tous les cœurs')
     ap.add_argument('--window', type=int, default=600_000, help='échantillons gardés pour l\'entraînement')
     ap.add_argument('--epochs', type=int, default=2)
@@ -89,7 +89,7 @@ def main():
         build_pool(decks, log=log)
 
     model = ZeroNet(info).to(a.device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)
     ckpt = os.path.join(run_dir, 'weights', 'checkpoint.pt')
     if os.path.exists(ckpt):
         c = torch.load(ckpt, map_location=a.device)
