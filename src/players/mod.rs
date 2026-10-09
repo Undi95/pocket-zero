@@ -13,6 +13,7 @@ mod weighted_random_player;
 pub use attach_attack_player::AttachAttackPlayer;
 pub use end_turn_player::EndTurnPlayer;
 pub use evolution_rusher_player::EvolutionRusherPlayer;
+pub(crate) use expectiminimax_player::determinize;
 pub use expectiminimax_player::{ExpectiMiniMaxPlayer, ValueFunction};
 pub use external_player::ExternalPlayer;
 pub use human_player::HumanPlayer;
@@ -68,6 +69,11 @@ pub enum PlayerCode {
         max_depth: usize,
     },
     ER, // Evolution Rusher
+    /// pocket-zero network: MCTS with `sims` simulations per decision (0 = network policy alone).
+    /// Weights come from the POCKET_ZERO_WEIGHTS environment variable (none = untrained bootstrap).
+    Z {
+        sims: usize,
+    },
     /// An external bot, spoken to over stdin/stdout (see `docs/bot-protocol.md`). The command to
     /// run comes from `--bot-a`/`--bot-b`, not from the code itself — `create_players` panics if
     /// asked to build an `X` player; use `create_players_with_bots`.
@@ -88,6 +94,16 @@ pub fn parse_player_code(s: &str) -> Result<PlayerCode, String> {
             return Ok(PlayerCode::ER);
         }
         return Err(format!("Invalid player code: {s}. Use 'e<number>' for ExpectiMiniMax with depth, e.g., 'e2', 'e5'"));
+    }
+
+    if let Some(rest) = lower.strip_prefix('z') {
+        if rest.is_empty() {
+            return Ok(PlayerCode::Z { sims: 64 });
+        }
+        return rest
+            .parse::<usize>()
+            .map(|sims| PlayerCode::Z { sims })
+            .map_err(|_| format!("Invalid player code: {s}. Use 'z<simulations>', e.g. 'z64'"));
     }
 
     match lower.as_str() {
@@ -149,6 +165,7 @@ fn get_player(deck: Deck, player: &PlayerCode) -> Box<dyn Player> {
             value_function: Box::new(value_functions::baseline_value_function),
         }),
         PlayerCode::ER => Box::new(EvolutionRusherPlayer { deck }),
+        PlayerCode::Z { sims } => Box::new(crate::zero::ZeroPlayer::from_env(deck, *sims)),
         PlayerCode::X => panic!(
             "PlayerCode::X (external bot) has no command to run; use create_players_with_bots \
              (the CLI's --bot-a/--bot-b flags) instead of create_players"

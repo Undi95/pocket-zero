@@ -23,6 +23,7 @@ pub mod stadiums;
 pub mod state;
 pub mod temp_deck;
 pub mod tools;
+pub mod zero;
 
 pub mod test_support;
 

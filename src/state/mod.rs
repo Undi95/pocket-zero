@@ -138,7 +138,7 @@ pub struct State {
     #[serde(default)]
     pub(crate) points_gained_during_own_last_turn: [u8; 2],
     // Maps turn to a vector of effects (cards) for that turn. Using BTreeMap to keep State hashable.
-    turn_effects: BTreeMap<u8, Vec<TurnEffect>>,
+    pub(crate) turn_effects: BTreeMap<u8, Vec<TurnEffect>>,
 }
 
 impl State {

@@ -14,3 +14,7 @@ replays/
 # Viewer (viewer/)
 viewer/node_modules
 viewer/dist
+bin/
+runs/
+results/
+smoke.bin

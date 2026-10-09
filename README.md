@@ -1,3 +1,67 @@
+# pocket-zero
+
+Bot AlphaZero et recherche de decks pour Pokémon TCG Pocket, construits sur le moteur
+[deckgym-core](https://github.com/bcollazo/deckgym-core) (AGPL-3.0), avec les règles et les cartes
+auditées dans Pocket Deck Lab (voir `lab/README.md`).
+
+## Installation (Windows)
+
+1. Clone le dépôt, puis double-clique sur **`setup.bat`**.
+   Tout s'installe *dans le dossier* : environnement Python `.venv` (PyTorch CUDA 12.8 pour les
+   RTX 50xx), binaires du moteur `bin\` (compilés par GitHub Actions, workflow « Windows build »),
+   module Python du moteur. Rien n'est installé dans le système.
+2. Prérequis : Git, Python 3.10+ (avec le lanceur `py`), un pilote NVIDIA récent.
+
+## Entraîner le bot
+
+```
+run.bat train
+```
+
+Chaque itération : self-play (MCTS en Rust sur tous les cœurs, réseau évalué par lots sur
+**chaque GPU**, un processus par carte), entraînement sur `cuda:0`, puis évaluation contre
+l'ancien réseau et contre le bot `e2`. Toutes les 5 itérations, validation contre les vrais
+matchups Limitless (écart moyen, RMSE ; le bot `e3` est à ~12 points).
+Tout se trouve dans `runs\principal\` : `log.txt`, `metrics.csv`, `weights\latest.bin`.
+L'entraînement reprend où il s'est arrêté : relance simplement la même commande.
+
+Options utiles : `--iterations 60`, `--games 3000`, `--sims 200`, `--concurrency 2048`,
+`--selfplay-devices cuda:0,cuda:1`, `--run autre_nom` (nouveau run depuis zéro).
+`run.bat help` les liste toutes.
+
+## Chercher des decks (toutes les cartes)
+
+```
+run.bat search --name recherche1
+```
+
+Recherche sur **tout le pool de cartes**, jouée par le réseau entraîné : criblage de chaque
+lignée d'attaquant, paires, algorithme génétique avec n'importe quelle carte (lignées
+incomplètes, Rare Candy, 1 à 3 énergies), score = 50 % méta réel + 50 % terrain d'archétypes
+hors méta. Résultat : `results\recherche1\RESULTATS_D.md`. Options : `--lock "B1a 42"` (construire
+autour d'une carte), `--gens 40`, `--search z32` (joueur plus fort, plus lent).
+
+## Utiliser le bot ailleurs
+
+Le joueur `z<simulations>` marche partout où le moteur prend un joueur (`z0` = politique du
+réseau seule, rapide) :
+
+```
+set POCKET_ZERO_WEIGHTS=runs\principal\weights\latest.bin
+bin\deckgym.exe simulate deck1.txt deck2.txt --num 100 --players z64,e3
+```
+
+## Comment ça marche
+
+- `src/zero/encode.rs` : ce qu'un joueur voit (taille de la main adverse mais pas son contenu,
+  composition de son propre deck mais pas son ordre), encodé en tenseurs.
+- `src/zero/mcts.rs`, `src/zero/batch.rs` : MCTS avec déterminisation (information cachée) et
+  hasard en boucle ouverte ; version par lots pour le GPU.
+- `zero/` : modèle PyTorch (jumeau exact du réseau Rust, vérifié par `python -m zero.parity`),
+  entraînement, boucle AlphaZero, pool de decks, recherche.
+
+---
+
 <img src="./images/logo.svg" alt="Logo" width="100" height="100">
 
 # deckgym-core: Pokémon TCG Pocket Simulator

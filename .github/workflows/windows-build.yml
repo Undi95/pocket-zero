@@ -1,0 +1,60 @@
+name: Windows build (pocket-zero)
+
+# Builds the Windows engine binaries and the Python module, and publishes them on the
+# `windows-bin` branch, which setup.ps1 downloads. No Rust or Visual Studio needed on the PC.
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'Cargo.toml', 'Cargo.lock', 'pyproject.toml', 'database.json', '.github/workflows/windows-build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      # AVX2/FMA (any CPU from the last ~10 years): faster network evaluation on CPU.
+      RUSTFLAGS: -C target-cpu=x86-64-v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build binaries
+        run: cargo build --release --bin pocket-zero --bin deckgym
+      - name: Build Python module
+        run: |
+          pip install maturin
+          maturin build --release -o dist
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          ./target/release/pocket-zero.exe info | Out-Null
+          ./target/release/pocket-zero.exe selfplay --decks lab/decks/meta --games 2 --sims 4 --out smoke.bin
+          pip install (Get-ChildItem dist/*.whl).FullName
+          python -c "import deckgym.deckgym as d; print(d.BatchSelfPlay)"
+      - name: Publish to windows-bin branch
+        shell: pwsh
+        run: |
+          $sha = git rev-parse --short HEAD
+          New-Item -ItemType Directory -Force -Path publish/bin, publish/wheels | Out-Null
+          Copy-Item target/release/pocket-zero.exe, target/release/deckgym.exe publish/bin/
+          Copy-Item dist/*.whl publish/wheels/
+          Set-Content publish/VERSION $sha
+          cd publish
+          git init -q -b windows-bin
+          git config user.name "pocket-zero-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Windows build $sha"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" windows-bin

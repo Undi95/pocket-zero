@@ -918,5 +918,6 @@ pub fn deckgym(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySimulationResults>()?;
     m.add_function(wrap_pyfunction!(py_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(get_player_types, m)?)?;
+    m.add_class::<crate::zero::py::PyBatchSelfPlay>()?;
     Ok(())
 }

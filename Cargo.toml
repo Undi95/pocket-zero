@@ -31,7 +31,7 @@ crossterm = { version = "0.28", optional = true }
 [features]
 default = []
 test-utils = []
-python = ["pyo3"]
+python = ["pyo3", "pyo3/abi3-py39"]
 tui = ["ratatui", "crossterm"]
 csv-export = ["csv"]
 
@@ -53,6 +53,10 @@ harness = false
 [[bench]]
 name = "rare_candy_benchmark"
 harness = false
+
+[[bin]]
+name = "pocket-zero"
+path = "src/bin/pocket_zero.rs"
 
 [[bin]]
 name = "tui"

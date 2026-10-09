@@ -22,16 +22,25 @@ Usage:
 import argparse, collections, json, os, random, re, shutil, subprocess, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BIN = os.path.join(ROOT, 'target/release/deckgym')
+_EXE = 'deckgym.exe' if os.name == 'nt' else 'deckgym'
+BIN = os.environ.get('PZ_DECKGYM') or next(
+    (p for p in (os.path.join(ROOT, 'bin', _EXE), os.path.join(ROOT, 'target', 'release', _EXE)) if os.path.exists(p)),
+    os.path.join(ROOT, 'target', 'release', _EXE))
 META = os.path.join(ROOT, 'lab/decks/meta')
-RES = os.path.join(ROOT, 'lab/results')
+RES = os.environ.get('PZ_RESULTS') or os.path.join(ROOT, 'lab/results')
+# Players (engine player codes). The defaults are the expectiminimax bots; pocket-zero sets
+# PZ_SCREEN / PZ_SEARCH to its trained network, e.g. z0 (network policy) and z16 (16-sim MCTS).
+SCREEN = os.environ.get('PZ_SCREEN', 'e2')
+SEARCH = os.environ.get('PZ_SEARCH', 'e3')
+FINAL = os.environ.get('PZ_FINAL', SEARCH)  # stage D (final validation)
 GAUNTLET = os.path.join(RES, 'gauntlet')  # meta decks + field decks, one folder for the simulator
-os.makedirs(RES, exist_ok=True)
-LOG = open(os.path.join(RES, 'pipeline.log'), 'a')
+_LOG = []
 
 def log(*a):
+    os.makedirs(RES, exist_ok=True)
     s = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a)
-    print(s, flush=True); LOG.write(s + '\n'); LOG.flush()
+    if not _LOG: _LOG.append(open(os.path.join(RES, 'pipeline.log'), 'a', encoding='utf-8'))  # opened on first use only
+    print(s, flush=True); _LOG[0].write(s + '\n'); _LOG[0].flush()
 
 # Meta share (Limitless B4a, adjusted for B4b trends). Filenames in lab/decks/meta.
 WEIGHTS = {'altaria': 7.7, 'lucario': 7.7, 'butterfree': 5.2, 'vespiquen': 4.5, 'suicune': 4.2, 'rayquaza': 3.1,
@@ -40,7 +49,7 @@ WEIGHTS = {'altaria': 7.7, 'lucario': 7.7, 'butterfree': 5.2, 'vespiquen': 4.5, 
 FIELD_SHARE = 0.5  # final score = (1 - FIELD_SHARE) * meta (weighted) + FIELD_SHARE * field (uniform)
 
 # ------------------------------------------------------------------ cards
-DB = json.load(open(os.path.join(ROOT, 'database.json')))
+DB = json.load(open(os.path.join(ROOT, 'database.json'), encoding='utf-8'))
 CARD = {}
 for e in DB:
     kind, c = next(iter(e.items())); c['kind'] = kind; CARD[c['id']] = c
@@ -141,11 +150,11 @@ def write_deck(d, path):
     lines = ['Energy: ' + ', '.join(d['e'])]
     for cid, k in sorted(collections.Counter(d['c']).items()):
         lines.append(f"{k} {CARD[cid]['name']} {cid}")
-    open(path, 'w').write('\n'.join(lines) + '\n')
+    open(path, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
 
 def parse_deck(path):
     cards, energy = [], None
-    for l in open(path):
+    for l in open(path, encoding='utf-8'):
         l = l.strip()
         if l.lower().startswith('energy:'):
             energy = [t.strip() for t in l.split(':', 1)[1].split(',') if t.strip()]
@@ -181,7 +190,7 @@ def run_games(d, per_opp, player, folder):
     write_deck(d, path)
     n_opp = len(opponents(folder))
     cmd = [BIN, 'simulate', path, folder, '--num', str(per_opp * n_opp), '--players', f'{player},{player}', '-p',
-           '-j', os.environ.get('THREADS', '2'), '--seed', str(random.randrange(1 << 30))]
+           '-j', os.environ.get('THREADS', str(os.cpu_count() or 2)), '--seed', str(random.randrange(1 << 30))]
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=3600, cwd=ROOT)
         txt = out.stdout + out.stderr
@@ -196,7 +205,7 @@ def run_games(d, per_opp, player, folder):
             per[m.group(1)] = (int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, int(g.group(1)))
     return per
 
-def evaluate(d, per_opp, player='e2', folder=None):
+def evaluate(d, per_opp, player=SCREEN, folder=None):
     """Accumulates games in the cache; returns score(d)."""
     rec = CACHE.setdefault(f'{player}:{key(d)}', {})
     for opp, (w, n) in run_games(d, per_opp, player, folder or META).items():
@@ -208,11 +217,11 @@ def winrates(d, player):
     rec = CACHE.get(f'{player}:{key(d)}', {})
     return {o: v[0] / v[1] for o, v in rec.items() if v[1]}, sum(v[1] for v in rec.values())
 
-def score(d, player='e2'):
+def score(d, player=SCREEN):
     """(total, games). total mixes the weighted meta winrate and the uniform field winrate."""
     s = full_score(d, player); return s['total'], s['games']
 
-def full_score(d, player='e2'):
+def full_score(d, player=SCREEN):
     wr, n = winrates(d, player)
     meta = [(WEIGHTS[o], v) for o, v in wr.items() if o in WEIGHTS]
     field = [v for o, v in wr.items() if o.startswith('field-')]
@@ -373,7 +382,7 @@ def stage_F(A, B, size=10):
 def select(cands, pop, per_species=2):
     """Best decks first, but at most per_species of each archetype, so the search keeps several ideas alive."""
     out, cnt = [], collections.Counter()
-    for d in sorted(cands, key=lambda x: -score(x, 'e3')[0]):
+    for d in sorted(cands, key=lambda x: -score(x, SEARCH)[0]):
         sp = species(d)
         if cnt[sp] < per_species: out.append(d); cnt[sp] += 1
         if len(out) == pop: break
@@ -384,7 +393,7 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
     state = json.load(open(f)) if os.path.exists(f) else {'gen': 0, 'pop': seeds}
     P = [p for p in state['pop'] if valid(p, lock)]
     if state['gen'] == 0:
-        for p in P: evaluate(p, per_opp, 'e3', GAUNTLET)
+        for p in P: evaluate(p, per_opp, SEARCH, GAUNTLET)
         P = select(P, pop)
     for g in range(state['gen'], gens):
         rng = random.Random(1234 + g)
@@ -395,10 +404,10 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
                 if c: children.append(c)
         for c in rng.sample(immigrants_pool, min(2, len(immigrants_pool))):  # fresh blood from screening
             if valid(c, lock): children.append(c)
-        for c in children: evaluate(c, per_opp, 'e3', GAUNTLET)
-        for p in P: evaluate(p, max(1, per_opp // 2), 'e3', GAUNTLET)  # elites accumulate games -> less noise
+        for c in children: evaluate(c, per_opp, SEARCH, GAUNTLET)
+        for p in P: evaluate(p, max(1, per_opp // 2), SEARCH, GAUNTLET)  # elites accumulate games -> less noise
         P = select({key(x): x for x in P + children}.values(), pop)
-        b = P[0]; s = full_score(b, 'e3')
+        b = P[0]; s = full_score(b, SEARCH)
         log(f'{tag} gen {g+1}/{gens} best={s["total"]:.3f} (méta {s["meta"]:.3f}, terrain {s["field"] or 0:.3f}, '
             f'{s["games"]} parties) [{species(b)}] {",".join(b["e"])} | {short(b)}')
         log(f'{tag}   archétypes vivants: ' + ' | '.join(sorted({species(x) for x in P})))
@@ -410,16 +419,16 @@ def stage_D(P, top=6, per_opp=30, tag='D'):
     for d in P:  # best deck of each archetype
         if species(d) in seen: continue
         seen.add(species(d))
-        evaluate(d, per_opp, 'e3', GAUNTLET)
-        out.append({'deck': d, **full_score(d, 'e3')})
+        evaluate(d, per_opp, FINAL, GAUNTLET)
+        out.append({'deck': d, **full_score(d, FINAL)})
         log(f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} parties)')
         if len(out) == top: break
     out.sort(key=lambda r: -r['total'])
     refs = {}
     for name in sorted(WEIGHTS, key=lambda n: -WEIGHTS[n]):  # every meta deck, same bot, same gauntlet
         ref = parse_deck(os.path.join(META, name + '.txt'))
-        evaluate(ref, per_opp // 3, 'e3', GAUNTLET)
-        refs[name] = {k: v for k, v in full_score(ref, 'e3').items() if k != 'per_opp'}
+        evaluate(ref, per_opp // 3, FINAL, GAUNTLET)
+        refs[name] = {k: v for k, v in full_score(ref, FINAL).items() if k != 'per_opp'}
         log(f'{tag}: réf {name} -> {refs[name]["total"]:.3f}')
     json.dump({'top': out, 'refs': refs}, open(stage_file(tag), 'w'))
     report(out, refs, tag)
@@ -429,7 +438,7 @@ def pct(x): return '—' if x is None else f'{x*100:.1f} %'
 
 def report(out, refs, tag):
     L = [f'# Résultats ({tag}) — {time.strftime("%Y-%m-%d %H:%M")}', '',
-         'Bot expectiminimax profondeur 3 des deux côtés. Score = '
+         f'Joueur {FINAL} des deux côtés. Score = '
          f'{int((1-FIELD_SHARE)*100)} % méta (17 listes réelles, pondérées par leur part de tournoi) + '
          f'{int(FIELD_SHARE*100)} % terrain (archétypes hors méta trouvés par la recherche, poids égal).', '',
          '## Références : les decks du méta, même bot, même adversaires', '',
@@ -443,7 +452,7 @@ def report(out, refs, tag):
               '**Pokémon**', ''] + [f'- {x}' for x in po] + ['', '**Dresseurs**', ''] + [f'- {x}' for x in tr] + \
              ['', '| Adversaire | Victoires |', '|---|---|'] + \
              [f'| {o} | {v*100:.0f} % |' for o, v in sorted(r['per_opp'].items(), key=lambda x: (-WEIGHTS.get(x[0], 0), x[0]))] + ['']
-    open(os.path.join(RES, f'RESULTATS_{tag}.md'), 'w').write('\n'.join(L))
+    open(os.path.join(RES, f'RESULTATS_{tag}.md'), 'w', encoding='utf-8').write('\n'.join(L))
     log(f'rapport écrit: RESULTATS_{tag}.md')
 
 if __name__ == '__main__':
