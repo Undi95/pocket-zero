@@ -371,7 +371,7 @@ impl BatchSelfPlay {
             // Write finished games, start new ones where some are left to play.
             let mut restarted = false;
             for i in 0..self.slots.len() {
-                let finished: Vec<_> = self.slots[i].finished.drain(..).collect();
+                let finished = std::mem::take(&mut self.slots[i].finished);
                 for (s, z) in &finished {
                     write_sample(&mut self.writer, s, *z)?;
                 }

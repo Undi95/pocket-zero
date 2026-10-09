@@ -188,7 +188,11 @@ pub fn play_imitation(
     deck_b: &Deck,
     rng: &mut StdRng,
 ) -> (Vec<Sample>, Option<GameOutcome>) {
-    let mut players = create_players(deck_a.clone(), deck_b.clone(), vec![code.clone(), code.clone()]);
+    let mut players = create_players(
+        deck_a.clone(),
+        deck_b.clone(),
+        vec![code.clone(), code.clone()],
+    );
     let mut state = State::initialize(deck_a, deck_b, rng);
     let mut samples = Vec::new();
     let mut steps = 0usize;

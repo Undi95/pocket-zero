@@ -125,7 +125,7 @@ pub(crate) fn determinize(state: &State, myself: usize, rng: &mut StdRng) -> Sta
     let opponent = (myself + 1) % 2;
     s.decks[myself].cards.shuffle(rng);
     let hand_size = s.hands[opponent].len();
-    let mut unknown: Vec<_> = s.hands[opponent].drain(..).collect();
+    let mut unknown = std::mem::take(&mut s.hands[opponent]);
     unknown.append(&mut s.decks[opponent].cards);
     unknown.shuffle(rng);
     s.decks[opponent].cards = unknown.split_off(hand_size);
