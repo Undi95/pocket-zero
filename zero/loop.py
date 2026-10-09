@@ -9,6 +9,7 @@ The latest network is runs/<run>/weights/latest.bin; use it anywhere with the `z
 import argparse
 import csv
 import json
+import math
 import os
 import shutil
 import time
@@ -43,8 +44,10 @@ def main():
     ap = argparse.ArgumentParser(description='Boucle AlphaZero pocket-zero')
     ap.add_argument('--run', default='principal')
     ap.add_argument('--iterations', type=int, default=40)
-    ap.add_argument('--games', type=int, default=1500, help='parties de self-play par itération')
-    ap.add_argument('--sims', type=int, default=128, help='simulations MCTS par décision en self-play')
+    ap.add_argument('--games', type=int, default=10000, help='parties de self-play par itération')
+    ap.add_argument('--sims', type=int, default=200, help='simulations MCTS par décision en self-play')
+    ap.add_argument('--temperature-moves', type=int, default=8,
+                    help='décisions jouées au hasard (selon la recherche) en début de partie, pour explorer')
     ap.add_argument('--first-sims', type=int, default=200,
                     help="simulations de la 1re itération si pas d'échauffement (sans réseau)")
     ap.add_argument('--warmup-games', type=int, default=8000,
@@ -52,16 +55,17 @@ def main():
     ap.add_argument('--warmup-player', default='e3')
     ap.add_argument('--warmup-epochs', type=int, default=4)
     ap.add_argument('--threads', type=int, default=0, help='0 = tous les cœurs')
-    ap.add_argument('--window', type=int, default=600_000, help='échantillons gardés pour l\'entraînement')
+    ap.add_argument('--window', type=int, default=2_000_000, help='positions gardées pour l\'entraînement')
     ap.add_argument('--epochs', type=int, default=2)
     ap.add_argument('--batch', type=int, default=1024)
-    ap.add_argument('--lr', type=float, default=1e-3)
+    ap.add_argument('--lr', type=float, default=1e-3,
+                    help="taux d'apprentissage de départ, réduit progressivement jusqu'à lr/10 à la dernière itération")
     ap.add_argument('--device', default='cuda:0' if torch.cuda.is_available() else 'cpu',
                     help="appareil d'entraînement")
     ap.add_argument('--selfplay-devices', default='auto',
                     help="GPU du self-play, ex. 'cuda:0,cuda:1' (auto = tous ; cpu = sans GPU)")
-    ap.add_argument('--concurrency', type=int, default=1024, help='parties simultanées par GPU')
-    ap.add_argument('--eval-games', type=int, default=200)
+    ap.add_argument('--concurrency', type=int, default=2048, help='parties simultanées par GPU')
+    ap.add_argument('--eval-games', type=int, default=400)
     ap.add_argument('--eval-sims', type=int, default=32)
     ap.add_argument('--validate-every', type=int, default=5, help='validation Limitless toutes les N itérations (0 = jamais)')
     ap.add_argument('--validate-games', type=int, default=100)
@@ -100,12 +104,17 @@ def main():
         f'{torch.cuda.device_count()} GPU')
 
     metrics_f = os.path.join(run_dir, 'metrics.csv')
+    header = ['iteration', 'samples', 'policy_loss', 'value_loss', 'val_policy_loss', 'val_value_loss',
+              'vs_previous', 'vs_e2', 'vs_e3', 'rmse_limitless', 'lr', 'selfplay_s', 'train_s']
+    if os.path.exists(metrics_f):
+        with open(metrics_f) as mf:
+            if mf.readline().strip().split(',') != header:
+                os.replace(metrics_f, os.path.join(run_dir, 'metrics_ancien_format.csv'))
     new_metrics = not os.path.exists(metrics_f)
     with open(metrics_f, 'a', newline='') as mf:
         w = csv.writer(mf)
         if new_metrics:
-            w.writerow(['iteration', 'samples', 'policy_loss', 'value_loss', 'val_policy_loss', 'val_value_loss',
-                        'vs_previous', 'vs_e2', 'rmse_limitless', 'selfplay_s', 'train_s'])
+            w.writerow(header)
 
     meta = os.path.join(engine.ROOT, 'lab', 'decks', 'meta')
     if a.warmup_games and not state.get('warmup_done') and state['iteration'] == 0:
@@ -126,7 +135,11 @@ def main():
         json.dump(state, open(state_f, 'w'))
 
     for it in range(state['iteration'], a.iterations):
-        log(f'=== itération {it + 1}/{a.iterations}')
+        # Cosine decay from lr to lr/10 over the run: big steps early, fine-tuning at the end.
+        lr = a.lr * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * it / max(a.iterations - 1, 1))))
+        for g in optimizer.param_groups:
+            g['lr'] = lr
+        log(f'=== itération {it + 1}/{a.iterations} (taux d\'apprentissage {lr:.2e})')
         prev = latest if os.path.exists(latest) else None
         shard = os.path.join(run_dir, 'shards', f'iter_{it:03d}')
         t0 = time.time()
@@ -137,7 +150,8 @@ def main():
             devices = None if a.selfplay_devices == 'auto' else a.selfplay_devices.split(',')
             deck_paths = sorted(os.path.join(decks, f) for f in os.listdir(decks))
             sp, _ = gpu_selfplay.run(deck_paths, a.games, a.sims, shard, prev, info, seed=it,
-                                     devices=devices, concurrency=a.concurrency)
+                                     devices=devices, concurrency=a.concurrency,
+                                     temperature_moves=a.temperature_moves)
         t_sp = time.time() - t0
         log(f'  self-play : {sp["games"]} parties, {sp["samples"]} positions ({t_sp / 60:.1f} min)')
 
@@ -154,7 +168,9 @@ def main():
         vs_prev = engine.arena(engine.zspec(a.eval_sims, new), engine.zspec(a.eval_sims, prev), meta,
                                a.eval_games, threads, seed=it)['a_score']
         vs_e2 = engine.arena(engine.zspec(a.eval_sims, new), 'e2', meta, a.eval_games, threads, seed=it)['a_score']
-        log(f'  nouveau réseau : {100 * vs_prev:.1f} % contre le précédent, {100 * vs_e2:.1f} % contre e2')
+        vs_e3 = engine.arena(engine.zspec(a.eval_sims, new), 'e3', meta, a.eval_games, threads, seed=it)['a_score']
+        log(f'  nouveau réseau : {100 * vs_prev:.1f} % contre le précédent, {100 * vs_e2:.1f} % contre e2, '
+            f'{100 * vs_e3:.1f} % contre e3')
         shutil.copy(new, latest)
 
         rmse = ''
@@ -165,7 +181,8 @@ def main():
         with open(metrics_f, 'a', newline='') as mf:
             csv.writer(mf).writerow([it + 1, m['samples'], f'{m["policy_loss"]:.4f}', f'{m["value_loss"]:.4f}',
                                      f'{m.get("val_policy_loss", 0):.4f}', f'{m.get("val_value_loss", 0):.4f}',
-                                     f'{vs_prev:.3f}', f'{vs_e2:.3f}', f'{rmse:.1f}' if rmse != '' else '',
+                                     f'{vs_prev:.3f}', f'{vs_e2:.3f}', f'{vs_e3:.3f}',
+                                     f'{rmse:.1f}' if rmse != '' else '', f'{lr:.2e}',
                                      f'{t_sp:.0f}', f'{t_tr:.0f}'])
         state['iteration'] = it + 1
         json.dump(state, open(state_f, 'w'))

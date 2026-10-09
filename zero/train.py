@@ -88,7 +88,7 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
             stats['value_loss'] += value_loss.item()
             stats['steps'] += 1
         s = max(stats['steps'], 1)
-        msg = (f'  epoch {epoch + 1}/{epochs}: politique {stats["policy_loss"] / s:.3f}, '
+        msg = (f'  passe {epoch + 1}/{epochs} sur les données : politique {stats["policy_loss"] / s:.3f}, '
                f'valeur {stats["value_loss"] / s:.3f}')
         if val is not None:
             vp, vv = evaluate_losses(model, val, device, q_mix)
@@ -100,7 +100,8 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
         stats = {'policy_loss': 0.0, 'value_loss': 0.0, 'steps': 0} if epoch + 1 < epochs else stats
     if best[2] is not None and best[1] < epochs:
         model.load_state_dict(best[2])
-        log(f'  meilleure époque sur les parties de contrôle : {best[1]} (gardée)')
+        log(f'  la passe {best[1]}/{epochs} généralisait mieux sur les parties de contrôle : '
+            f'on garde le réseau de cette passe')
     s = max(stats['steps'], 1)
     out = {'policy_loss': stats['policy_loss'] / s, 'value_loss': stats['value_loss'] / s,
            'samples': len(buf)}
