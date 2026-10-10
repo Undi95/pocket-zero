@@ -1,3 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 pub mod actions;
 pub mod card_ids;
 pub mod card_logic;
@@ -8,6 +12,7 @@ pub mod database;
 pub mod deck;
 pub mod effects;
 pub mod example_utils;
+pub mod fxhash;
 pub mod game;
 pub mod gameplay_stats_collector;
 mod hooks;

@@ -101,11 +101,20 @@ fn forecast_pokemon_checkup(state: &State) -> (Probabilities, Mutations) {
 
     let mut probabilities = Vec::with_capacity(outcome_ids.len());
     let mut outcomes: Mutations = Vec::with_capacity(outcome_ids.len());
+    // Usually nothing to flip for: then the preview itself can take the checkup, saving a copy
+    // of the whole state at every end of turn.
+    let single_outcome = outcome_ids.len() == 1;
     for outcome in outcome_ids {
-        let mut preview_after_checkup = preview_state.clone();
-        apply_pokemon_checkup(&mut preview_after_checkup, &checkup_targets, &outcome);
+        let mut copy;
+        let preview_after_checkup = if single_outcome {
+            &mut preview_state
+        } else {
+            copy = preview_state.clone();
+            &mut copy
+        };
+        apply_pokemon_checkup(preview_after_checkup, &checkup_targets, &outcome);
         let (start_probs, start_mutations) =
-            start_turn_ability_outcomes(&preview_after_checkup, next_player, false);
+            start_turn_ability_outcomes(preview_after_checkup, next_player, false);
         for (start_prob, start_mutation) in start_probs.into_iter().zip(start_mutations) {
             let outcome = outcome.clone();
             probabilities.push(base_probability * start_prob);

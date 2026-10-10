@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use crate::{
@@ -83,9 +84,60 @@ static LUCKY_MITTENS_EFFECT: LazyLock<String> =
 static CLEAR_VEIL_EFFECT: LazyLock<String> =
     LazyLock::new(|| tool_effect_text_from_card_id(CardId::B4149ClearVeil));
 
+/// Effect text of the Tools the engine checks for, built once. `has_tool` runs on every HP
+/// check, and building the reference card from the database each time (every string cloned)
+/// was about a third of the engine's time in self-play.
+static TOOL_EFFECTS: LazyLock<HashMap<CardId, &'static str>> = LazyLock::new(|| {
+    [
+        (CardId::A2147GiantCape, &GIANT_CAPE_EFFECT),
+        (CardId::A2148RockyHelmet, &ROCKY_HELMET_EFFECT),
+        (CardId::A3146PoisonBarb, &POISON_BARB_EFFECT),
+        (CardId::A3147LeafCape, &LEAF_CAPE_EFFECT),
+        (CardId::A3a065ElectricalCord, &ELECTRICAL_CORD_EFFECT),
+        (CardId::A3b067Leftovers, &LEFTOVERS_EFFECT),
+        (CardId::A4a067InflatableBoat, &INFLATABLE_BOAT_EFFECT),
+        (CardId::A4153SteelApron, &STEEL_APRON_EFFECT),
+        (CardId::B1219HeavyHelmet, &HEAVY_HELMET_EFFECT),
+        (CardId::B2147ProtectivePoncho, &PROTECTIVE_PONCHO_EFFECT),
+        (CardId::B2148MetalCoreBarrier, &METAL_CORE_BARRIER_EFFECT),
+        (CardId::B2a087BigAirBalloon, &BIG_AIR_BALLOON_EFFECT),
+        (CardId::B3148LuckyEgg, &LUCKY_EGG_EFFECT),
+        (
+            CardId::B3a069AncientBoosterEnergyCapsule,
+            &ANCIENT_BOOSTER_ENERGY_CAPSULE_EFFECT,
+        ),
+        (
+            CardId::B3a070FutureBoosterEnergyCapsule,
+            &FUTURE_BOOSTER_ENERGY_CAPSULE_EFFECT,
+        ),
+        (CardId::B3b064SmallBalloon, &SMALL_BALLOON_EFFECT),
+        (CardId::B3b065ElegantCape, &ELEGANT_CAPE_EFFECT),
+        (CardId::B4148DeceptiveNeedle, &DECEPTIVE_NEEDLE_EFFECT),
+        (CardId::A2149LumBerry, &LUM_BERRY_EFFECT),
+        (CardId::A3a066Beastite, &BEASTITE_EFFECT),
+        (CardId::A4154DarkPendant, &DARK_PENDANT_EFFECT),
+        (CardId::A4155RescueScarf, &RESCUE_SCARF_EFFECT),
+        (CardId::A4a068MemoryLight, &MEMORY_LIGHT_EFFECT),
+        (CardId::B1218SitrusBerry, &SITRUS_BERRY_EFFECT),
+        (CardId::B1220LuckyMittens, &LUCKY_MITTENS_EFFECT),
+        (CardId::B4149ClearVeil, &CLEAR_VEIL_EFFECT),
+    ]
+    .into_iter()
+    .map(|(id, effect)| (id, effect.as_str()))
+    .collect()
+});
+
+/// Whether `effect` is the effect text of the referenced Tool (cached for the Tools above).
+fn is_tool_effect(effect: &str, reference_tool_id: CardId) -> bool {
+    match TOOL_EFFECTS.get(&reference_tool_id) {
+        Some(reference) => effect == *reference,
+        None => effect == tool_effect_text_from_card_id(reference_tool_id),
+    }
+}
+
 pub fn tool_effects_equal(trainer_card: &TrainerCard, reference_tool_id: CardId) -> bool {
     ensure_tool_trainer(trainer_card);
-    trainer_card.effect == tool_effect_text_from_card_id(reference_tool_id)
+    is_tool_effect(&trainer_card.effect, reference_tool_id)
 }
 
 /// Whether *any* Tool attached to `played_card` is the referenced Tool. A Pokémon with two Tool
@@ -99,11 +151,9 @@ pub fn has_tool(played_card: &PlayedCard, reference_tool_id: CardId) -> bool {
 /// remove *that* Tool specifically (Lum Berry and Sitrus Berry discard themselves; Metal Core
 /// Barrier is discarded at the end of the opponent's turn) rather than all of them.
 pub(crate) fn tool_position(played_card: &PlayedCard, reference_tool_id: CardId) -> Option<usize> {
-    let reference_effect = tool_effect_text_from_card_id(reference_tool_id);
-    played_card
-        .attached_tools
-        .iter()
-        .position(|attached_tool| ensure_tool_card(attached_tool).effect == reference_effect)
+    played_card.attached_tools.iter().position(|attached_tool| {
+        is_tool_effect(&ensure_tool_card(attached_tool).effect, reference_tool_id)
+    })
 }
 
 pub(crate) fn enumerate_tool_choices<'a>(

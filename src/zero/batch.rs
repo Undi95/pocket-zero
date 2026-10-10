@@ -66,7 +66,8 @@ pub struct BatchSelfPlay {
 
 enum Walk {
     Terminal(f32, Vec<u64>),
-    Leaf(Vec<u64>, usize, Vec<Action>, Box<State>),
+    /// A node to expand, already encoded (no copy of the state needed).
+    Leaf(Request),
 }
 
 /// Walks down from the node at `path` (the root when empty) with PUCT until a leaf.
@@ -92,7 +93,13 @@ fn select(
             break (actor, actions);
         };
         if !node.expanded || path.len() >= cfg.max_depth {
-            return Walk::Leaf(path, actor, actions, Box::new(state.clone()));
+            return Walk::Leaf(Request {
+                path,
+                actor,
+                obs: encode_state(state, actor),
+                feats: actions.iter().map(|a| encode_action(a, actor)).collect(),
+                actions,
+            });
         }
         let sign = if actor == root_actor { 1.0 } else { -1.0 };
         let sqrt_n = (node.n.max(1) as f32).sqrt();
@@ -221,14 +228,8 @@ impl Slot {
                             backup(&mut d.root, &path, v);
                             continue;
                         }
-                        Walk::Leaf(path, actor, actions, leaf) => {
-                            self.request = Some(Request {
-                                path,
-                                actor,
-                                obs: encode_state(&leaf, actor),
-                                feats: actions.iter().map(|a| encode_action(a, actor)).collect(),
-                                actions,
-                            });
+                        Walk::Leaf(request) => {
+                            self.request = Some(request);
                             return false;
                         }
                     }
@@ -267,14 +268,8 @@ impl Slot {
                         d.sims_done += 1;
                         continue;
                     }
-                    Walk::Leaf(path, actor, actions, leaf) => {
-                        self.request = Some(Request {
-                            path,
-                            actor,
-                            obs: encode_state(&leaf, actor),
-                            feats: actions.iter().map(|a| encode_action(a, actor)).collect(),
-                            actions,
-                        });
+                    Walk::Leaf(request) => {
+                        self.request = Some(request);
                         return false;
                     }
                 }

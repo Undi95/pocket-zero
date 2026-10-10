@@ -118,6 +118,17 @@ enum Cmd {
         #[arg(long, default_value_t = 0)]
         seed: u64,
     },
+    /// Engine speed: the GPU self-play loop with a dummy evaluator (no network), evaluations/s
+    Bench {
+        #[arg(long, default_value = "lab/decks/meta")]
+        decks: String,
+        #[arg(long, default_value_t = 200)]
+        games: usize,
+        #[arg(long, default_value_t = 64)]
+        sims: usize,
+        #[arg(long, default_value_t = 256)]
+        concurrency: usize,
+    },
     /// Evaluate the network on the first records of a shard (Python/Rust parity check)
     Parity {
         #[arg(long)]
@@ -433,6 +444,59 @@ fn main() {
             }
             std::fs::write(&out, csv).unwrap_or_else(|e| panic!("{out}: {e}"));
             println!("{}", json!({"games": games, "rows": rows.len()}));
+        }
+        Cmd::Bench {
+            decks,
+            games,
+            sims,
+            concurrency,
+        } => {
+            let decks = load_decks(&decks);
+            let cfg = SelfPlayConfig {
+                mcts: MctsConfig {
+                    simulations: sims,
+                    noise_frac: 0.25,
+                    gumbel_noise: true,
+                    ..MctsConfig::default()
+                },
+                temperature_moves: 8,
+            };
+            let out = std::env::temp_dir().join("pz_bench.bin");
+            let mut bsp = deckgym::zero::batch::BatchSelfPlay::new(
+                cfg,
+                decks,
+                games,
+                concurrency,
+                1,
+                out.to_str().unwrap(),
+            )
+            .unwrap_or_else(|e| panic!("{e}"));
+            let start = std::time::Instant::now();
+            let (mut evals, mut rounds) = (0usize, 0usize);
+            let mut t_collect = std::time::Duration::ZERO;
+            let mut t_respond = std::time::Duration::ZERO;
+            while !bsp.done() {
+                let t0 = std::time::Instant::now();
+                let b = bsp.collect().unwrap_or_else(|e| panic!("{e}"));
+                t_collect += t0.elapsed();
+                if b.n == 0 {
+                    break;
+                }
+                evals += b.n;
+                rounds += 1;
+                let t1 = std::time::Instant::now();
+                bsp.respond(&vec![0.0; b.n], &vec![0.0; b.owner.len()]);
+                t_respond += t1.elapsed();
+            }
+            let secs = start.elapsed().as_secs_f64();
+            let (done, _, samples, _, _) = bsp.progress();
+            let _ = std::fs::remove_file(&out);
+            println!(
+                "{}",
+                json!({"games": done, "samples": samples, "evals": evals, "rounds": rounds,
+                       "seconds": secs, "evals_per_s": evals as f64 / secs,
+                       "collect_s": t_collect.as_secs_f64(), "respond_s": t_respond.as_secs_f64()})
+            );
         }
         Cmd::Parity { weights, shard, n } => {
             let net = Net::load(&weights).unwrap_or_else(|e| panic!("{e}"));

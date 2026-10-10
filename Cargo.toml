@@ -28,6 +28,11 @@ strum_macros = "0.27"
 ratatui = { version = "0.28", optional = true }
 crossterm = { version = "0.28", optional = true }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# The engine clones game states (cards, strings) constantly; the system allocators spend a large
+# share of self-play time in malloc/free (Windows' heap even more under many threads).
+mimalloc = { version = "0.1", default-features = false }
+
 [features]
 default = []
 test-utils = []

@@ -8,7 +8,9 @@
 //! Actions are encoded generically from their serde representation, so new `SimpleAction`
 //! variants are picked up without touching this file.
 
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::LazyLock;
 
 use serde_json::Value;
@@ -17,6 +19,7 @@ use strum::IntoEnumIterator;
 use crate::actions::{Action, SimpleAction};
 use crate::card_ids::CardId;
 use crate::database::get_card_by_enum;
+use crate::fxhash::{FxBuildHasher, FxHasher};
 use crate::hooks::get_stage;
 use crate::models::{Card, EnergyType, PlayedCard, TrainerType};
 use crate::State;
@@ -402,7 +405,45 @@ fn walk(v: &Value, key: &str, w: &mut Walk) {
     }
 }
 
+type CacheEntry = (SimpleAction, bool, usize, ActionFeatures);
+type ActionCache = HashMap<u64, Vec<CacheEntry>, FxBuildHasher>;
+
+thread_local! {
+    /// encode_action is a pure function of (action, is_stack, player) and the same few hundred
+    /// actions come back in every simulation: computing them (through their serde form) was a
+    /// sixth of the engine's time in self-play.
+    static ACTION_CACHE: RefCell<ActionCache> = RefCell::new(ActionCache::default());
+}
+
 pub fn encode_action(action: &Action, me: usize) -> ActionFeatures {
+    let mut h = FxHasher::default();
+    action.action.hash(&mut h);
+    action.is_stack.hash(&mut h);
+    me.hash(&mut h);
+    let k = h.finish();
+    let same = |e: &&CacheEntry| e.0 == action.action && e.1 == action.is_stack && e.2 == me;
+    let hit = ACTION_CACHE.with(|c| {
+        c.borrow()
+            .get(&k)
+            .and_then(|v| v.iter().find(same).map(|e| e.3.clone()))
+    });
+    if let Some(f) = hit {
+        return f;
+    }
+    let f = encode_action_uncached(action, me);
+    ACTION_CACHE.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.len() >= 200_000 {
+            c.clear();
+        }
+        c.entry(k)
+            .or_default()
+            .push((action.action.clone(), action.is_stack, me, f.clone()));
+    });
+    f
+}
+
+fn encode_action_uncached(action: &Action, me: usize) -> ActionFeatures {
     let json = serde_json::to_value(&action.action).unwrap_or(Value::Null);
     let (name, body) = match &json {
         Value::String(s) => (s.clone(), Value::Null),
@@ -459,9 +500,12 @@ pub fn encode_action(action: &Action, me: usize) -> ActionFeatures {
     ActionFeatures { dense, tokens }
 }
 
-/// A stable identity for an action across determinizations, used to share MCTS statistics.
+/// A stable identity for an action across determinizations (within a process), used to share
+/// MCTS statistics. Cards hash by id, so the same move with the same cards gets the same key.
 pub fn action_key(action: &SimpleAction) -> u64 {
-    fnv(&serde_json::to_string(action).unwrap_or_default())
+    let mut h = FxHasher::default();
+    action.hash(&mut h);
+    h.finish()
 }
 
 #[cfg(test)]
