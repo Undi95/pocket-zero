@@ -1,10 +1,13 @@
 //! Self-play: the network plays both sides, every searched decision becomes a training sample.
 //!
-//! Shard file (read by `zero/data.py`): b"PZS1", then u32 STATE_DENSE, N_TOKENS, ACTION_DENSE,
+//! Shard file (read by `zero/data.py`): b"PZS2", then u32 STATE_DENSE, N_TOKENS, ACTION_DENSE,
 //! ACTION_TOKENS, MAX_ACTIONS, then fixed-size records, all little-endian:
 //!   f32 dense[STATE_DENSE] | i32 tokens[N_TOKENS] | i32 n_actions
 //!   | f32 action_dense[MAX_ACTIONS * ACTION_DENSE] | i32 action_tokens[MAX_ACTIONS * ACTION_TOKENS]
 //!   | f32 policy[MAX_ACTIONS] | f32 z (final result for the player to move) | f32 q (search value)
+//!   | i32 actor | i32 last (1 on the last decision of its game)
+//! The records of a game are contiguous and in order, so value targets can bootstrap from the
+//! following positions (TD(lambda) in zero/train.py). PZS1 is the same without actor/last.
 
 use std::io::Write;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -31,13 +34,15 @@ pub struct Sample {
     pub actions: Vec<ActionFeatures>,
     pub policy: Vec<f32>,
     pub actor: usize,
+    /// Search value for the player to move; NaN when there was no search (imitation).
     pub q: f32,
 }
 
 #[derive(Clone)]
 pub struct SelfPlayConfig {
     pub mcts: MctsConfig,
-    /// Decisions per game played proportionally to visit counts before switching to the best one.
+    /// PUCT root only: decisions per game played proportionally to visit counts before switching
+    /// to the most visited one.
     pub temperature_moves: usize,
 }
 
@@ -61,24 +66,25 @@ pub fn play_game<E: Evaluator>(
             continue;
         }
         let res = search(eval, &cfg.mcts, &state, actor, &actions, rng);
-        let total: u32 = res.visits.iter().sum::<u32>().max(1);
         samples.push(Sample {
             obs: encode_state(&state, actor),
             actions: actions.iter().map(|a| encode_action(a, actor)).collect(),
-            policy: res
-                .visits
-                .iter()
-                .map(|&n| n as f32 / total as f32)
-                .collect(),
+            policy: res.policy.clone(),
             actor,
             q: res.value,
         });
-        let temperature = if decisions < cfg.temperature_moves {
-            1.0
+        // The Gumbel root already explores (its noise makes the pick a sample of the improved
+        // policy); the PUCT root plays proportionally to visits for the first decisions.
+        let i = if cfg.mcts.gumbel {
+            res.best
         } else {
-            0.0
+            let temperature = if decisions < cfg.temperature_moves {
+                1.0
+            } else {
+                0.0
+            };
+            pick(&res.visits, temperature, rng)
         };
-        let i = pick(&res.visits, temperature, rng);
         decisions += 1;
         apply_action(rng, &mut state, &actions[i]);
     }
@@ -94,7 +100,7 @@ fn z_for(outcome: Option<GameOutcome>, actor: usize) -> f32 {
 }
 
 pub fn write_header(w: &mut impl Write) -> std::io::Result<()> {
-    w.write_all(b"PZS1")?;
+    w.write_all(b"PZS2")?;
     for v in [
         STATE_DENSE,
         N_TOKENS,
@@ -107,7 +113,7 @@ pub fn write_header(w: &mut impl Write) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn write_sample(w: &mut impl Write, s: &Sample, z: f32) -> std::io::Result<()> {
+pub fn write_sample(w: &mut impl Write, s: &Sample, z: f32, last: bool) -> std::io::Result<()> {
     // Keep the most visited actions if there are more than MAX_ACTIONS.
     let mut order: Vec<usize> = (0..s.actions.len()).collect();
     order.sort_by(|&a, &b| s.policy[b].total_cmp(&s.policy[a]));
@@ -115,7 +121,7 @@ pub fn write_sample(w: &mut impl Write, s: &Sample, z: f32) -> std::io::Result<(
     let kept: f32 = order.iter().map(|&i| s.policy[i]).sum::<f32>().max(1e-9);
 
     let mut buf: Vec<u8> = Vec::with_capacity(
-        4 * (STATE_DENSE + N_TOKENS + 1 + MAX_ACTIONS * (ACTION_DENSE + ACTION_TOKENS + 1) + 2),
+        4 * (STATE_DENSE + N_TOKENS + 1 + MAX_ACTIONS * (ACTION_DENSE + ACTION_TOKENS + 1) + 4),
     );
     for x in &s.obs.dense {
         buf.extend_from_slice(&x.to_le_bytes());
@@ -148,8 +154,16 @@ pub fn write_sample(w: &mut impl Write, s: &Sample, z: f32) -> std::io::Result<(
         let p = order.get(k).map_or(0.0, |&i| s.policy[i] / kept);
         buf.extend_from_slice(&p.to_le_bytes());
     }
+    // No search value (imitation): q 0 and actor -1, so value targets keep the game result.
+    let (q, actor) = if s.q.is_nan() {
+        (0.0f32, -1i32)
+    } else {
+        (s.q, s.actor as i32)
+    };
     buf.extend_from_slice(&z.to_le_bytes());
-    buf.extend_from_slice(&s.q.to_le_bytes());
+    buf.extend_from_slice(&q.to_le_bytes());
+    buf.extend_from_slice(&actor.to_le_bytes());
+    buf.extend_from_slice(&(last as i32).to_le_bytes());
     w.write_all(&buf)
 }
 
@@ -225,7 +239,7 @@ where
             actions: actions.iter().map(|a| encode_action(a, actor)).collect(),
             policy,
             actor,
-            q: 0.0,
+            q: f32::NAN, // no search value
         });
         apply_action(rng, &mut state, &actions[i]);
     }
@@ -291,8 +305,9 @@ where
             }
             {
                 let mut w = writer.lock().unwrap();
-                for s in &game_samples {
-                    write_sample(&mut *w, s, z_for(outcome, s.actor))?;
+                for (k, s) in game_samples.iter().enumerate() {
+                    let last = k + 1 == game_samples.len();
+                    write_sample(&mut *w, s, z_for(outcome, s.actor), last)?;
                 }
             }
             samples.fetch_add(game_samples.len(), Ordering::Relaxed);
@@ -328,6 +343,7 @@ mod tests {
             mcts: MctsConfig {
                 simulations: 8,
                 noise_frac: 0.25,
+                gumbel_noise: true,
                 ..MctsConfig::default()
             },
             temperature_moves: 10,
@@ -337,9 +353,9 @@ mod tests {
         assert!(outcome.is_some(), "game should end");
         assert!(!samples.is_empty());
         let mut buf = Vec::new();
-        write_sample(&mut buf, &samples[0], 1.0).unwrap();
+        write_sample(&mut buf, &samples[0], 1.0, false).unwrap();
         let expected =
-            4 * (STATE_DENSE + N_TOKENS + 1 + MAX_ACTIONS * (ACTION_DENSE + ACTION_TOKENS + 1) + 2);
+            4 * (STATE_DENSE + N_TOKENS + 1 + MAX_ACTIONS * (ACTION_DENSE + ACTION_TOKENS + 1) + 4);
         assert_eq!(buf.len(), expected);
         let p: f32 = samples[0].policy.iter().sum();
         assert!((p - 1.0).abs() < 1e-4);

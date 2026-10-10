@@ -5,21 +5,41 @@ import struct
 import numpy as np
 
 
-def shard_dtype(sd, nt, ad, at, ma):
-    return np.dtype([('dense', '<f4', (sd,)), ('tokens', '<i4', (nt,)), ('n', '<i4'),
-                     ('adense', '<f4', (ma, ad)), ('atok', '<i4', (ma, at)), ('pi', '<f4', (ma,)),
-                     ('z', '<f4'), ('q', '<f4')])
+VERSIONS = {b'PZS1': 1, b'PZS2': 2}
+
+
+def shard_dtype(sd, nt, ad, at, ma, version=2):
+    fields = [('dense', '<f4', (sd,)), ('tokens', '<i4', (nt,)), ('n', '<i4'),
+              ('adense', '<f4', (ma, ad)), ('atok', '<i4', (ma, at)), ('pi', '<f4', (ma,)),
+              ('z', '<f4'), ('q', '<f4')]
+    if version >= 2:
+        # actor -1 = no search value (imitation data, or a PZS1 record): no bootstrapping.
+        fields += [('actor', '<i4'), ('last', '<i4')]
+    return np.dtype(fields)
 
 
 def read_shard(path):
     with open(path, 'rb') as f:
         head = f.read(24)
-    if head[:4] != b'PZS1':
+    version = VERSIONS.get(head[:4])
+    if version is None:
         raise ValueError(f'{path}: not a pocket-zero shard')
     dims = struct.unpack('<5I', head[4:24])
-    dt = shard_dtype(*dims)
+    dt = shard_dtype(*dims, version=version)
     n = (os.path.getsize(path) - 24) // dt.itemsize
     return np.memmap(path, dtype=dt, mode='r', offset=24, shape=(n,))
+
+
+def upgrade(a):
+    """PZS1 records in the PZS2 layout: each one stands alone (actor -1, last 1)."""
+    if 'actor' in a.dtype.names:
+        return a
+    out = np.zeros(len(a), dtype=np.dtype(a.dtype.descr + [('actor', '<i4'), ('last', '<i4')]))
+    for name in a.dtype.names:
+        out[name] = a[name]
+    out['actor'] = -1
+    out['last'] = 1
+    return out
 
 
 def load_buffer(paths, max_samples):
@@ -30,7 +50,7 @@ def load_buffer(paths, max_samples):
         take = min(len(a), max_samples - total)
         if take <= 0:
             break
-        chunks.append(np.array(a[-take:]))
+        chunks.append(upgrade(np.array(a[-take:])))
         total += take
     if not chunks:
         raise ValueError('no samples')

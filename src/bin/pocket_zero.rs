@@ -138,10 +138,34 @@ fn make_player(spec: &str, deck: Deck) -> Box<dyn Player> {
         Some((c, w)) => (c, Some(w)),
         None => (spec, None),
     };
+    // zp<sims>: the plain PUCT root (visit counts), kept for comparisons.
+    if let Some(sims) = code
+        .strip_prefix("zp")
+        .and_then(|r| r.parse::<usize>().ok())
+    {
+        let net = weights.map(|w| load_net(w).unwrap_or_else(|e| panic!("{e}")));
+        let cfg = MctsConfig {
+            simulations: sims,
+            gumbel: false,
+            ..MctsConfig::default()
+        };
+        return Box::new(ZeroPlayer::with_config(deck, net, cfg));
+    }
     match parse_player_code(code).unwrap_or_else(|e| panic!("{e}")) {
         PlayerCode::Z { sims } => {
             let net = weights.map(|w| load_net(w).unwrap_or_else(|e| panic!("{e}")));
-            Box::new(ZeroPlayer::new(deck, sims, net))
+            let mut cfg = MctsConfig {
+                simulations: sims,
+                ..MctsConfig::default()
+            };
+            // Search experiments: PZ_CSCALE / PZ_CONSIDER override the Gumbel settings.
+            if let Some(x) = std::env::var("PZ_CSCALE").ok().and_then(|v| v.parse().ok()) {
+                cfg.c_scale = x;
+            }
+            if let Some(x) = std::env::var("PZ_CONSIDER").ok().and_then(|v| v.parse().ok()) {
+                cfg.max_considered = x;
+            }
+            Box::new(ZeroPlayer::with_config(deck, net, cfg))
         }
         PlayerCode::Y { depth } => {
             let net = weights.map(|w| load_net(w).unwrap_or_else(|e| panic!("{e}")));
@@ -160,9 +184,13 @@ fn read_shard_obs(path: &str, n: usize) -> Vec<(Obs, Vec<ActionFeatures>)> {
         .and_then(|mut f| f.read_to_end(&mut bytes))
         .unwrap_or_else(|e| panic!("{path}: {e}"));
     let u32_at = |o: usize| u32::from_le_bytes(bytes[o..o + 4].try_into().unwrap()) as usize;
-    assert_eq!(&bytes[..4], b"PZS1");
+    let extra = match &bytes[..4] {
+        b"PZS1" => 2,
+        b"PZS2" => 4,
+        _ => panic!("{path}: not a pocket-zero shard"),
+    };
     let (sd, nt, ad, at, ma) = (u32_at(4), u32_at(8), u32_at(12), u32_at(16), u32_at(20));
-    let rec = 4 * (sd + nt + 1 + ma * (ad + at + 1) + 2);
+    let rec = 4 * (sd + nt + 1 + ma * (ad + at + 1) + extra);
     let f32_at = |o: usize| f32::from_le_bytes(bytes[o..o + 4].try_into().unwrap());
     let mut out = Vec::new();
     let mut off = 24;
@@ -237,6 +265,7 @@ fn main() {
                 mcts: MctsConfig {
                     simulations: sims,
                     noise_frac: noise,
+                    gumbel_noise: noise > 0.0,
                     ..MctsConfig::default()
                 },
                 temperature_moves,

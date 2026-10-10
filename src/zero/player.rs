@@ -4,7 +4,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use rand::rngs::StdRng;
 
 use super::encode::encode_state;
-use super::mcts::{pick, search, Bootstrap, Evaluator, MctsConfig};
+use super::mcts::{search, Bootstrap, Evaluator, MctsConfig};
 use super::net::Net;
 use crate::actions::Action;
 use crate::players::{baseline_value_function, ExpectiMiniMaxPlayer, Player, ValueFunction};
@@ -45,13 +45,21 @@ impl std::fmt::Debug for ZeroPlayer {
 
 impl ZeroPlayer {
     pub fn new(deck: Deck, sims: usize, net: Option<Arc<Net>>) -> Self {
-        ZeroPlayer {
+        Self::with_config(
             deck,
             net,
-            cfg: MctsConfig {
+            MctsConfig {
                 simulations: sims,
                 ..MctsConfig::default()
             },
+        )
+    }
+
+    pub fn with_config(deck: Deck, net: Option<Arc<Net>>, cfg: MctsConfig) -> Self {
+        ZeroPlayer {
+            deck,
+            net,
+            cfg,
             last_scores: None,
         }
     }
@@ -85,8 +93,8 @@ impl ZeroPlayer {
                 .unwrap_or(0);
         }
         let res = search(eval, &self.cfg, state, actor, actions, rng);
-        self.last_scores = Some(res.visits.iter().map(|n| *n as f64).collect());
-        pick(&res.visits, 0.0, rng)
+        self.last_scores = Some(res.policy.iter().map(|p| *p as f64).collect());
+        res.best
     }
 }
 

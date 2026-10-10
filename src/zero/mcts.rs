@@ -9,11 +9,18 @@
 //! - Forced moves (a single legal action) are applied without creating a decision.
 //!
 //! Values are stored from the root player's point of view and flipped when the opponent acts.
+//!
+//! Root (default): Gumbel search (Danihelka et al. 2022, "Policy improvement by planning with
+//! Gumbel"). Sequential halving over the most promising actions; every candidate of a phase is
+//! searched on the *same* determinizations and random streams, so they are compared on the same
+//! hidden cards and the same coin flips (paired comparisons: the luck cancels out instead of
+//! drowning the difference between moves). The policy target is the prior improved by the
+//! completed Q-values, which stays meaningful with few simulations, unlike visit counts.
 
 use std::collections::HashMap;
 
 use rand::rngs::StdRng;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 pub(crate) use rand_distr_gamma::sample_gamma;
 
 use super::encode::{action_key, encode_action, encode_state};
@@ -63,6 +70,17 @@ pub struct MctsConfig {
     pub dirichlet_alpha: f32,
     /// Safety cap on decisions per simulation (games end within 30 turns anyway).
     pub max_depth: usize,
+    /// Gumbel root with paired determinizations (see the module docs); false = plain PUCT root
+    /// with visit-count targets.
+    pub gumbel: bool,
+    /// Gumbel noise on the root (self-play exploration); off for evaluation play.
+    pub gumbel_noise: bool,
+    /// Most root actions entering sequential halving.
+    pub max_considered: usize,
+    /// Scale of the Q-values against the prior logits: sigma(q) = (c_visit + max N) * c_scale * q,
+    /// q mapped to [0, 1].
+    pub c_visit: f32,
+    pub c_scale: f32,
 }
 
 impl Default for MctsConfig {
@@ -73,7 +91,155 @@ impl Default for MctsConfig {
             noise_frac: 0.0,
             dirichlet_alpha: 0.5,
             max_depth: 400,
+            gumbel: true,
+            gumbel_noise: false,
+            max_considered: 16,
+            c_visit: 50.0,
+            c_scale: 0.5,
         }
+    }
+}
+
+fn sample_gumbel(rng: &mut StdRng) -> f32 {
+    let u: f32 = rng.gen::<f32>().clamp(1e-7, 1.0 - 1e-7);
+    -(-u.ln()).ln()
+}
+
+/// Root of a Gumbel search. Simulations are handed out as (root action, determinization seed):
+/// the candidates still in contention all get the same seeds within a phase.
+pub(crate) struct GumbelRoot {
+    pub(crate) keys: Vec<u64>,
+    logits: Vec<f32>,
+    gumbel: Vec<f32>,
+    remaining: Vec<usize>,
+    phases: usize,
+    budget: usize,
+    queue: Vec<(usize, u64)>,
+    started: bool,
+}
+
+impl GumbelRoot {
+    pub(crate) fn new(
+        cfg: &MctsConfig,
+        actions: &[Action],
+        priors: &[f32],
+        rng: &mut StdRng,
+    ) -> Self {
+        let keys: Vec<u64> = actions.iter().map(|a| action_key(&a.action)).collect();
+        let logits: Vec<f32> = priors.iter().map(|p| p.max(1e-12).ln()).collect();
+        let gumbel: Vec<f32> = (0..actions.len())
+            .map(|_| {
+                if cfg.gumbel_noise {
+                    sample_gumbel(rng)
+                } else {
+                    0.0
+                }
+            })
+            .collect();
+        let m = cfg.max_considered.max(1).min(actions.len());
+        let mut order: Vec<usize> = (0..actions.len()).collect();
+        order.sort_by(|&a, &b| (gumbel[b] + logits[b]).total_cmp(&(gumbel[a] + logits[a])));
+        order.truncate(m);
+        GumbelRoot {
+            keys,
+            logits,
+            gumbel,
+            remaining: order,
+            phases: (m as f32).log2().ceil().max(1.0) as usize,
+            budget: cfg.simulations,
+            queue: Vec::new(),
+            started: false,
+        }
+    }
+
+    fn sigma(cfg: &MctsConfig, q: f32, max_n: u32) -> f32 {
+        (cfg.c_visit + max_n as f32) * cfg.c_scale * (q + 1.0) * 0.5
+    }
+
+    /// Visits and summed value of each root action (root player's point of view).
+    fn stats(&self, root: &Node) -> Vec<(u32, f32)> {
+        self.keys
+            .iter()
+            .map(|k| root.children.get(k).map_or((0, 0.0), |c| (c.n, c.w)))
+            .collect()
+    }
+
+    /// The next simulation to run, or None when the search is over.
+    pub(crate) fn next(
+        &mut self,
+        root: &Node,
+        cfg: &MctsConfig,
+        rng: &mut StdRng,
+    ) -> Option<(usize, u64)> {
+        if let Some(x) = self.queue.pop() {
+            return Some(x);
+        }
+        if self.budget == 0 || self.remaining.len() <= 1 {
+            return None;
+        }
+        if self.started {
+            // A phase just ended: the better half goes on.
+            let stats = self.stats(root);
+            let max_n = stats.iter().map(|s| s.0).max().unwrap_or(0);
+            let score = |a: usize| {
+                let (n, w) = stats[a];
+                let q = if n > 0 { w / n as f32 } else { -1.0 };
+                self.gumbel[a] + self.logits[a] + Self::sigma(cfg, q, max_n)
+            };
+            self.remaining
+                .sort_by(|&a, &b| score(b).total_cmp(&score(a)));
+            self.remaining.truncate(self.remaining.len().div_ceil(2));
+            if self.remaining.len() <= 1 {
+                return None;
+            }
+        }
+        self.started = true;
+        let per = (self.budget / (self.phases * self.remaining.len())).max(1);
+        for _ in 0..per {
+            let seed: u64 = rng.gen();
+            for &a in self.remaining.iter().rev() {
+                self.queue.push((a, seed));
+            }
+        }
+        self.queue.pop()
+    }
+
+    /// (action to play, improved policy over all actions, value for the player to move).
+    pub(crate) fn finish(&self, root: &Node, cfg: &MctsConfig, root_value: f32) -> (usize, Vec<f32>, f32) {
+        let stats = self.stats(root);
+        let max_n = stats.iter().map(|s| s.0).max().unwrap_or(0);
+        let sum_n: u32 = stats.iter().map(|s| s.0).sum();
+        // Unvisited actions get the value of the prior policy, estimated from the root value and
+        // the visited actions' Q-values ("completed Q", v_mix in the paper).
+        let (pq, pw) = stats
+            .iter()
+            .zip(&self.logits)
+            .filter(|(s, _)| s.0 > 0)
+            .fold((0.0f32, 0.0f32), |(pq, pw), (s, l)| {
+                let p = l.exp();
+                (pq + p * s.1 / s.0 as f32, pw + p)
+            });
+        let v_mix = if pw > 0.0 {
+            (root_value + sum_n as f32 * pq / pw) / (1.0 + sum_n as f32)
+        } else {
+            root_value
+        };
+        let completed: Vec<f32> = stats
+            .iter()
+            .map(|s| if s.0 > 0 { s.1 / s.0 as f32 } else { v_mix })
+            .collect();
+        let scores: Vec<f32> = (0..self.keys.len())
+            .map(|a| self.logits[a] + Self::sigma(cfg, completed[a], max_n))
+            .collect();
+        let policy = softmax(&scores);
+        let value = policy.iter().zip(&completed).map(|(p, q)| p * q).sum();
+        let best = self
+            .remaining
+            .iter()
+            .copied()
+            .max_by(|&a, &b| (self.gumbel[a] + scores[a]).total_cmp(&(self.gumbel[b] + scores[b])))
+            .unwrap_or(0);
+        (best, policy, value)
     }
 }
 
@@ -170,6 +336,10 @@ impl<E: Evaluator> Search<'_, E> {
 pub struct SearchResult {
     /// Visit count per legal action, in the order of `actions`.
     pub visits: Vec<u32>,
+    /// Policy target (sums to 1), in the order of `actions`.
+    pub policy: Vec<f32>,
+    /// The action the search picks.
+    pub best: usize,
     /// Root value estimate for the player to move.
     pub value: f32,
 }
@@ -189,6 +359,37 @@ pub fn search<E: Evaluator>(
         root: actor,
     };
     let mut root = Node::default();
+    if cfg.gumbel {
+        let (root_v, priors) = eval.evaluate(state, actor, actions);
+        for (a, p) in actions.iter().zip(&priors) {
+            root.priors.insert(action_key(&a.action), *p);
+        }
+        root.expanded = true;
+        root.n = 1;
+        let mut plan = GumbelRoot::new(cfg, actions, &priors, rng);
+        while let Some((a, seed)) = plan.next(&root, cfg, rng) {
+            let mut srng = StdRng::seed_from_u64(seed);
+            let mut sim = determinize(state, actor, &mut srng);
+            apply_action(&mut srng, &mut sim, &actions[a]);
+            let child = root.children.entry(plan.keys[a]).or_default();
+            let v = s.descend(&mut child.node, &mut sim, &mut srng, 1);
+            child.n += 1;
+            child.w += v;
+            root.n += 1;
+        }
+        let (best, policy, value) = plan.finish(&root, cfg, root_v);
+        let visits = plan
+            .keys
+            .iter()
+            .map(|k| root.children.get(k).map_or(0, |c| c.n))
+            .collect();
+        return SearchResult {
+            visits,
+            policy,
+            best,
+            value,
+        };
+    }
     let root_v = s.expand(&mut root, state, actor, actions);
     if cfg.noise_frac > 0.0 {
         let noise: Vec<f32> = (0..actions.len())
@@ -207,13 +408,16 @@ pub fn search<E: Evaluator>(
         // the root player, whose information is unchanged).
         s.descend(&mut root, &mut sim, rng, 0);
     }
-    let visits = actions
+    let visits: Vec<u32> = actions
         .iter()
         .map(|a| root.children.get(&action_key(&a.action)).map_or(0, |c| c.n))
         .collect();
     let total_w: f32 = root.children.values().map(|c| c.w).sum();
     let total_n: u32 = root.children.values().map(|c| c.n).sum();
+    let total = visits.iter().sum::<u32>().max(1) as f32;
     SearchResult {
+        policy: visits.iter().map(|&n| n as f32 / total).collect(),
+        best: pick(&visits, 0.0, rng),
         visits,
         value: if total_n > 0 {
             total_w / total_n as f32

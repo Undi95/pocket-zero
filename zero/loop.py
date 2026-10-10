@@ -22,6 +22,8 @@ from .decks import build_pool
 from .model import ZeroNet, export_weights
 from .train import train
 
+TD_LAMBDA = 0.0
+
 # Real Limitless winrates (format B4a), same as lab/tools/validate.py.
 REAL = {('butterfree', 'lucario'): 62.4, ('butterfree', 'altaria'): 48.0, ('butterfree', 'dedenne'): 55.7,
         ('butterfree', 'hoopa'): 60.6, ('lucario', 'altaria'): 27.2, ('lucario', 'dedenne'): 64.4,
@@ -40,6 +42,19 @@ def validate(player, games, threads, log):
     return (sum(e * e for e in errs) / len(errs)) ** 0.5
 
 
+def trend(metrics_f, key, n=5):
+    """Mean of `key` over the last n rows and over the n rows before (None when missing)."""
+    try:
+        with open(metrics_f, newline='') as f:
+            vals = [float(r[key]) for r in csv.DictReader(f) if r.get(key)]
+    except (OSError, ValueError):
+        return None, None
+    cur = vals[-n:]
+    old = vals[-2 * n:-n]
+    mean = lambda v: sum(v) / len(v) if v else None
+    return mean(cur), mean(old)
+
+
 def main():
     ap = argparse.ArgumentParser(description='Boucle AlphaZero pocket-zero')
     ap.add_argument('--run', default='principal')
@@ -47,7 +62,8 @@ def main():
     ap.add_argument('--games', type=int, default=10000, help='parties de self-play par itération')
     ap.add_argument('--sims', type=int, default=200, help='simulations MCTS par décision en self-play')
     ap.add_argument('--temperature-moves', type=int, default=8,
-                    help='décisions jouées au hasard (selon la recherche) en début de partie, pour explorer')
+                    help="(ancienne recherche PUCT seulement) décisions jouées au hasard en début de partie ; "
+                         "la recherche Gumbel explore d'elle-même")
     ap.add_argument('--first-sims', type=int, default=200,
                     help="simulations de la 1re itération si pas d'échauffement (sans réseau)")
     ap.add_argument('--warmup-games', type=int, default=8000,
@@ -57,6 +73,9 @@ def main():
     ap.add_argument('--threads', type=int, default=0, help='0 = tous les cœurs')
     ap.add_argument('--window', type=int, default=2_000_000, help='positions gardées pour l\'entraînement')
     ap.add_argument('--epochs', type=int, default=2)
+    ap.add_argument('--td-lambda', type=float, default=TD_LAMBDA,
+                    help="cible de valeur TD(lambda) : s'appuie sur les évaluations des positions suivantes "
+                         "au lieu du seul résultat final, beaucoup moins bruité (0 = résultat final seul)")
     ap.add_argument('--batch', type=int, default=1024)
     ap.add_argument('--lr', type=float, default=1e-3,
                     help="taux d'apprentissage de départ, réduit progressivement jusqu'à lr/10 à la dernière itération")
@@ -160,7 +179,8 @@ def main():
         shards = sorted(os.path.join(run_dir, 'shards', f) for f in os.listdir(os.path.join(run_dir, 'shards')))
         buf = load_buffer(shards, a.window)
         t0 = time.time()
-        m = train(model, optimizer, buf, a.device, epochs=a.epochs, batch=a.batch, log=log, seed=it)
+        m = train(model, optimizer, buf, a.device, epochs=a.epochs, batch=a.batch, log=log, seed=it,
+                  td_lambda=a.td_lambda)
         t_tr = time.time() - t0
         del buf
         new = os.path.join(run_dir, 'weights', f'iter_{it:03d}.bin')
@@ -171,8 +191,8 @@ def main():
                                a.eval_games, threads, seed=it)['a_score']
         vs_e2 = engine.arena(engine.zspec(a.eval_sims, new), 'e2', meta, a.eval_games, threads, seed=it)['a_score']
         vs_e3 = engine.arena(engine.zspec(a.eval_sims, new), 'e3', meta, a.eval_games, threads, seed=it)['a_score']
-        log(f'  nouveau réseau : {100 * vs_prev:.1f} % contre le précédent, {100 * vs_e2:.1f} % contre e2, '
-            f'{100 * vs_e3:.1f} % contre e3')
+        log(f'  nouveau réseau : {100 * vs_prev:.1f} % contre le précédent (~50 % est normal : un petit pas '
+            f'par itération), {100 * vs_e2:.1f} % contre e2, {100 * vs_e3:.1f} % contre e3')
         shutil.copy(new, latest)
 
         rmse = ''
@@ -186,6 +206,14 @@ def main():
                                      f'{vs_prev:.3f}', f'{vs_e2:.3f}', f'{vs_e3:.3f}',
                                      f'{rmse:.1f}' if rmse != '' else '', f'{lr:.2e}',
                                      f'{t_sp:.0f}', f'{t_tr:.0f}'])
+        # One iteration moves the network only a little, and 400 games measure +-5 %: the
+        # trend over several iterations is what shows progress.
+        cur, old = trend(metrics_f, 'vs_e3')
+        if cur is not None:
+            msg = f'  tendance : {100 * cur:.1f} % contre e3 en moyenne sur les 5 dernières itérations'
+            if old is not None:
+                msg += f' (5 précédentes : {100 * old:.1f} %)'
+            log(msg)
         state['iteration'] = it + 1
         json.dump(state, open(state_f, 'w'))
     log('terminé. Réseau final :', latest)

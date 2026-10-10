@@ -57,6 +57,7 @@ impl PyBatchSelfPlay {
             mcts: MctsConfig {
                 simulations: sims,
                 noise_frac: noise,
+                gumbel_noise: noise > 0.0,
                 ..MctsConfig::default()
             },
             temperature_moves,

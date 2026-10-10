@@ -42,6 +42,25 @@ def value_subset(buf, frac):
     return h.astype(np.float64) / float(1 << 32) < frac
 
 
+def td_targets(buf, lam):
+    """TD(lambda) value targets. Each position leans on the search values of the positions that
+    follow it in the same game and ends on the result:
+        G_t = s * ((1 - lam) * q_{t+1} + lam * G_{t+1}),   G_last = z,
+    with s = -1 when the player to move changes. In a game decided by coin flips and draws this
+    is far less noisy than the bare result. Records without a search value (actor -1:
+    imitation, old shards) keep the result."""
+    z, q = buf['z'].tolist(), buf['q'].tolist()
+    actor, last = buf['actor'].tolist(), buf['last'].tolist()
+    g = [0.0] * len(z)
+    for i in range(len(z) - 1, -1, -1):
+        if last[i] or actor[i] < 0 or i + 1 == len(z) or actor[i + 1] < 0:
+            g[i] = z[i]
+        else:
+            s = 1.0 if actor[i + 1] == actor[i] else -1.0
+            g[i] = s * ((1 - lam) * q[i + 1] + lam * g[i + 1])
+    return np.asarray(g, dtype=np.float32)
+
+
 def to_tensors(b, device):
     t = lambda x, dt: torch.from_numpy(np.ascontiguousarray(x)).to(device=device, dtype=dt, non_blocking=True)
     return (t(b['dense'], torch.float32), t(b['tokens'], torch.long), t(b['adense'], torch.float32),
@@ -76,13 +95,18 @@ def evaluate_losses(model, buf, device, q_mix, batch=2048):
 
 
 def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=print, seed=0,
-          holdout=0.03, value_frac=0.2):
+          holdout=0.03, value_frac=0.2, td_lambda=0.0):
     """`q_mix` blends the search value into the value target (helps early, when results are noisy).
     The most recent `holdout` fraction of positions is kept out of training to measure
     generalisation (a value loss far below the held-out one means memorised games).
     Only a fixed `value_frac` of positions train the value head: positions of one game share its
     result and look alike, so using them all teaches the network to recognise games rather than
-    to judge positions (the reason AlphaGo trained its value net on one position per game)."""
+    to judge positions (the reason AlphaGo trained its value net on one position per game).
+    `td_lambda` > 0 replaces the result by TD(lambda) targets (see td_targets; q_mix is then
+    ignored, the search values being already part of the target)."""
+    if td_lambda > 0 and 'actor' in buf.dtype.names:
+        buf['z'] = td_targets(buf, td_lambda)
+        q_mix = 0.0
     n_val = int(len(buf) * holdout) if len(buf) > 2000 else 0
     val, buf = (buf[len(buf) - n_val:], buf[:len(buf) - n_val]) if n_val else (None, buf)
     rng = np.random.default_rng(seed)
