@@ -189,6 +189,11 @@ def main():
         log(f'=== itération {it + 1}/{a.iterations} (taux d\'apprentissage {lr:.2e})')
         prev = latest if os.path.exists(latest) else None
         shard = os.path.join(run_dir, 'shards', f'iter_{it:03d}')
+        # Leftovers of an interrupted attempt at this iteration (possibly cut mid-game, or under
+        # another file name) would otherwise stay in the training window.
+        for f in os.listdir(shard_dir):
+            if f.startswith(f'iter_{it:03d}_'):
+                os.remove(os.path.join(shard_dir, f))
         t0 = time.time()
         if prev is None:
             # No network yet: CPU self-play with the engine's hand-written evaluation.

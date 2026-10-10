@@ -74,7 +74,11 @@ def load_buffer(paths, max_samples):
         take = min(len(a), max_samples - total)
         if take <= 0:
             break
-        chunks.append(upgrade(np.array(a[-take:])))
+        c = upgrade(np.array(a[-take:]))
+        # A shard boundary is a game boundary: an interrupted file may end mid-game, and value
+        # targets must never bootstrap from another file's first position.
+        c['last'][-1] = 1
+        chunks.append(c)
         total += take
     if not chunks:
         raise ValueError('no samples')
