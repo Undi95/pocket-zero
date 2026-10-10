@@ -15,6 +15,9 @@ import torch
 import torch.multiprocessing as mp
 
 
+PROGRESS_EVERY = float(os.environ.get('PZ_PROGRESS_EVERY', 30))  # seconds between progress lines
+
+
 def shard_paths(out, games):
     """Output files of one worker: one per half (a single one for a single game)."""
     return [out] if games < 2 else [out[:-4] + 'a.bin', out[:-4] + 'b.bin']
@@ -55,8 +58,12 @@ def _worker(rank, args, results):
         return (v.float().cpu().numpy().astype('<f4').tobytes(),
                 logits.float().cpu().numpy().astype('<f4').tobytes())
 
+    # An environment must not be touched while the engine thread is working on it (collect
+    # holds it), so its progress is read only between its collect and its respond.
+    stats = [e.progress() for e in envs]
+
     def progress():
-        return [sum(x) for x in zip(*(e.progress() for e in envs))]
+        return [sum(x) for x in zip(*stats)]
 
     last = time.time()
     t0 = last
@@ -68,17 +75,19 @@ def _worker(rank, args, results):
         while pending:
             for k in list(pending):
                 batch = pending.pop(k).result()
+                stats[k] = envs[k].progress()
                 if batch[0] == 0:  # this half is finished
                     continue
                 envs[k].respond(*evaluate(batch))
                 pending[k] = engine_thread.submit(envs[k].collect)
                 evals += batch[0]
-            if time.time() - last > 30:
+            if time.time() - last > PROGRESS_EVERY:
                 done, target, samples, _, _ = progress()
                 el = time.time() - t0
                 print(f'  [{device}] {done}/{target} parties, {samples} positions, '
                       f'{evals / el:.0f} évaluations/s, {done / el * 60:.1f} parties/min', flush=True)
                 last = time.time()
+    stats = [e.progress() for e in envs]
     results[rank] = tuple(progress())
 
 
