@@ -59,4 +59,57 @@ def build_pool(out_dir, meta_copies=15, pairs=300, mutants=300, seed=0, log=prin
         n += 1
     log(f'pool de decks : {n} fichiers dans {out_dir} ({len(meta)} listes méta x{meta_copies}, '
         f'{len(lines)} lignées, paires et mutants)')
+    extend_pool(out_dir, log=log)
     return out_dir
+
+
+COVERAGE_MARK = '.couverture'
+
+
+def extend_pool(out_dir, seed=1, log=print):
+    """Adds one deck for every card that no deck of `out_dir` contains yet: a Pokémon's line next
+    to a real attacker's line, a Trainer in a meta list. Without it a third of the Pokémon (and
+    the Fossils) never appeared in self-play, and the deck search, which may use any card, would
+    judge them with a network that has never seen them played."""
+    p = _pipeline()
+    rng = random.Random(seed)
+    seen = set()
+    for f in os.listdir(out_dir):
+        if f.endswith('.txt'):
+            seen.update(p.sig(p.CARD[c]) for c in p.parse_deck(os.path.join(out_dir, f))['c'])
+    attackers = [ch for ch in (p.chain(f) for f in p.attacker_finals()) if ch]
+    meta = [p.parse_deck(os.path.join(p.META, f)) for f in sorted(os.listdir(p.META)) if f.endswith('.txt')]
+
+    def add(d, cid):
+        p.write_deck(d, os.path.join(out_dir, f'cover-{cid.replace(" ", "_")}.txt'))
+        seen.update(p.sig(p.CARD[c]) for c in d['c'])
+
+    added = 0
+    for cid in p.POKEMON:
+        if p.sig(p.CARD[cid]) in seen:
+            continue
+        ch = p.chain(cid) or [cid]
+        for _ in range(30):
+            d = p.shell(p.line_cards(ch, True) + p.line_cards(rng.choice(attackers), True))
+            if d and p.valid(d) and cid in d['c']:
+                add(d, cid)
+                added += 1
+                break
+    trainers = p.TRAINERS + [c for c in p.UNIQUE if p.is_fossil(p.CARD[c])]
+    for cid in trainers:
+        if p.sig(p.CARD[cid]) in seen:
+            continue
+        for _ in range(50):
+            base = rng.choice(meta)
+            c = list(base['c'])
+            slots = [i for i, x in enumerate(c) if not (p.is_poke(p.CARD[x]) or p.is_fossil(p.CARD[x]))]
+            for i in rng.sample(slots, min(2, len(slots))):
+                c[i] = cid
+            d = {'e': base['e'], 'c': c}
+            if p.valid(d):
+                add(d, cid)
+                added += 1
+                break
+    open(os.path.join(out_dir, COVERAGE_MARK), 'w').close()
+    log(f'couverture : {added} decks ajoutés pour les cartes jamais jouées à l\'entraînement')
+    return added

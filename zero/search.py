@@ -1,7 +1,7 @@
 """Deck search over the WHOLE card pool, played by the trained network.
 
     python -m zero.search --name recherche1 [--weights runs\\principal\\weights\\latest.bin]
-                          [--screen z0] [--search z0] [--final z16] [--gens 25] [--lock "B1a 42,B1a 62"]
+                          [--screen z0] [--search z8] [--final z32] [--gens 25] [--lock "B1a 42,B1a 62"]
 
 Runs lab/search/pipeline.py (screening of every attacker line, pairs, genetic search with any
 card, final validation) with the network as both players. Results: results/<name>/RESULTATS_D.md
@@ -19,9 +19,11 @@ def main():
     ap = argparse.ArgumentParser(description='Recherche de decks avec le bot pocket-zero')
     ap.add_argument('--name', default='recherche')
     ap.add_argument('--weights', default=os.path.join(ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
+    # Network of iteration 81 against e3 (400 games): z0 43.8 %, z8 54.8 %, z32 56.6 %.
     ap.add_argument('--screen', default='z0', help='joueur du criblage (z0 = politique du réseau, rapide)')
-    ap.add_argument('--search', default='z0', help="joueur de l'algorithme génétique")
-    ap.add_argument('--final', default='z16', help='joueur de la validation finale (plus fort, plus lent)')
+    ap.add_argument('--search', default='z8',
+                    help="joueur de l'algorithme génétique (z8 : 8 simulations, déjà plus fort qu'e3)")
+    ap.add_argument('--final', default='z32', help='joueur de la validation finale (plus fort, plus lent)')
     ap.add_argument('--gens', type=int, default=25)
     ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
     ap.add_argument('--threads', type=int, default=0)

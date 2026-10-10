@@ -43,7 +43,13 @@ Recherche sur **tout le pool de cartes**, jouée par le réseau entraîné : cri
 lignée d'attaquant, paires, algorithme génétique avec n'importe quelle carte (lignées
 incomplètes, Rare Candy, 1 à 3 énergies), score = 50 % méta réel + 50 % terrain d'archétypes
 hors méta. Résultat : `results\recherche1\RESULTATS_D.md`. Options : `--lock "B1a 42"` (construire
-autour d'une carte), `--gens 40`, `--search z32` (joueur plus fort, plus lent).
+autour d'une carte), `--gens 40`. Joueurs par défaut : criblage `z0` (réseau seul), algorithme
+génétique `z8` (8 simulations, déjà plus fort que `e3`), validation finale `z32` ; `--search z32`
+pour un joueur encore plus fort mais plus lent. Lance-la entraînement arrêté : les deux se
+partagent le processeur.
+
+Toutes les cartes ont un deck dans le pool d'entraînement (`cover-*.txt`, ajoutés au démarrage
+d'un run) : le bot a vu jouer chaque Pokémon et chaque dresseur que la recherche peut choisir.
 
 ## Utiliser le bot ailleurs
 

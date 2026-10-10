@@ -18,7 +18,7 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import build_pool
+from .decks import COVERAGE_MARK, build_pool, extend_pool
 from .model import ZeroNet, export_weights
 from .train import train
 
@@ -113,6 +113,8 @@ def main():
     decks = os.path.join(run_dir, 'decks')
     if not os.path.isdir(decks):
         build_pool(decks, log=log)
+    elif not os.path.exists(os.path.join(decks, COVERAGE_MARK)):
+        extend_pool(decks, log=log)  # runs started before every card had a deck
 
     model = ZeroNet(info).to(a.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)
@@ -200,7 +202,7 @@ def main():
             sp = engine.selfplay(decks, a.games, a.first_sims, shard + '_w0.bin', None, threads, seed=it)
         else:
             devices = None if a.selfplay_devices == 'auto' else a.selfplay_devices.split(',')
-            deck_paths = sorted(os.path.join(decks, f) for f in os.listdir(decks))
+            deck_paths = sorted(os.path.join(decks, f) for f in os.listdir(decks) if f.endswith('.txt'))
             sp, _ = gpu_selfplay.run(deck_paths, a.games, a.sims, shard, prev, info, seed=it,
                                      devices=devices, concurrency=a.concurrency,
                                      temperature_moves=a.temperature_moves)
