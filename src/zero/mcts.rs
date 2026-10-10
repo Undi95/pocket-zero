@@ -205,7 +205,12 @@ impl GumbelRoot {
     }
 
     /// (action to play, improved policy over all actions, value for the player to move).
-    pub(crate) fn finish(&self, root: &Node, cfg: &MctsConfig, root_value: f32) -> (usize, Vec<f32>, f32) {
+    pub(crate) fn finish(
+        &self,
+        root: &Node,
+        cfg: &MctsConfig,
+        root_value: f32,
+    ) -> (usize, Vec<f32>, f32) {
         let stats = self.stats(root);
         let max_n = stats.iter().map(|s| s.0).max().unwrap_or(0);
         let sum_n: u32 = stats.iter().map(|s| s.0).sum();

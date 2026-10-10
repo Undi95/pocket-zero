@@ -94,8 +94,43 @@ def evaluate_losses(model, buf, device, q_mix, batch=2048):
     return tot_p / max(len(buf), 1), tot_v / max(len(buf), 1)
 
 
+def calibrate_value(model, val, z, device, batch=2048):
+    """Temperature scaling of the value head on held-out games. A network that has seen the
+    results of its training games is too sure of itself on new positions (it says +-0.9 where
+    +-0.6 is right), which skews every average the search takes over coin flips and hidden
+    cards. Fits v = tanh(a * logit + b) to the real results of the held-out games. Returns
+    (a, b, mse_before, mse_after); the caller folds a, b into the exported weights
+    (export_weights(..., value_scale=(a, b))), training goes on with the raw model."""
+    model.eval()
+    xs = []
+    with torch.no_grad():
+        for i in range(0, len(val), batch):
+            dense, tokens, *_ = to_tensors(val[i:i + batch], device)
+            h = model.trunk(dense, tokens)
+            xs.append(model.v2(F.relu(model.v1(h))).squeeze(-1).float().cpu())
+    x = torch.cat(xs)
+    y = torch.from_numpy(np.ascontiguousarray(z, dtype=np.float32))
+    a = torch.ones(1, requires_grad=True)
+    b = torch.zeros(1, requires_grad=True)
+    opt = torch.optim.LBFGS([a, b], max_iter=100, line_search_fn='strong_wolfe')
+
+    def closure():
+        opt.zero_grad()
+        loss = ((torch.tanh(a * x + b) - y) ** 2).mean()
+        loss.backward()
+        return loss
+
+    opt.step(closure)
+    a_, b_ = float(a.item()), float(b.item())
+    before = float(((torch.tanh(x) - y) ** 2).mean())
+    if not (0.02 < a_ < 5.0) or not np.isfinite(b_):
+        return 1.0, 0.0, before, before
+    after = float(((torch.tanh(a_ * x + b_) - y) ** 2).mean())
+    return a_, b_, before, after
+
+
 def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=print, seed=0,
-          holdout=0.03, value_frac=0.2, td_lambda=0.0):
+          holdout=0.03, value_frac=0.2, td_lambda=0.0, calibrate=True):
     """`q_mix` blends the search value into the value target (helps early, when results are noisy).
     The most recent `holdout` fraction of positions is kept out of training to measure
     generalisation (a value loss far below the held-out one means memorised games).
@@ -103,7 +138,10 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
     result and look alike, so using them all teaches the network to recognise games rather than
     to judge positions (the reason AlphaGo trained its value net on one position per game).
     `td_lambda` > 0 replaces the result by TD(lambda) targets (see td_targets; q_mix is then
-    ignored, the search values being already part of the target)."""
+    ignored, the search values being already part of the target).
+    `calibrate`: fit the value calibration on the held-out games (see calibrate_value), returned
+    as out['value_scale'] for export_weights."""
+    results = buf['z'].copy()
     if td_lambda > 0 and 'actor' in buf.dtype.names:
         buf['z'] = td_targets(buf, td_lambda)
         q_mix = 0.0
@@ -148,6 +186,12 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
     s = max(stats['steps'], 1)
     out = {'policy_loss': stats['policy_loss'] / s, 'value_loss': stats['value_loss'] / s,
            'samples': len(buf)}
+    out['value_scale'] = (1.0, 0.0)
+    if val is not None and calibrate:
+        a, b, before, after = calibrate_value(model, val, results[len(results) - n_val:], device)
+        out.update(value_scale=(a, b), val_mse_raw=before, val_mse_cal=after)
+        log(f'  calibration de la valeur sur les parties de contrôle : échelle {a:.2f} '
+            f'(erreur contre les vrais résultats {before:.3f} -> {after:.3f})')
     if val is not None:
         out['val_policy_loss'], out['val_value_loss'] = evaluate_losses(model, val, device, q_mix)
     return out

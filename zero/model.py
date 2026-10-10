@@ -64,9 +64,14 @@ class ZeroNet(nn.Module):
         return value, self.p_out(q).squeeze(-1)
 
 
-def export_weights(model, path):
-    """Writes the PZW1 format read by Net::load (see src/zero/net.rs)."""
-    sd = {k: v.detach().float().cpu().numpy() for k, v in model.state_dict().items()}
+def export_weights(model, path, value_scale=(1.0, 0.0)):
+    """Writes the PZW1 format read by Net::load (see src/zero/net.rs). `value_scale` (a, b)
+    turns the value into tanh(a * logit + b) in the exported file only (calibration, see
+    zero/train.py calibrate_value); the model itself is left as trained."""
+    sd = {k: v.detach().float().cpu().numpy().copy() for k, v in model.state_dict().items()}
+    a, b = value_scale
+    sd['v2.weight'] = sd['v2.weight'] * a
+    sd['v2.bias'] = sd['v2.bias'] * a + b
     with open(path, 'wb') as f:
         f.write(b'PZW1')
         f.write(struct.pack('<I', len(sd)))

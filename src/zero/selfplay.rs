@@ -246,6 +246,68 @@ where
     (samples, state.winner)
 }
 
+/// One decision of a value check: what the hand-written evaluation and the network think of the
+/// position, and how the game ended (all for the player to move).
+pub struct ValueRow {
+    pub game: usize,
+    pub turn: u8,
+    pub actor: usize,
+    pub baseline: f64,
+    pub net: f32,
+    pub z: f32,
+}
+
+/// Plays `games` games with `make` players and records, at every decision, the hand-written
+/// evaluation, the network value and the final result: which one predicts the winner better?
+pub fn value_check<M>(
+    make: M,
+    net: &super::net::Net,
+    decks: &[Deck],
+    games: usize,
+    seed: u64,
+) -> Vec<ValueRow>
+where
+    M: Fn(Deck) -> Box<dyn Player> + Sync,
+{
+    (0..games)
+        .into_par_iter()
+        .flat_map_iter(|g| {
+            let mut rng =
+                StdRng::seed_from_u64(seed.wrapping_mul(1_000_003).wrapping_add(g as u64));
+            let a = &decks[rng.gen_range(0..decks.len())];
+            let b = &decks[rng.gen_range(0..decks.len())];
+            let mut players = [make(a.clone()), make(b.clone())];
+            let mut state = State::initialize(a, b, &mut rng);
+            let mut rows = Vec::new();
+            let mut steps = 0usize;
+            while !state.is_game_over() && steps < 5000 {
+                steps += 1;
+                let (actor, actions) = state.generate_possible_actions();
+                if actions.len() > 1 {
+                    rows.push(ValueRow {
+                        game: g,
+                        turn: state.turn_count,
+                        actor,
+                        baseline: crate::players::baseline_value_function(&state, actor),
+                        net: net.evaluate(&encode_state(&state, actor), &[]).value,
+                        z: 0.0,
+                    });
+                }
+                let action = if actions.len() == 1 {
+                    actions[0].clone()
+                } else {
+                    players[actor].decision_fn(&mut rng, &state, &actions)
+                };
+                apply_action(&mut rng, &mut state, &action);
+            }
+            for r in rows.iter_mut() {
+                r.z = z_for(state.winner, r.actor);
+            }
+            rows
+        })
+        .collect()
+}
+
 pub fn run_imitation<M>(
     make: M,
     decks: &[Deck],

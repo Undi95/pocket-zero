@@ -209,7 +209,14 @@ impl Slot {
                     apply_action(&mut srng, &mut sim, &d.actions[a]);
                     let key = plan.keys[a];
                     d.root.children.entry(key).or_default();
-                    match select(&mut d.root, vec![key], d.actor, &mut sim, &mut srng, &cfg.mcts) {
+                    match select(
+                        &mut d.root,
+                        vec![key],
+                        d.actor,
+                        &mut sim,
+                        &mut srng,
+                        &cfg.mcts,
+                    ) {
                         Walk::Terminal(v, path) => {
                             backup(&mut d.root, &path, v);
                             continue;
@@ -247,7 +254,14 @@ impl Slot {
             }
             if d.sims_done < cfg.mcts.simulations {
                 let mut sim = determinize(&self.state, d.actor, &mut self.rng);
-                match select(&mut d.root, vec![], d.actor, &mut sim, &mut self.rng, &cfg.mcts) {
+                match select(
+                    &mut d.root,
+                    vec![],
+                    d.actor,
+                    &mut sim,
+                    &mut self.rng,
+                    &cfg.mcts,
+                ) {
                     Walk::Terminal(v, path) => {
                         backup(&mut d.root, &path, v);
                         d.sims_done += 1;
@@ -319,7 +333,12 @@ impl Slot {
             // Root of a new decision, Gumbel search: plan the simulations.
             node.n = 1;
             d.root_value = v_root;
-            d.plan = Some(GumbelRoot::new(&cfg.mcts, &req.actions, &priors, &mut self.rng));
+            d.plan = Some(GumbelRoot::new(
+                &cfg.mcts,
+                &req.actions,
+                &priors,
+                &mut self.rng,
+            ));
         } else if req.path.is_empty() && node.n == 0 {
             // Root of a new decision: exploration noise, then start the simulations.
             if cfg.mcts.noise_frac > 0.0 {

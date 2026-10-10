@@ -57,6 +57,9 @@ enum Cmd {
         noise: f32,
         #[arg(long, default_value_t = 0)]
         seed: u64,
+        /// Plain PUCT root (visit-count targets) instead of the Gumbel root
+        #[arg(long)]
+        puct: bool,
     },
     /// Imitation data: an engine player (default e3) plays both sides, its moves are the targets
     Imitate {
@@ -96,6 +99,22 @@ enum Cmd {
         player: String,
         #[arg(long, default_value_t = 100)]
         games: usize,
+        #[arg(long, default_value_t = 0)]
+        seed: u64,
+    },
+    /// Value diagnostics: at every decision of games played by `player`, the hand-written
+    /// evaluation, the network value and the final result, as CSV
+    Valuecheck {
+        #[arg(long)]
+        decks: String,
+        #[arg(long)]
+        games: usize,
+        #[arg(long, default_value = "e3")]
+        player: String,
+        #[arg(long)]
+        weights: String,
+        #[arg(long)]
+        out: String,
         #[arg(long, default_value_t = 0)]
         seed: u64,
     },
@@ -162,7 +181,10 @@ fn make_player(spec: &str, deck: Deck) -> Box<dyn Player> {
             if let Some(x) = std::env::var("PZ_CSCALE").ok().and_then(|v| v.parse().ok()) {
                 cfg.c_scale = x;
             }
-            if let Some(x) = std::env::var("PZ_CONSIDER").ok().and_then(|v| v.parse().ok()) {
+            if let Some(x) = std::env::var("PZ_CONSIDER")
+                .ok()
+                .and_then(|v| v.parse().ok())
+            {
                 cfg.max_considered = x;
             }
             Box::new(ZeroPlayer::with_config(deck, net, cfg))
@@ -259,12 +281,14 @@ fn main() {
             temperature_moves,
             noise,
             seed,
+            puct,
         } => {
             let decks = load_decks(&decks);
             let cfg = SelfPlayConfig {
                 mcts: MctsConfig {
                     simulations: sims,
                     noise_frac: noise,
+                    gumbel: !puct,
                     gumbel_noise: noise > 0.0,
                     ..MctsConfig::default()
                 },
@@ -387,6 +411,28 @@ fn main() {
                 "{}",
                 json!({"deck_a": deck_a, "deck_b": deck_b, "games": games, "score_a": score})
             );
+        }
+        Cmd::Valuecheck {
+            decks,
+            games,
+            player,
+            weights,
+            out,
+            seed,
+        } => {
+            let decks = load_decks(&decks);
+            let net = Net::load(&weights).unwrap_or_else(|e| panic!("{e}"));
+            let rows =
+                selfplay::value_check(|d| make_player(&player, d), &net, &decks, games, seed);
+            let mut csv = String::from("game,turn,actor,baseline,net,z\n");
+            for r in &rows {
+                csv.push_str(&format!(
+                    "{},{},{},{},{},{}\n",
+                    r.game, r.turn, r.actor, r.baseline, r.net, r.z
+                ));
+            }
+            std::fs::write(&out, csv).unwrap_or_else(|e| panic!("{out}: {e}"));
+            println!("{}", json!({"games": games, "rows": rows.len()}));
         }
         Cmd::Parity { weights, shard, n } => {
             let net = Net::load(&weights).unwrap_or_else(|e| panic!("{e}"));

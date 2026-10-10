@@ -18,12 +18,16 @@ auditées dans Pocket Deck Lab (voir `lab/README.md`).
 run.bat train
 ```
 
-Chaque itération : self-play (MCTS en Rust sur tous les cœurs, réseau évalué par lots sur
+Chaque itération : self-play (recherche en Rust sur tous les cœurs, réseau évalué par lots sur
 **chaque GPU**, un processus par carte), entraînement sur `cuda:0`, puis évaluation contre
-l'ancien réseau et contre le bot `e2`. Toutes les 5 itérations, validation contre les vrais
-matchups Limitless (écart moyen, RMSE ; le bot `e3` est à ~12 points).
+l'ancien réseau et contre les bots `e2` et `e3`. Toutes les 5 itérations, validation contre les
+vrais matchups Limitless (écart moyen, RMSE ; le bot `e3` est à ~10-12 points).
 Tout se trouve dans `runs\principal\` : `log.txt`, `metrics.csv`, `weights\latest.bin`.
 L'entraînement reprend où il s'est arrêté : relance simplement la même commande.
+
+Lire les résultats : « contre le précédent » reste vers 50 % (chaque itération n'est qu'un petit
+pas, et 400 parties mesurent à ±5 %). La progression se lit sur `vs_e3` dans la durée : le log
+affiche la moyenne des 5 dernières itérations à côté des 5 précédentes.
 
 Options utiles : `--iterations 60`, `--games 3000`, `--sims 200`, `--concurrency 2048`,
 `--selfplay-devices cuda:0,cuda:1`, `--run autre_nom` (nouveau run depuis zéro).
@@ -55,8 +59,19 @@ bin\deckgym.exe simulate deck1.txt deck2.txt --num 100 --players z64,e3
 
 - `src/zero/encode.rs` : ce qu'un joueur voit (taille de la main adverse mais pas son contenu,
   composition de son propre deck mais pas son ordre), encodé en tenseurs.
-- `src/zero/mcts.rs`, `src/zero/batch.rs` : MCTS avec déterminisation (information cachée) et
-  hasard en boucle ouverte ; version par lots pour le GPU.
+- `src/zero/mcts.rs`, `src/zero/batch.rs` : recherche avec déterminisation (information cachée)
+  et hasard en boucle ouverte ; version par lots pour le GPU. Racine « Gumbel » : halving
+  séquentiel sur les coups les plus prometteurs, chaque candidat joué sur *les mêmes* cartes
+  cachées et les mêmes pile ou face (comparaisons appariées : la chance s'annule au lieu de
+  noyer la différence entre deux coups), et cible de politique = politique améliorée par les
+  valeurs Q (bien plus nette que les nombres de visites, qui restaient presque plats).
+  `zp<sims>` garde l'ancienne racine PUCT pour comparer.
+- Cible de valeur TD(λ) (`--td-lambda 0.9`) : chaque position s'appuie sur les évaluations des
+  positions suivantes de la même partie, au lieu du seul résultat final (très bruité dans un jeu
+  de pile ou face). Valeur calibrée à chaque itération sur des parties jamais vues (le réseau
+  avait tendance à être trop sûr de lui).
+- `pocket-zero valuecheck` : compare, sur des parties jouées, l'évaluation du réseau, celle écrite
+  à la main et le vrai résultat.
 - `zero/` : modèle PyTorch (jumeau exact du réseau Rust, vérifié par `python -m zero.parity`),
   entraînement, boucle AlphaZero, pool de decks, recherche.
 

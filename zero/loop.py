@@ -22,7 +22,7 @@ from .decks import build_pool
 from .model import ZeroNet, export_weights
 from .train import train
 
-TD_LAMBDA = 0.0
+TD_LAMBDA = 0.9
 
 # Real Limitless winrates (format B4a), same as lab/tools/validate.py.
 REAL = {('butterfree', 'lucario'): 62.4, ('butterfree', 'altaria'): 48.0, ('butterfree', 'dedenne'): 55.7,
@@ -145,9 +145,9 @@ def main():
         sp = engine.imitate(decks, a.warmup_games, shard, a.warmup_player, threads)
         log(f'  {sp["games"]} parties, {sp["samples"]} positions ({(time.time() - t0) / 60:.1f} min)')
         buf = load_buffer([shard], a.window)
-        train(model, optimizer, buf, a.device, epochs=a.warmup_epochs, batch=a.batch, q_mix=0.0, log=log)
+        m = train(model, optimizer, buf, a.device, epochs=a.warmup_epochs, batch=a.batch, q_mix=0.0, log=log)
         del buf
-        export_weights(model, latest)
+        export_weights(model, latest, m['value_scale'])
         shutil.copy(latest, os.path.join(run_dir, 'weights', 'warmup.bin'))
         torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict()}, ckpt)
         vs_e2 = engine.arena(engine.zspec(a.eval_sims, latest), 'e2', meta, a.eval_games, threads)['a_score']
@@ -184,7 +184,7 @@ def main():
         t_tr = time.time() - t0
         del buf
         new = os.path.join(run_dir, 'weights', f'iter_{it:03d}.bin')
-        export_weights(model, new)
+        export_weights(model, new, m['value_scale'])
         torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict()}, ckpt)
 
         vs_prev = engine.arena(engine.zspec(a.eval_sims, new), engine.zspec(a.eval_sims, prev), meta,
