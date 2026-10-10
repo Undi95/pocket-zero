@@ -177,6 +177,10 @@ def main():
         state['warmup_done'] = True
         json.dump(state, open(state_f, 'w'))
 
+    if state['iteration'] >= a.iterations:
+        log(f"Ce run a déjà fait {state['iteration']} itérations (--iterations {a.iterations} demandé) : "
+            f"rien à faire. Pour continuer : run.bat train --iterations {state['iteration'] + 40}")
+        return
     for it in range(state['iteration'], a.iterations):
         # Cosine decay from lr to lr/10 over the run: big steps early, fine-tuning at the end.
         lr = a.lr * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * it / max(a.iterations - 1, 1))))
