@@ -57,22 +57,7 @@ impl Player for ExpectiMiniMaxPlayer {
         };
 
         // Get value for each possible action
-        let original_level = log::max_level();
-        log::set_max_level(LevelFilter::Info); // Temporarily silence debug and trace logs
-        let mut scores: Vec<f64> = Vec::with_capacity(possible_actions.len());
-        for action in possible_actions.iter() {
-            let (score, action_node) = expected_value_function(
-                rng,
-                state,
-                action,
-                self.max_depth - 1,
-                myself,
-                &self.value_function,
-            );
-            scores.push(score);
-            root.children.push(action_node);
-        }
-        log::set_max_level(original_level); // Restore the original logging level
+        let scores = self.score_on(rng, state, possible_actions, myself, &mut root);
 
         trace!("Scores: {scores:?}");
         // Select the one with best score
@@ -110,6 +95,54 @@ impl Player for ExpectiMiniMaxPlayer {
 
     fn get_deck(&self) -> Deck {
         self.deck.clone()
+    }
+}
+
+impl ExpectiMiniMaxPlayer {
+    /// Expected value of each action (same order as `possible_actions`), searched on a
+    /// determinized copy of `state`. What `decision_fn` maximises.
+    pub fn score_actions(
+        &self,
+        rng: &mut StdRng,
+        state: &State,
+        possible_actions: &[Action],
+    ) -> Vec<f64> {
+        let myself = possible_actions[0].actor;
+        let determinized = determinize(state, myself, rng);
+        let mut root = DebugStateNode {
+            acting_player: myself,
+            children: vec![],
+            proba: 1.0,
+            value: 0.0,
+        };
+        self.score_on(rng, &determinized, possible_actions, myself, &mut root)
+    }
+
+    fn score_on(
+        &self,
+        rng: &mut StdRng,
+        state: &State,
+        possible_actions: &[Action],
+        myself: usize,
+        root: &mut DebugStateNode,
+    ) -> Vec<f64> {
+        let original_level = log::max_level();
+        log::set_max_level(LevelFilter::Info); // Temporarily silence debug and trace logs
+        let mut scores: Vec<f64> = Vec::with_capacity(possible_actions.len());
+        for action in possible_actions.iter() {
+            let (score, action_node) = expected_value_function(
+                rng,
+                state,
+                action,
+                self.max_depth - 1,
+                myself,
+                &self.value_function,
+            );
+            scores.push(score);
+            root.children.push(action_node);
+        }
+        log::set_max_level(original_level); // Restore the original logging level
+        scores
     }
 }
 

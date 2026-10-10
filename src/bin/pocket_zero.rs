@@ -21,7 +21,7 @@ use deckgym::zero::encode::{self, ActionFeatures, Obs};
 use deckgym::zero::mcts::{Bootstrap, MctsConfig};
 use deckgym::zero::net::{self, Net};
 use deckgym::zero::selfplay::{self, SelfPlayConfig, MAX_ACTIONS};
-use deckgym::zero::{load_net, ZeroPlayer};
+use deckgym::zero::{load_net, NetSearchPlayer, ZeroPlayer};
 use deckgym::{Deck, Game};
 
 #[derive(Parser)]
@@ -143,6 +143,10 @@ fn make_player(spec: &str, deck: Deck) -> Box<dyn Player> {
             let net = weights.map(|w| load_net(w).unwrap_or_else(|e| panic!("{e}")));
             Box::new(ZeroPlayer::new(deck, sims, net))
         }
+        PlayerCode::Y { depth } => {
+            let net = weights.map(|w| load_net(w).unwrap_or_else(|e| panic!("{e}")));
+            Box::new(NetSearchPlayer::new(deck, depth, net))
+        }
         other => create_players(deck.clone(), deck, vec![other, PlayerCode::R])
             .into_iter()
             .next()
@@ -259,9 +263,15 @@ fn main() {
             seed,
         } => {
             let decks = load_decks(&decks);
-            let code = parse_player_code(&player).unwrap_or_else(|e| panic!("{e}"));
-            let stats = selfplay::run_imitation(&code, &decks, games, seed, &out, true)
-                .unwrap_or_else(|e| panic!("{out}: {e}"));
+            let stats = selfplay::run_imitation(
+                |d| make_player(&player, d),
+                &decks,
+                games,
+                seed,
+                &out,
+                true,
+            )
+            .unwrap_or_else(|e| panic!("{out}: {e}"));
             println!(
                 "{}",
                 json!({"games": stats.games, "samples": stats.samples,

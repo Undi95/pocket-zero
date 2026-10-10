@@ -74,6 +74,11 @@ pub enum PlayerCode {
     Z {
         sims: usize,
     },
+    /// Expert-iteration search: the `e<depth>` chance-aware search with the pocket-zero network
+    /// (POCKET_ZERO_WEIGHTS) as evaluation instead of the hand-written one.
+    Y {
+        depth: usize,
+    },
     /// An external bot, spoken to over stdin/stdout (see `docs/bot-protocol.md`). The command to
     /// run comes from `--bot-a`/`--bot-b`, not from the code itself — `create_players` panics if
     /// asked to build an `X` player; use `create_players_with_bots`.
@@ -104,6 +109,16 @@ pub fn parse_player_code(s: &str) -> Result<PlayerCode, String> {
             .parse::<usize>()
             .map(|sims| PlayerCode::Z { sims })
             .map_err(|_| format!("Invalid player code: {s}. Use 'z<simulations>', e.g. 'z64'"));
+    }
+
+    if let Some(rest) = lower.strip_prefix('y') {
+        if rest.is_empty() {
+            return Ok(PlayerCode::Y { depth: 2 });
+        }
+        return rest
+            .parse::<usize>()
+            .map(|depth| PlayerCode::Y { depth })
+            .map_err(|_| format!("Invalid player code: {s}. Use 'y<depth>', e.g. 'y2'"));
     }
 
     match lower.as_str() {
@@ -166,6 +181,7 @@ fn get_player(deck: Deck, player: &PlayerCode) -> Box<dyn Player> {
         }),
         PlayerCode::ER => Box::new(EvolutionRusherPlayer { deck }),
         PlayerCode::Z { sims } => Box::new(crate::zero::ZeroPlayer::from_env(deck, *sims)),
+        PlayerCode::Y { depth } => Box::new(crate::zero::NetSearchPlayer::from_env(deck, *depth)),
         PlayerCode::X => panic!(
             "PlayerCode::X (external bot) has no command to run; use create_players_with_bots \
              (the CLI's --bot-a/--bot-b flags) instead of create_players"

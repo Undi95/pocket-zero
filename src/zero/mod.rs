@@ -15,4 +15,4 @@ mod player;
 pub mod py;
 pub mod selfplay;
 
-pub use player::{load_net, ZeroPlayer};
+pub use player::{load_net, NetSearchPlayer, ZeroPlayer};

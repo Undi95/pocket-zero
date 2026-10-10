@@ -20,7 +20,7 @@ use super::encode::{
 };
 use super::mcts::{pick, search, Evaluator, MctsConfig};
 use crate::actions::apply_action;
-use crate::players::{create_players, PlayerCode};
+use crate::players::Player;
 use crate::state::GameOutcome;
 use crate::{Deck, State};
 
@@ -180,19 +180,19 @@ pub fn run<E: Evaluator>(
     )
 }
 
-/// Imitation data: an existing engine player (e.g. e3) plays both sides; each of its decisions
-/// becomes a sample whose policy target is the move it chose. Used to warm-start the network.
-pub fn play_imitation(
-    code: &PlayerCode,
+/// Imitation data: an existing player (e.g. e3, or the y expert) plays both sides; each of its
+/// decisions becomes a sample. The policy target is the player's own probabilities when it gives
+/// them (`last_scores`, normalised), otherwise the move it chose.
+pub fn play_imitation<M>(
+    make: &M,
     deck_a: &Deck,
     deck_b: &Deck,
     rng: &mut StdRng,
-) -> (Vec<Sample>, Option<GameOutcome>) {
-    let mut players = create_players(
-        deck_a.clone(),
-        deck_b.clone(),
-        vec![code.clone(), code.clone()],
-    );
+) -> (Vec<Sample>, Option<GameOutcome>)
+where
+    M: Fn(Deck) -> Box<dyn Player>,
+{
+    let mut players = [make(deck_a.clone()), make(deck_b.clone())];
     let mut state = State::initialize(deck_a, deck_b, rng);
     let mut samples = Vec::new();
     let mut steps = 0usize;
@@ -205,8 +205,21 @@ pub fn play_imitation(
         }
         let chosen = players[actor].decision_fn(rng, &state, &actions);
         let i = actions.iter().position(|a| *a == chosen).unwrap_or(0);
-        let mut policy = vec![0.0; actions.len()];
-        policy[i] = 1.0;
+        let policy = match players[actor].last_scores() {
+            Some(s)
+                if s.len() == actions.len()
+                    && s.iter().all(|x| *x >= 0.0)
+                    && s.iter().sum::<f64>() > 0.0 =>
+            {
+                let sum: f64 = s.iter().sum();
+                s.iter().map(|x| (*x / sum) as f32).collect()
+            }
+            _ => {
+                let mut p = vec![0.0; actions.len()];
+                p[i] = 1.0;
+                p
+            }
+        };
         samples.push(Sample {
             obs: encode_state(&state, actor),
             actions: actions.iter().map(|a| encode_action(a, actor)).collect(),
@@ -219,16 +232,19 @@ pub fn play_imitation(
     (samples, state.winner)
 }
 
-pub fn run_imitation(
-    code: &PlayerCode,
+pub fn run_imitation<M>(
+    make: M,
     decks: &[Deck],
     games: usize,
     seed: u64,
     out: &str,
     progress: bool,
-) -> std::io::Result<SelfPlayStats> {
+) -> std::io::Result<SelfPlayStats>
+where
+    M: Fn(Deck) -> Box<dyn Player> + Sync,
+{
     run_games(
-        |a, b, rng| play_imitation(code, a, b, rng),
+        |a, b, rng| play_imitation(&make, a, b, rng),
         decks,
         games,
         seed,
