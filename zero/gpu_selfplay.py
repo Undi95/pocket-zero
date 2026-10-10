@@ -3,6 +3,7 @@ parallel through the Rust engine (MCTS on all CPU cores) and evaluating their po
 batches. Falls back to a single CPU worker when no GPU is available."""
 import os
 import time
+import warnings
 
 import numpy as np
 import torch
@@ -19,6 +20,9 @@ def _worker(rank, args, results):
     from .model import ZeroNet
     from .train import load_weights
 
+    # The batches arrive as read-only bytes; they are only read (copied to the GPU), so torch's
+    # warning about non-writable arrays does not apply.
+    warnings.filterwarnings('ignore', message='The given NumPy array is not writable')
     torch.set_num_threads(1)
     torch.backends.cuda.matmul.allow_tf32 = True
     model = ZeroNet(info)
