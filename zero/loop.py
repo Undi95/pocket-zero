@@ -17,7 +17,7 @@ import time
 import torch
 
 from . import engine, gpu_selfplay
-from .data import load_buffer
+from .data import load_buffer, stale_shards
 from .decks import build_pool
 from .model import ZeroNet, export_weights
 from .train import train
@@ -72,6 +72,9 @@ def main():
     ap.add_argument('--warmup-epochs', type=int, default=4)
     ap.add_argument('--threads', type=int, default=0, help='0 = tous les cœurs')
     ap.add_argument('--window', type=int, default=2_000_000, help='positions gardées pour l\'entraînement')
+    ap.add_argument('--keep-shards', action='store_true',
+                    help="garder toutes les parties d'autojeu (sinon celles sorties de la fenêtre "
+                         "d'entraînement sont supprimées : ~4 Go par itération)")
     ap.add_argument('--epochs', type=int, default=2)
     ap.add_argument('--td-lambda', type=float, default=TD_LAMBDA,
                     help="cible de valeur TD(lambda) : s'appuie sur les évaluations des positions suivantes "
@@ -137,6 +140,25 @@ def main():
         if new_metrics:
             w.writerow(header)
 
+    shard_dir = os.path.join(run_dir, 'shards')
+
+    def prune():
+        """Deletes the self-play files that fell out of the training window (they are never
+        read again; each iteration writes ~4 GB)."""
+        if a.keep_shards:
+            return
+        freed = 0
+        for p in stale_shards([os.path.join(shard_dir, f) for f in os.listdir(shard_dir)], a.window):
+            try:
+                size = os.path.getsize(p)
+                os.remove(p)
+                freed += size
+            except OSError as e:
+                log(f'  impossible de supprimer {os.path.basename(p)} : {e}')
+        if freed:
+            log(f'  anciennes parties sorties de la fenêtre d\'entraînement supprimées : {freed / 1e9:.1f} Go libérés')
+
+    prune()
     meta = os.path.join(engine.ROOT, 'lab', 'decks', 'meta')
     if a.warmup_games and not state.get('warmup_done') and state['iteration'] == 0:
         log(f'=== échauffement : le réseau apprend en imitant {a.warmup_player} ({a.warmup_games} parties)')
@@ -183,6 +205,7 @@ def main():
                   td_lambda=a.td_lambda)
         t_tr = time.time() - t0
         del buf
+        prune()
         new = os.path.join(run_dir, 'weights', f'iter_{it:03d}.bin')
         export_weights(model, new, m['value_scale'])
         torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict()}, ckpt)

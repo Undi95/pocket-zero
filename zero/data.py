@@ -30,6 +30,30 @@ def read_shard(path):
     return np.memmap(path, dtype=dt, mode='r', offset=24, shape=(n,))
 
 
+def shard_len(path):
+    """Records in a shard, from its header and size (no memory map, so nothing stays open)."""
+    with open(path, 'rb') as f:
+        head = f.read(24)
+    version = VERSIONS.get(head[:4])
+    if version is None or len(head) < 24:
+        return 0
+    dt = shard_dtype(*struct.unpack('<5I', head[4:24]), version=version)
+    return (os.path.getsize(path) - 24) // dt.itemsize
+
+
+def stale_shards(paths, max_samples, margin=2):
+    """Shards too old to be in the training window (the newest `max_samples` positions, as
+    load_buffer reads them), keeping `margin` older files in reserve."""
+    paths = sorted(paths)
+    total = needed = 0
+    for p in reversed(paths):
+        if total >= max_samples:
+            break
+        total += shard_len(p)
+        needed += 1
+    return paths[:max(0, len(paths) - needed - margin)]
+
+
 def upgrade(a):
     """PZS1 records in the PZS2 layout: each one stands alone (actor -1, last 1)."""
     if 'actor' in a.dtype.names:
