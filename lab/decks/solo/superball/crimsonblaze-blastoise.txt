@@ -1,0 +1,16 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Squirtle B1a 017
+1 Wartortle B1a 018
+1 Blastoise B1a 019
+2 Basculin B1a 021
+2 Clauncher B1a 022
+1 Clawitzer B1a 023
+1 Porygon B1a 056
+1 Porygon2 B1a 057
+1 Starly B1a 059
+1 Staravia B1a 060
+1 Buneary B1a 062
+1 Lopunny B1a 063
+1 Bouffalant B1a 064

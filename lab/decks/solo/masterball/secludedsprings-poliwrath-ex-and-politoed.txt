@@ -1,0 +1,14 @@
+Energy: Fighting
+1 Misty A1 220
+1 Sabrina A1 225
+1 Red A2b 071
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+1 Politoed A4 040
+1 Hitmontop A4 102
+2 Poliwag A4a 013
+1 Poliwhirl A4a 014
+2 Mantyke A4a 023
+2 Poliwrath ex A4a 042
+2 Professor's Research A4b 373
+2 X Speed P-A 002

@@ -1,0 +1,19 @@
+Energy: Fighting
+1 Machop A1 143
+1 Machoke A1 144
+1 Machamp A1 145
+1 Geodude A1 147
+1 Graveler A1 148
+1 Golem A1 149
+1 Onix A1 150
+1 Clobbopus A1 162
+1 Grapploct A1 163
+1 Rattata A1 189
+1 Raticate A1 190
+1 Spearow A1 191
+1 Fearow A1 192
+1 Jigglypuff A1 193
+1 Wigglytuff A1 194
+1 Chansey A1 202
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

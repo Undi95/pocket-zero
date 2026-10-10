@@ -1,0 +1,12 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Skiddo B1 021
+2 Pidgey B1 180
+2 Whismur B1 190
+1 Skitty B1 193
+2 Bulbasaur B1a 001
+2 Sunkern B1a 007
+1 Sunflora B1a 008
+2 Burmy B1a 009
+2 Porygon B1a 056
+2 Buneary B1a 062

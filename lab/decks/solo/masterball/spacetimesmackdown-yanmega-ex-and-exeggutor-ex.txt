@@ -1,0 +1,11 @@
+Energy: Grass
+2 Exeggcute A1 021
+2 Exeggutor ex A1 023
+2 Kangaskhan A1 203
+2 Erika A1 219
+2 Yanma A2 006
+2 Yanmega ex A2 007
+2 Giant Cape A2 147
+2 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

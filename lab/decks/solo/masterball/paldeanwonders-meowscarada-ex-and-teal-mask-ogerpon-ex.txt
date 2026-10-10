@@ -1,0 +1,16 @@
+Energy: Grass
+1 Cyrus A2 150
+2 Sprigatito A2b 005
+1 Red A2b 071
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+2 Professor's Research A4b 373
+1 May B1 223
+1 Copycat B1 225
+1 Quick-Grow Extract B1a 067
+1 Teal Mask Ogerpon ex B2 017
+1 Floragato B2a 002
+2 Meowscarada ex B2a 003
+1 Smoliv B2a 007
+1 Dolliv B2a 008
+1 Arboliva B2a 009

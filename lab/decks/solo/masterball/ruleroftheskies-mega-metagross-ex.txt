@@ -1,0 +1,14 @@
+Energy: Metal
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+1 Lillie A3 155
+2 Professor's Research A4b 373
+1 Copycat B1 225
+2 Metal Core Barrier B2 148
+2 Orthworm B2a 077
+2 Beldum B4 106
+1 Metang B4 107
+2 Mega Metagross ex B4 109
+1 Genesect B4 111
+1 Wally B4 153

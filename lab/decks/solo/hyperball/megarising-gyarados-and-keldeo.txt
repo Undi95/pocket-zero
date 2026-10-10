@@ -1,0 +1,18 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Psyduck B1 048
+1 Golduck B1 049
+2 Magikarp B1 050
+1 Gyarados B1 051
+1 Corphish B1 058
+1 Crawdaunt B1 059
+1 Luvdisc B1 060
+1 Panpour B1 061
+1 Simipour B1 062
+1 Keldeo B1 070
+1 Chewtle B1 076
+1 Drednaw B1 077
+1 Arrokuda B1 078
+1 Barraskewda B1 079
+1 Spinda B1 195

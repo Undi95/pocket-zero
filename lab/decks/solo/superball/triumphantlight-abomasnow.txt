@@ -1,0 +1,18 @@
+Energy: Water
+1 Marill A2a 014
+1 Azumarill A2a 015
+1 Barboach A2a 016
+1 Whiscash A2a 017
+1 Snorunt A2a 018
+1 Froslass A2a 019
+2 Snover A2a 020
+1 Abomasnow A2a 021
+1 Phione A2a 024
+1 Hoothoot A2a 064
+1 Noctowl A2a 065
+1 Starly A2a 066
+1 Staravia A2a 067
+1 Staraptor A2a 068
+1 Arceus A2a 070
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

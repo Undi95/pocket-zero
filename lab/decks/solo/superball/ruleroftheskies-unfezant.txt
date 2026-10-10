@@ -1,0 +1,16 @@
+Energy: Psychic
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Drowzee B4 066
+1 Hypno B4 067
+1 Chimecho B4 073
+1 Woobat B4 075
+1 Swoobat B4 076
+1 Oricorio B4 078
+1 Rattata B4 129
+1 Raticate B4 130
+2 Pidove B4 137
+1 Tranquill B4 138
+1 Unfezant B4 139
+2 Ducklett B4 140
+2 Type: Null B4 143

@@ -1,0 +1,13 @@
+Energy: Fire
+2 Poké Ball A2b 111
+2 Slugma A4a 008
+2 Magcargo A4a 009
+2 Fletchinder A4a 011
+2 Talonflame A4a 012
+2 Lickitung A4a 057
+1 Lickilicky A4a 058
+1 Zangoose A4a 065
+2 Fletchling A4a 066
+2 Professor's Research A4b 373
+1 Potion P-A 001
+1 X Speed P-A 002

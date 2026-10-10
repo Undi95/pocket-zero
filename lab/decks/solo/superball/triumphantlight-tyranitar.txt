@@ -1,0 +1,17 @@
+Energy: Fighting
+1 Sudowoodo A2a 036
+1 Phanpy A2a 037
+1 Donphan A2a 038
+2 Larvitar A2a 039
+2 Pupitar A2a 040
+1 Tyranitar A2a 041
+1 Meditite A2a 043
+1 Medicham A2a 044
+1 Hoothoot A2a 064
+1 Noctowl A2a 065
+1 Starly A2a 066
+1 Staravia A2a 067
+1 Staraptor A2a 068
+1 Arceus A2a 070
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

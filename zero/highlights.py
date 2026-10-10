@@ -69,7 +69,7 @@ def summarize(paths, labels, iteration):
     rate = lambda t, k: t[k][0] / t[k][1]
     out = [f"── Moments forts de l'itération {iteration} ({fmt_int(len(games))} parties) ──"]
 
-    cands = [k for k, (w, n) in deck.items() if n >= 8]
+    cands = [k for k, (w, n) in deck.items() if n >= 6]
     if cands:
         best = max(cands, key=lambda k: (rate(deck, k), deck[k][1]))
         w, n = deck[best]
@@ -79,6 +79,11 @@ def summarize(paths, labels, iteration):
         top = ' · '.join(f'{k} {pct(rate(meta, k))}' for k in ranked[:3])
         out.append(f'📊 Méta (contre tout le pool) : {top} … lanterne rouge : '
                    f'{ranked[-1]} {pct(rate(meta, ranked[-1]))}')
+    devs = [k for k, (w, n) in deck.items() if kind(k) == "solo" and n >= 6]
+    if devs:
+        best = max(devs, key=lambda k: (rate(deck, k), deck[k][1]))
+        w, n = deck[best]
+        out.append(f'🎮 Meilleur deck des devs : {label(best)} — {w} victoires sur {n} ({pct(w / n)})')
     shiny = sorted((k for k, (w, n) in gems.items() if n >= 40), key=lambda k: -rate(gems, k))
     if shiny:
         out.append('💎 Pépites hors méta : ' + ' · '.join(

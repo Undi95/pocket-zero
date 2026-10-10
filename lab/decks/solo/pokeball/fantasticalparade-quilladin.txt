@@ -1,0 +1,12 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Ledyba B2 001
+2 Roselia B2 004
+1 Cacnea B2 006
+2 Chespin B2 008
+1 Quilladin B2 009
+2 Scatterbug B2 011
+2 Bagon B2 121
+2 Sentret B2 128
+2 Taillow B2 132
+2 Bunnelby B2 139

@@ -1,0 +1,13 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Psyduck B3b 011
+2 Goldeen B3b 012
+1 Seaking B3b 013
+2 Feebas B3b 014
+2 Snorunt B3b 016
+1 Luvdisc B3b 018
+1 Piplup B3b 019
+2 Jigglypuff B3b 051
+2 Eevee B3b 053
+1 Teddiursa B3b 056
+2 Skwovet B3b 062

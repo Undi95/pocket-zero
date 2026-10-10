@@ -1,0 +1,13 @@
+Energy: Water
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Eevee Bag A3b 066
+2 Professor's Research A4b 373
+2 Eevee B1 184
+1 Copycat B1 225
+2 Vaporeon ex B3 037
+2 Sobble B3 048
+2 Drizzile B3 049
+2 Inteleon B3 050
+1 Parasol Lady B3 152
+1 X Speed P-A 002

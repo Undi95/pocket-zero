@@ -1,0 +1,14 @@
+Energy: Water
+1 Sabrina A1 225
+2 Cyrus A2 150
+1 Irida A2a 072
+2 Poké Ball A2b 111
+2 Pyukumuku A3 054
+2 Rare Candy A3 144
+1 Lillie A3 155
+2 Horsea A4 041
+1 Seadra A4 042
+2 Kingdra ex A4 043
+1 Elekid A4 070
+1 Elemental Switch A4 151
+2 Professor's Research A4b 373

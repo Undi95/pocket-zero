@@ -1,0 +1,13 @@
+Energy: Fire
+1 Leaf A1a 068
+2 Rocky Helmet A2 148
+1 Cyrus A2 150
+1 Red A2b 071
+2 Poké Ball A2b 111
+2 Flareon A3b 008
+2 Flareon ex A3b 009
+1 Torkoal A3b 010
+2 Eevee A3b 055
+2 Eevee ex A3b 056
+2 Eevee Bag A3b 066
+2 Professor's Research A4b 373

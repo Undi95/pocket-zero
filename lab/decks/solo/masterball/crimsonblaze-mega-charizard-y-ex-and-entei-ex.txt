@@ -1,0 +1,13 @@
+Energy: Fire
+1 Sabrina A1 225
+2 Leaf A1a 068
+1 Giant Cape A2 147
+2 Poké Ball A2b 111
+1 Torkoal A3b 010
+2 Entei ex A4a 010
+2 Professor's Research A4b 373
+2 Flame Patch B1 217
+1 Copycat B1 225
+2 Charmander B1a 011
+2 Charmeleon B1a 012
+2 Mega Charizard Y ex B1a 014

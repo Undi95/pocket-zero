@@ -1,0 +1,13 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Surskit B3a 001
+2 Psyduck B3a 006
+1 Golduck B3a 007
+2 Buizel B3a 009
+2 Snom B3a 011
+1 Girafarig B3a 057
+1 Dunsparce B3a 059
+2 Swablu B3a 061
+2 Rufflet B3a 062
+2 Rookidee B3a 065
+1 Corvisquire B3a 066

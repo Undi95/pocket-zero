@@ -1,0 +1,14 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Squirtle B1a 017
+2 Wartortle B1a 018
+1 Mega Blastoise ex B1a 020
+1 Basculin B1a 021
+2 Clauncher B1a 022
+2 Clawitzer B1a 023
+2 Buneary B1a 062
+1 Lopunny B1a 063
+1 Furfrou B1a 065
+1 Potion P-A 001
+1 X Speed P-A 002

@@ -49,6 +49,13 @@ def arena(a, b, decks, games, threads=None, seed=0):
                threads)
 
 
+def league(decks, player, games_per_deck, threads=None, seed=0):
+    """{'games': n, 'decks': {file stem: [wins, games]}}: every deck of the folder against random
+    others, `player` on both sides."""
+    return run(['league', '--decks', decks, '--player', player, '--games-per-deck', games_per_deck,
+                '--seed', seed], threads)
+
+
 def match(deck_a, deck_b, player, games, threads=None, seed=0):
     return run(['match', '--deck-a', deck_a, '--deck-b', deck_b, '--player', player,
                 '--games', games, '--seed', seed], threads, stream=False)

@@ -1,0 +1,19 @@
+Energy: Psychic
+1 Gastly A1 120
+1 Haunter A1 121
+1 Jynx A1 127
+1 Gardevoir A1 132
+1 Misdreavus A2 066
+1 Ralts A2 068
+1 Kirlia A2 069
+1 Giratina A2 078
+2 Poké Ball A2b 111
+1 Oricorio A3 077
+1 Cosmog A3 085
+1 Cosmoem A3 086
+1 Swirlix A3b 031
+1 Slurpuff A3b 032
+1 Milcery A3b 036
+1 Alcremie A3b 037
+2 Professor's Research A4b 373
+1 Potion P-A 001

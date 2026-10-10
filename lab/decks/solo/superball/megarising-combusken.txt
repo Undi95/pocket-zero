@@ -1,0 +1,19 @@
+Energy: Fire
+2 Poké Ball A2b 111
+1 Growlithe B1 028
+1 Ponyta B1 030
+2 Torchic B1 033
+1 Combusken B1 034
+1 Pansear B1 037
+1 Darumaka B1 039
+1 Litwick B1 041
+1 Lampent B1 042
+1 Litleo B1 045
+1 Pidgey B1 180
+1 Pidgeotto B1 181
+1 Aipom B1 185
+1 Zigzagoon B1 188
+1 Whismur B1 190
+1 Loudred B1 191
+1 Skitty B1 193
+1 Swablu B1 196

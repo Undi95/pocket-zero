@@ -1,0 +1,19 @@
+Energy: Lightning
+1 Pikachu A1 094
+1 Magnemite A1 097
+1 Magneton A1 098
+1 Jigglypuff A1 193
+1 Farfetch'd A1 198
+1 Pidgey A1a 057
+1 Pidgeotto A1a 058
+1 Magnezone A2 053
+1 Lickitung A2 124
+1 Pachirisu A2b 025
+1 Bidoof A2b 064
+2 Poké Ball A2b 111
+1 Oricorio A3 066
+1 Zeraora A3a 021
+1 Electrical Cord A3a 065
+1 Dratini A3b 051
+1 Chinchou A4 064
+2 Professor's Research A4b 373

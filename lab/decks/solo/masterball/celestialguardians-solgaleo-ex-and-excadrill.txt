@@ -1,0 +1,13 @@
+Energy: Metal
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Cosmog A3 085
+1 Cosmoem A3 086
+2 Drilbur A3 093
+2 Excadrill A3 119
+1 Klefki A3 121
+2 Solgaleo ex A3 122
+2 Rare Candy A3 144
+2 Lillie A3 155
+2 Professor's Research A4b 373

@@ -1,0 +1,18 @@
+Energy: Fighting
+1 Burmy A2 015
+1 Rhyhorn A2 080
+1 Rhydon A2 081
+1 Rhyperior A2 082
+1 Gligar A2 083
+1 Gliscor A2 084
+1 Hitmontop A2 085
+1 Regirock A2 087
+1 Cranidos A2 088
+1 Rampardos A2 089
+1 Wormadam A2 090
+2 Hippopotas A2 093
+1 Aipom A2 130
+1 Ambipom A2 131
+1 Skull Fossil A2 144
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

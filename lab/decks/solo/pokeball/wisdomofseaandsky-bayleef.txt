@@ -1,0 +1,12 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Scyther A4 006
+2 Chikorita A4 008
+1 Bayleef A4 009
+2 Ledyba A4 011
+2 Sunkern A4 016
+2 Spearow A4 129
+2 Porygon A4 135
+2 Sentret A4 138
+2 Hoothoot A4 140
+1 Teddiursa A4 145

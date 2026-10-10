@@ -1,0 +1,17 @@
+Energy: Lightning
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Pikachu B2 049
+1 Alolan Raichu B2 050
+1 Zapdos B2 051
+1 Plusle B2 052
+1 Minun B2 053
+2 Toxel B2 054
+1 Tadbulb B2 056
+1 Bellibolt B2 057
+1 Sentret B2 128
+1 Furret B2 129
+1 Slakoth B2 134
+1 Vigoroth B2 135
+1 Bunnelby B2 139
+1 Diggersby B2 140

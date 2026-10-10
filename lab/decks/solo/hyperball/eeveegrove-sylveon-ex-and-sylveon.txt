@@ -1,0 +1,13 @@
+Energy: Psychic
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+1 Guzma A3 151
+2 Espeon A3b 028
+2 Sylveon A3b 033
+2 Sylveon ex A3b 034
+2 Eevee A3b 055
+2 Eevee ex A3b 056
+2 Eevee Bag A3b 066
+2 Professor's Research A4b 373
+1 Red Card P-A 006

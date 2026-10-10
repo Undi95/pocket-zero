@@ -1,0 +1,14 @@
+Energy: Fire
+2 Charmander A1 033
+2 Charmeleon A1 034
+1 Charizard ex A1 036
+2 Ponyta A1 042
+1 Rapidash A1 043
+1 Moltres A1 046
+2 Salandit A1 049
+1 Salazzle A1 050
+2 Rattata A1 189
+1 Raticate A1 190
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

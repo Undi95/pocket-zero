@@ -1,0 +1,19 @@
+Energy: Fighting
+1 Machop A1 143
+1 Machoke A1 144
+1 Cubone A1 151
+1 Marshadow A1a 047
+1 Pidgey A1a 057
+1 Lucario A2 092
+1 Sudowoodo A2a 036
+1 Nosepass A2a 042
+1 Gible A2a 045
+1 Gabite A2a 046
+1 Riolu A2b 042
+2 Poké Ball A2b 111
+1 Drilbur A3 093
+1 Crabrawler A3 097
+1 Rockruff A3a 032
+1 Phanpy A4 099
+2 Professor's Research A4b 373
+1 Potion P-A 001

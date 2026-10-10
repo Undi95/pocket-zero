@@ -1,0 +1,12 @@
+Energy: Water
+2 Leaf A1a 068
+2 Giant Cape A2 147
+1 Cyrus A2 150
+2 Irida A2a 072
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Copycat B1 225
+2 Tatsugiri B2a 033
+2 Slowpoke B2b 015
+2 Mega Slowbro ex B2b 016
+2 Phione B2b 021

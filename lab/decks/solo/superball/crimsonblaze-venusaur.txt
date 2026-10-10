@@ -1,0 +1,15 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Bulbasaur B1a 001
+1 Ivysaur B1a 002
+1 Venusaur B1a 003
+2 Spinarak B1a 005
+1 Ariados B1a 006
+2 Sunkern B1a 007
+1 Sunflora B1a 008
+2 Burmy B1a 009
+1 Mothim B1a 010
+1 Porygon B1a 056
+1 Porygon2 B1a 057
+1 Furfrou B1a 065

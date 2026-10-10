@@ -1,0 +1,15 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Petilil A3a 001
+1 Lilligant A3a 002
+2 Rowlet A3a 003
+1 Dartrix A3a 004
+1 Decidueye A3a 005
+1 Pheromosa A3a 007
+1 Kartana A3a 008
+2 Stufful A3a 057
+1 Bewear A3a 058
+2 Oranguru A3a 059
+1 Celesteela A3a 062
+1 Looker A3a 068
+2 Professor's Research A4b 373

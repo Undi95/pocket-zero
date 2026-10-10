@@ -1,0 +1,12 @@
+Energy: Fighting
+2 Machop A1 143
+2 Jigglypuff A1 193
+1 Pidgey A1a 057
+2 Nosepass A2a 042
+2 Gible A2a 045
+1 Gabite A2a 046
+2 Bidoof A2b 064
+2 Poké Ball A2b 111
+2 Drilbur A3 093
+2 Skitty A3 129
+2 Dratini A3b 051

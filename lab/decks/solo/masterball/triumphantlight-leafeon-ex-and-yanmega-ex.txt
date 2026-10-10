@@ -1,0 +1,12 @@
+Energy: Grass
+2 Eevee A1 206
+2 Erika A1 219
+1 Sabrina A1 225
+2 Yanma A2 006
+2 Yanmega ex A2 007
+2 Giant Cape A2 147
+1 Cyrus A2 150
+2 Leafeon ex A2a 010
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 X Speed P-A 002

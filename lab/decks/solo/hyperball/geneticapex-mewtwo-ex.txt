@@ -1,0 +1,14 @@
+Energy: Psychic
+2 Clefairy A1 113
+1 Clefable A1 114
+2 Slowpoke A1 118
+1 Slowbro A1 119
+2 Gastly A1 120
+2 Haunter A1 121
+1 Gengar A1 122
+1 Mewtwo ex A1 129
+2 Rattata A1 189
+1 Raticate A1 190
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

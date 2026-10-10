@@ -1,0 +1,19 @@
+Energy: Grass
+2 Poké Ball A2b 111
+1 Pinsir B1 001
+2 Wurmple B1 003
+1 Silcoon B1 004
+1 Cascoon B1 006
+1 Seedot B1 008
+1 Nuzleaf B1 009
+1 Shroomish B1 011
+1 Pansage B1 013
+1 Cottonee B1 015
+1 Petilil B1 017
+1 Skiddo B1 021
+1 Phantump B1 023
+1 Grookey B1 025
+1 Thwackey B1 026
+1 Pidgey B1 180
+1 Pidgeotto B1 181
+1 Aipom B1 185

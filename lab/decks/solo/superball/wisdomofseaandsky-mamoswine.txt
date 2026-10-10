@@ -1,0 +1,17 @@
+Energy: Fighting
+2 Poké Ball A2b 111
+1 Sudowoodo A4 093
+2 Gligar A4 094
+1 Gliscor A4 095
+2 Swinub A4 096
+1 Piloswine A4 097
+1 Mamoswine A4 098
+1 Hitmontop A4 102
+1 Binacle A4 105
+1 Barbaracle A4 106
+1 Spearow A4 129
+1 Fearow A4 130
+1 Sentret A4 138
+1 Furret A4 139
+2 Professor's Research A4b 373
+1 Potion P-A 001

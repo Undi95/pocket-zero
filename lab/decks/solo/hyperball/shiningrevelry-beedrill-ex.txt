@@ -1,0 +1,14 @@
+Energy: Grass
+2 Weedle A2b 001
+2 Kakuna A2b 002
+1 Beedrill ex A2b 003
+1 Pinsir A2b 004
+2 Sprigatito A2b 005
+2 Floragato A2b 006
+1 Meowscarada A2b 007
+2 Buneary A2b 066
+1 Lopunny A2b 067
+1 Red A2b 071
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

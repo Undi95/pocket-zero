@@ -1,0 +1,14 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Cottonee B1 015
+2 Petilil B1 017
+2 Bulbasaur B1a 001
+2 Sprigatito B2a 001
+1 Floragato B2a 002
+1 Smoliv B2a 007
+1 Dolliv B2a 008
+1 Scyther B2b 001
+2 Treecko B3 005
+1 Caterpie B3b 001
+1 Metapod B3b 002
+2 Combee B4 010

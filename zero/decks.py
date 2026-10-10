@@ -62,6 +62,7 @@ def build_pool(out_dir, meta_copies=15, pairs=300, mutants=300, seed=0, log=prin
     log(f'pool de decks : {n} fichiers dans {out_dir} ({len(meta)} listes méta x{meta_copies}, '
         f'{len(lines)} lignées, paires et mutants)')
     extend_pool(out_dir, log=log)
+    add_solo_decks(out_dir, log=log)
     return out_dir
 
 
@@ -117,7 +118,36 @@ def extend_pool(out_dir, seed=1, log=print):
     return added
 
 
-KINDS = {'meta': 'méta', 'line': 'lignée', 'pair': 'paire', 'mutant': 'mutant', 'cover': 'découverte'}
+KINDS = {'meta': 'méta', 'line': 'lignée', 'pair': 'paire', 'mutant': 'mutant', 'cover': 'découverte',
+         'solo': 'solo'}
+RANKS = {'pokeball': 'Poké Ball', 'superball': 'Super Ball', 'hyperball': 'Hyper Ball', 'masterball': 'Master Ball'}
+SOLO_DIR = os.path.join(ROOT, 'lab', 'decks', 'solo')
+SOLO_MARK = '.solo'
+
+
+def solo_name(file_stem):
+    """'celestialguardians-alolan-muk-ex-and-toxapex' -> 'Alolan Muk ex & Toxapex'."""
+    words = file_stem.split('-')[1:]
+    pretty = {'ex': 'ex', 'and': '&'}
+    return ' '.join(pretty.get(w, w.capitalize()) for w in words).replace("Rocket S ", "Rocket's ")
+
+
+def add_solo_decks(out_dir, log=print):
+    """Copies the developers' decks of the step-up solo battles (lab/decks/solo/<rank>, four
+    ranks from Poké Ball to Master Ball) into the self-play pool: hand-made decks of every
+    level, and they disappear from the game at the end of October 2026."""
+    n = 0
+    for rank in RANKS:
+        folder = os.path.join(SOLO_DIR, rank)
+        if not os.path.isdir(folder):
+            continue
+        for f in sorted(os.listdir(folder)):
+            if f.endswith('.txt'):
+                shutil.copy(os.path.join(folder, f), os.path.join(out_dir, f'solo-{rank}-{f}'))
+                n += 1
+    open(os.path.join(out_dir, SOLO_MARK), 'w').close()
+    log(f'decks du mode solo : {n} decks des développeurs ajoutés (Poké Ball à Master Ball)')
+    return n
 LABELS_FILE = '.noms.json'
 
 
@@ -147,6 +177,9 @@ def deck_labels(decks_dir):
             if kind == 'meta':
                 name = ' '.join(w.capitalize() for w in stem.split('-')[1:-1])
                 labels[stem] = [f'{name} (méta)', name, kind]
+            elif kind == 'solo':
+                rank = stem.split('-')[1]
+                labels[stem] = [f'{solo_name(stem.split("-", 2)[2])} ({RANKS.get(rank, rank)})', top[0], kind]
             else:
                 labels[stem] = [f"{' + '.join(top)} ({KINDS.get(kind, kind)})", top[0], kind]
         try:

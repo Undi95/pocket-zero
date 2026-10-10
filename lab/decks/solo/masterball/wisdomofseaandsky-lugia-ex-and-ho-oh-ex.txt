@@ -1,0 +1,15 @@
+Energy: Fire, Lightning
+1 Sabrina A1 225
+2 Leaf A1a 068
+2 Giant Cape A2 147
+2 Poké Ball A2b 111
+1 Ilima A3 149
+1 Zeraora A3a 021
+1 Magby A4 032
+1 Entei A4 033
+2 Ho-Oh ex A4 034
+1 Pichu A4 066
+2 Lugia ex A4 149
+1 Elemental Switch A4 151
+1 Silver A4 158
+2 Professor's Research A4b 373

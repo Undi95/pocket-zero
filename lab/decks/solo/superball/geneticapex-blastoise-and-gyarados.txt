@@ -1,0 +1,19 @@
+Energy: Water
+1 Squirtle A1 053
+1 Wartortle A1 054
+1 Blastoise A1 055
+1 Goldeen A1 072
+1 Seaking A1 073
+1 Magikarp A1 077
+1 Gyarados A1 078
+1 Snom A1 092
+1 Frosmoth A1 093
+1 Rattata A1 189
+1 Raticate A1 190
+1 Spearow A1 191
+1 Fearow A1 192
+1 Jigglypuff A1 193
+1 Wigglytuff A1 194
+1 Chansey A1 202
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

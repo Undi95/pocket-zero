@@ -1,0 +1,19 @@
+Energy: Fire
+1 Charmander A1 033
+1 Charmeleon A1 034
+1 Growlithe A1 039
+1 Jigglypuff A1 193
+1 Farfetch'd A1 198
+1 Pidgey A1a 057
+1 Chimchar A2 027
+1 Monferno A2 028
+1 Heatran A2a 013
+1 Bidoof A2b 064
+2 Poké Ball A2b 111
+1 Litten A3 030
+1 Torracat A3 032
+1 Flareon A3b 008
+1 Torkoal A3b 010
+1 Eevee A3b 055
+2 Professor's Research A4b 373
+1 Potion P-A 001

@@ -1,0 +1,13 @@
+Energy: Lightning
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Zeraora A3a 021
+2 Elemental Switch A4 151
+2 Professor's Research A4b 373
+2 Jolteon ex B1 081
+2 Eevee B1 184
+1 Copycat B1 225
+2 Electrike B2b 026
+2 Mega Manectric ex B2b 027
+1 Hiking Trail B2b 069
+1 X Speed P-A 002

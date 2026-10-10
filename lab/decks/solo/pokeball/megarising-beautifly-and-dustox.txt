@@ -1,0 +1,18 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Pinsir B1 001
+2 Wurmple B1 003
+1 Silcoon B1 004
+1 Beautifly B1 005
+1 Cascoon B1 006
+1 Dustox B1 007
+1 Shroomish B1 011
+1 Breloom B1 012
+1 Pansage B1 013
+1 Simisage B1 014
+1 Maractus B1 019
+1 Skiddo B1 021
+1 Gogoat B1 022
+1 Phantump B1 023
+1 Trevenant B1 024

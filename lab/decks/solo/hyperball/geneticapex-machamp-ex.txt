@@ -1,0 +1,14 @@
+Energy: Fighting
+2 Mankey A1 141
+1 Primeape A1 142
+2 Machop A1 143
+2 Machoke A1 144
+1 Machamp ex A1 146
+2 Cubone A1 151
+1 Marowak A1 152
+1 Hitmonlee A1 154
+2 Rattata A1 189
+1 Raticate A1 190
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Potion P-A 001

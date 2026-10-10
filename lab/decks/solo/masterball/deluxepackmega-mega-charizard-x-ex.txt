@@ -1,0 +1,14 @@
+Energy: Fire
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Torkoal A3b 010
+2 Professor's Research A4b 373
+2 Flame Patch B1 217
+1 Copycat B1 225
+1 Mega Charizard Y ex B1a 014
+2 Charmander B2b 007
+2 Charmeleon B2b 008
+2 Mega Charizard X ex B2b 009
+1 Lucky Egg B3 148
+1 Rainbow Cave B4 155
+1 X Speed P-A 002

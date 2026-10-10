@@ -1,0 +1,14 @@
+Energy: Psychic
+1 Sabrina A1 225
+1 Pokémon Communication A2 146
+2 Poké Ball A2b 111
+1 Guzma A3 151
+2 Professor's Research A4b 373
+1 Copycat B1 225
+2 Meloetta B2 070
+2 Meowth B2 124
+2 Peculiar Plaza B2 155
+1 Lucky Egg B3 148
+1 Elegant Cape B3b 065
+2 Team Rocket's Slowpoke B4a 025
+2 Team Rocket's Slowking ex B4a 026

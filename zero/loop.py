@@ -18,7 +18,7 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import COVERAGE_MARK, build_pool, deck_labels, extend_pool
+from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, build_pool, deck_labels, extend_pool
 from .highlights import summarize
 from .model import ZeroNet, export_weights
 from .train import train
@@ -140,8 +140,11 @@ def main():
     decks = os.path.join(run_dir, 'decks')
     if not os.path.isdir(decks):
         build_pool(decks, log=log)
-    elif not os.path.exists(os.path.join(decks, COVERAGE_MARK)):
-        extend_pool(decks, log=log)  # runs started before every card had a deck
+    else:  # runs started before these decks existed
+        if not os.path.exists(os.path.join(decks, COVERAGE_MARK)):
+            extend_pool(decks, log=log)
+        if not os.path.exists(os.path.join(decks, SOLO_MARK)):
+            add_solo_decks(decks, log=log)
 
     model = ZeroNet(info).to(a.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)

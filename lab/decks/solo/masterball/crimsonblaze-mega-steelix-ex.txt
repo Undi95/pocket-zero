@@ -1,0 +1,12 @@
+Energy: Metal
+2 Brock A1 224
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Heavy Helmet B1 219
+1 Copycat B1 225
+2 Onix B1a 038
+2 Nosepass B1a 041
+2 Mega Steelix ex B1a 052
+2 Probopass B1a 053
+2 Ditto B1a 055

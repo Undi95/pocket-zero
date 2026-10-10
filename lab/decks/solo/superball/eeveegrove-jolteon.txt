@@ -1,0 +1,16 @@
+Energy: Lightning
+2 Poké Ball A2b 111
+1 Jolteon A3b 025
+2 Joltik A3b 026
+1 Galvantula A3b 027
+1 Drampa A3b 054
+2 Eevee A3b 055
+1 Aipom A3b 058
+1 Ambipom A3b 059
+1 Chatot A3b 060
+2 Minccino A3b 062
+1 Cinccino A3b 063
+1 Skwovet A3b 064
+1 Greedent A3b 065
+1 Leftovers A3b 067
+2 Professor's Research A4b 373

@@ -1,0 +1,19 @@
+Energy: Darkness
+1 Murkrow A2 096
+1 Honchkrow A2 097
+1 Poochyena A2 100
+1 Mightyena A2 101
+1 Stunky A2 102
+1 Skuntank A2 103
+1 Spiritomb A2 104
+1 Skorupi A2 105
+1 Drapion A2 106
+1 Croagunk A2 107
+1 Toxicroak A2 108
+1 Darkrai A2 109
+1 Aipom A2 130
+1 Ambipom A2 131
+1 Chatot A2 141
+1 Regigigas A2 143
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

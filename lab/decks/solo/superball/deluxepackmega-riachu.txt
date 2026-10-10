@@ -1,0 +1,14 @@
+Energy: Lightning
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Mareep B1 082
+1 Flaaffy B1 083
+2 Magnemite B1a 024
+1 Magneton B1a 025
+2 Toxel B2 054
+2 Electrike B2b 026
+1 Iron Thorns B3a 018
+2 Pikachu B4 049
+1 Raichu B4 050
+1 Helioptile B4 060
+1 Heliolisk B4 061

@@ -1,0 +1,15 @@
+Energy: Fire
+2 Houndour A2a 011
+2 Houndoom A2a 012
+1 Heatran A2a 013
+1 Rotom A2a 035
+1 Snorlax A2a 063
+2 Starly A2a 066
+2 Staravia A2a 067
+1 Staraptor A2a 068
+1 Arceus A2a 070
+1 Arceus ex A2a 071
+1 Celestic Town Elder A2a 073
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Potion P-A 001

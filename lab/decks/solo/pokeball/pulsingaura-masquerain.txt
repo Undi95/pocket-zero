@@ -1,0 +1,17 @@
+Energy: Grass
+2 Poké Ball A2b 111
+1 Tangela B3 001
+2 Treecko B3 005
+2 Surskit B3 009
+1 Masquerain B3 010
+1 Shroomish B3 011
+1 Carnivine B3 014
+2 Sewaddle B3 015
+1 Swadloon B3 016
+1 Chansey B3 127
+1 Eevee B3 129
+1 Teddiursa B3 131
+1 Patrat B3 135
+1 Lillipup B3 137
+1 Minccino B3 142
+1 Rookidee B3 145

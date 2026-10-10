@@ -1,0 +1,13 @@
+Energy: Grass
+1 Erika A1 219
+2 Poké Ball A2b 111
+2 Rowlet A3 010
+1 Dartrix A3 011
+2 Decidueye ex A3 012
+2 Fomantis A3 014
+2 Lurantis A3 015
+1 Tapu Bulu A3 024
+2 Rare Candy A3 144
+2 Leaf Cape A3 147
+1 Lillie A3 155
+2 Professor's Research A4b 373

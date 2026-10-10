@@ -1,0 +1,18 @@
+Energy: Fire
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Growlithe B1 028
+1 Arcanine B1 029
+1 Ho-Oh B1 032
+2 Torchic B1 033
+1 Combusken B1 034
+1 Blaziken B1 035
+1 Pansear B1 037
+1 Simisear B1 038
+1 Darumaka B1 039
+1 Darmanitan B1 040
+1 Heatmor B1 044
+1 Turtonator B1 047
+1 Miltank B1 187
+1 Zigzagoon B1 188
+1 Linoone B1 189

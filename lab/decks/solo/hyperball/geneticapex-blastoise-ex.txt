@@ -1,0 +1,15 @@
+Energy: Water
+2 Squirtle A1 053
+2 Wartortle A1 054
+1 Blastoise ex A1 056
+2 Psyduck A1 057
+1 Golduck A1 058
+1 Lapras A1 079
+1 Articuno A1 083
+1 Pyukumuku A1 090
+2 Rattata A1 189
+1 Raticate A1 190
+1 Misty A1 220
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

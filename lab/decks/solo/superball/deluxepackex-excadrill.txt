@@ -1,0 +1,19 @@
+Energy: Metal
+1 Jigglypuff A1 193
+1 Farfetch'd A1 198
+1 Pidgey A1a 057
+1 Pidgeotto A1a 058
+1 Lickitung A2 124
+1 Tinkatink A2b 052
+1 Tinkatuff A2b 053
+2 Poké Ball A2b 111
+1 Drilbur A3 093
+1 Excadrill A3 119
+1 Klefki A3 121
+1 Magearna A3 123
+1 Skitty A3 129
+1 Delcatty A3 130
+1 Alolan Diglett A3a 046
+1 Eevee A3b 055
+2 Professor's Research A4b 373
+1 Potion P-A 001

@@ -1,0 +1,17 @@
+Energy: Psychic
+1 Togepi A2 063
+1 Togetic A2 064
+1 Togekiss A2 065
+1 Misdreavus A2 066
+2 Duskull A2 070
+2 Dusclops A2 071
+1 Drifloon A2 073
+1 Drifblim A2 074
+1 Azelf A2 077
+1 Giratina A2 078
+1 Buneary A2 137
+1 Lopunny A2 138
+1 Glameow A2 139
+1 Purugly A2 140
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

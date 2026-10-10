@@ -1,0 +1,11 @@
+Energy: Grass
+2 Eevee A1 206
+2 Erika A1 219
+2 Leafeon ex A2a 010
+2 Weedle A2b 001
+2 Kakuna A2b 002
+2 Beedrill ex A2b 003
+2 Team Rocket Grunt A2b 072
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 X Speed P-A 002

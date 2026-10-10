@@ -1,0 +1,14 @@
+Energy: Darkness
+1 Farfetch'd A1 198
+2 Zubat A2a 048
+2 Golbat A2a 049
+2 Poké Ball A2b 111
+1 Rare Candy A3 144
+2 Nihilego A3a 042
+1 Guzzlord ex A3a 043
+1 Lusamine A3a 069
+2 Umbreon A3b 043
+2 Eevee A3b 055
+1 Crobat ex A4 109
+1 Silver A4 158
+2 Professor's Research A4b 373

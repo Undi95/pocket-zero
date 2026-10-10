@@ -1,0 +1,18 @@
+Energy: Grass
+2 Poké Ball A2b 111
+1 Oddish A4 001
+1 Gloom A4 002
+1 Tangela A4 004
+1 Scyther A4 006
+1 Pinsir A4 007
+2 Chikorita A4 008
+1 Bayleef A4 009
+1 Meganium A4 010
+1 Ledyba A4 011
+1 Ledian A4 012
+1 Sunkern A4 016
+1 Sunflora A4 017
+1 Yanma A4 018
+1 Yanmega A4 019
+1 Squirt Bottle A4 152
+2 Professor's Research A4b 373

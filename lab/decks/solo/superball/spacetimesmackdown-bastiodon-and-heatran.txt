@@ -1,0 +1,19 @@
+Energy: Metal
+1 Mawile A1 178
+1 Pawniard A1 179
+1 Bisharp A1 180
+1 Burmy A2 015
+1 Nosepass A2 086
+1 Registeel A2 112
+1 Shieldon A2 113
+1 Bastiodon A2 114
+1 Wormadam A2 115
+1 Bronzor A2 116
+1 Bronzong A2 117
+1 Probopass A2 118
+1 Heatran A2 120
+1 Buneary A2 137
+1 Lopunny A2 138
+1 Armor Fossil A2 145
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

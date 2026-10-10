@@ -102,6 +102,18 @@ enum Cmd {
         #[arg(long, default_value_t = 0)]
         seed: u64,
     },
+    /// League: every deck of a folder plays about `games_per_deck` games against random others
+    /// of the folder, the same player on both sides; wins per deck as JSON
+    League {
+        #[arg(long)]
+        decks: String,
+        #[arg(long)]
+        player: String,
+        #[arg(long, default_value_t = 40)]
+        games_per_deck: usize,
+        #[arg(long, default_value_t = 0)]
+        seed: u64,
+    },
     /// Value diagnostics: at every decision of games played by `player`, the hand-written
     /// evaluation, the network value and the final result, as CSV
     Valuecheck {
@@ -141,6 +153,11 @@ enum Cmd {
 }
 
 fn load_decks(dir: &str) -> Vec<Deck> {
+    load_named_decks(dir).into_iter().map(|(_, d)| d).collect()
+}
+
+/// Valid decks of a folder (or a single file), with their file stems.
+fn load_named_decks(dir: &str) -> Vec<(String, Deck)> {
     let path = std::path::Path::new(dir);
     let mut files: Vec<_> = if path.is_dir() {
         std::fs::read_dir(path)
@@ -152,11 +169,12 @@ fn load_decks(dir: &str) -> Vec<Deck> {
         vec![path.to_path_buf()]
     };
     files.sort();
-    let decks: Vec<Deck> = files
+    let decks: Vec<(String, Deck)> = files
         .iter()
         .filter_map(|p| {
             let d = Deck::from_file(p.to_str()?).ok()?;
-            (d.is_valid()).then_some(d)
+            let stem = p.file_stem()?.to_string_lossy().into_owned();
+            (d.is_valid()).then_some((stem, d))
         })
         .collect();
     assert!(!decks.is_empty(), "no valid deck in {dir}");
@@ -428,6 +446,55 @@ fn main() {
                 "{}",
                 json!({"deck_a": deck_a, "deck_b": deck_b, "games": games, "score_a": score})
             );
+        }
+        Cmd::League {
+            decks,
+            player,
+            games_per_deck,
+            seed,
+        } => {
+            let decks = load_named_decks(&decks);
+            let n = decks.len();
+            assert!(n >= 2, "a league needs at least two decks");
+            // Game g: deck g % n against a random other one, seats random (Game::new flips).
+            let games = (games_per_deck * n).div_ceil(2);
+            let done = AtomicUsize::new(0);
+            let results: Vec<(usize, usize, f64)> = (0..games)
+                .into_par_iter()
+                .map(|g| {
+                    let mut rng =
+                        StdRng::seed_from_u64(seed.wrapping_mul(31_337).wrapping_add(g as u64));
+                    let i = g % n;
+                    let j = (i + rng.gen_range(1..n)) % n;
+                    let players = vec![
+                        make_player(&player, decks[i].1.clone()),
+                        make_player(&player, decks[j].1.clone()),
+                    ];
+                    let score = match Game::new(players, rng.gen()).play() {
+                        Some(GameOutcome::Win(0)) => 1.0,
+                        Some(GameOutcome::Win(_)) => 0.0,
+                        _ => 0.5,
+                    };
+                    let k = done.fetch_add(1, Ordering::Relaxed) + 1;
+                    if k.is_multiple_of(100) {
+                        eprintln!("league {k}/{games}");
+                    }
+                    (i, j, score)
+                })
+                .collect();
+            let mut table = vec![(0.0f64, 0usize); n];
+            for (i, j, s) in results {
+                table[i].0 += s;
+                table[i].1 += 1;
+                table[j].0 += 1.0 - s;
+                table[j].1 += 1;
+            }
+            let per: serde_json::Map<String, serde_json::Value> = decks
+                .iter()
+                .zip(&table)
+                .map(|((name, _), (w, g))| (name.clone(), json!([w, g])))
+                .collect();
+            println!("{}", json!({"games": games, "decks": per}));
         }
         Cmd::Valuecheck {
             decks,

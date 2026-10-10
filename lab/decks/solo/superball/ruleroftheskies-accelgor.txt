@@ -1,0 +1,15 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Wurmple B4 001
+2 Kricketot B4 008
+1 Kricketune B4 009
+1 Shelmet B4 013
+1 Accelgor B4 014
+1 Dhelmise B4 015
+2 Poltchageist B4 017
+1 Sinistcha B4 018
+1 Aipom B4 132
+1 Ambipom B4 133
+2 Pidove B4 137
+1 Tranquill B4 138

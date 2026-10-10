@@ -1,0 +1,12 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Hoppip A4a 001
+2 Skiploom A4a 002
+1 Jumpluff ex A4a 003
+2 Sunkern A4a 004
+2 Sunflora A4a 005
+2 Durant A4a 007
+2 Zangoose A4a 065
+2 Professor's Research A4b 373
+2 Potion P-A 001
+1 X Speed P-A 002

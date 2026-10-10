@@ -1,0 +1,17 @@
+Energy: Fire
+1 Magmar A2 023
+1 Magmortar A2 024
+1 Slugma A2 025
+1 Magcargo A2 026
+2 Chimchar A2 027
+2 Monferno A2 028
+1 Heat Rotom A2 030
+1 Aipom A2 130
+1 Ambipom A2 131
+1 Starly A2 132
+1 Staravia A2 133
+1 Staraptor A2 134
+1 Fan Rotom A2 142
+1 Regigigas A2 143
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

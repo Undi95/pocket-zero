@@ -1,0 +1,18 @@
+Energy: Grass
+2 Poké Ball A2b 111
+1 Tropius A3b 001
+1 Leafeon A3b 002
+1 Bounsweet A3b 003
+1 Steenee A3b 004
+1 Tsareena A3b 005
+1 Applin A3b 006
+1 Appletun A3b 007
+2 Eevee A3b 055
+1 Aipom A3b 058
+1 Ambipom A3b 059
+1 Minccino A3b 062
+1 Cinccino A3b 063
+1 Skwovet A3b 064
+1 Greedent A3b 065
+1 Leftovers A3b 067
+2 Professor's Research A4b 373

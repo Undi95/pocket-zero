@@ -1,0 +1,13 @@
+Energy: Lightning
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Electrical Cord A3a 065
+2 Raikou ex A4a 025
+2 Professor's Research A4b 373
+1 Copycat B1 225
+2 Plusle B2 052
+2 Minun B2 053
+2 Toxel B2 054
+2 Toxtricity ex B2 055
+1 X Speed P-A 002

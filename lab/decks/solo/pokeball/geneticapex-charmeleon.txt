@@ -1,0 +1,13 @@
+Energy: Fire
+1 Charmander A1 033
+1 Charmeleon A1 034
+2 Vulpix A1 037
+2 Growlithe A1 039
+2 Salandit A1 049
+2 Sizzlipede A1 051
+2 Pidgey A1 186
+2 Rattata A1 189
+1 Spearow A1 191
+2 Jigglypuff A1 193
+1 Doduo A1 199
+2 Poké Ball A2b 111

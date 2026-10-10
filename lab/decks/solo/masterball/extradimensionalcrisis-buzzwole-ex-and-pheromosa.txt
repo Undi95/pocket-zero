@@ -1,0 +1,12 @@
+Energy: Grass
+2 Cyrus A2 150
+1 Red A2b 071
+2 Poké Ball A2b 111
+1 Leaf Cape A3 147
+2 Buzzwole ex A3a 006
+2 Pheromosa A3a 007
+2 Kartana A3a 008
+2 Celesteela A3a 062
+2 Beastite A3a 066
+2 Lusamine A3a 069
+2 Professor's Research A4b 373

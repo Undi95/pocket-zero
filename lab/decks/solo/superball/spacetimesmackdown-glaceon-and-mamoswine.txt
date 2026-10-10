@@ -1,0 +1,18 @@
+Energy: Water
+1 Swinub A2 031
+1 Piloswine A2 032
+1 Mamoswine A2 033
+1 Regice A2 034
+1 Buizel A2 038
+1 Floatzel A2 039
+1 Shellos A2 040
+1 Gastrodon A2 041
+1 Finneon A2 042
+1 Lumineon A2 043
+1 Snover A2 044
+1 Abomasnow A2 045
+1 Glaceon A2 046
+2 Wash Rotom A2 047
+1 Eevee A2 126
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

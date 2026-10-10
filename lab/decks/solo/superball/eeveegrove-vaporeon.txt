@@ -1,0 +1,18 @@
+Energy: Water
+2 Poké Ball A2b 111
+1 Vaporeon A3b 016
+1 Glaceon A3b 017
+1 Vanillite A3b 018
+1 Vanillish A3b 019
+1 Vanilluxe A3b 020
+1 Alomomola A3b 021
+1 Popplio A3b 022
+1 Brionne A3b 023
+2 Eevee A3b 055
+1 Aipom A3b 058
+1 Ambipom A3b 059
+1 Chatot A3b 060
+1 Skwovet A3b 064
+1 Greedent A3b 065
+1 Leftovers A3b 067
+2 Professor's Research A4b 373

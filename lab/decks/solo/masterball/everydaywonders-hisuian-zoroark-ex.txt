@@ -1,0 +1,13 @@
+Energy: Grass
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Klefki B1 120
+1 May B1 223
+2 Quick-Grow Extract B1a 067
+2 Caterpie B3b 001
+2 Metapod B3b 002
+2 Butterfree B3b 003
+2 Hisuian Zorua B3b 059
+2 Hisuian Zoroark ex B3b 060
+1 X Speed P-A 002

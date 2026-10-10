@@ -1,0 +1,18 @@
+Energy: Grass
+1 Heracross A2a 001
+1 Burmy A2a 002
+1 Mothim A2a 003
+1 Combee A2a 004
+1 Vespiquen A2a 005
+2 Cherubi A2a 006
+1 Cherrim A2a 007
+1 Cherrim A2a 008
+1 Carnivine A2a 009
+1 Hoothoot A2a 064
+1 Noctowl A2a 065
+1 Starly A2a 066
+1 Staravia A2a 067
+1 Staraptor A2a 068
+1 Arceus A2a 070
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

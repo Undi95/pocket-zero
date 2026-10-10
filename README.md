@@ -55,6 +55,20 @@ partagent le processeur.
 Toutes les cartes ont un deck dans le pool d'entraînement (`cover-*.txt`, ajoutés au démarrage
 d'un run) : le bot a vu jouer chaque Pokémon et chaque dresseur que la recherche peut choisir.
 
+## Les decks du mode solo
+
+`lab/decks/solo/` contient les decks des développeurs des combats progressifs du mode solo
+(466 decks, de `pokeball` à `masterball`, d'après les listes de Serebii), retirés du jeu fin
+octobre 2026. Ils font partie du pool d'entraînement (`solo-*.txt`), et :
+
+```
+run.bat solo
+```
+
+les fait s'affronter avec le bot entraîné : un classement par rang, puis un grand tournoi des
+meilleurs de chaque rang contre les 17 listes de la méta (`results\solo\CLASSEMENT.md`, une
+dizaine de minutes, entraînement arrêté).
+
 ## Utiliser le bot ailleurs
 
 Le joueur `z<simulations>` marche partout où le moteur prend un joueur (`z0` = politique du

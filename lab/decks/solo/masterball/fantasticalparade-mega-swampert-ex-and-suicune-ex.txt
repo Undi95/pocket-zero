@@ -1,0 +1,15 @@
+Energy: Water
+1 Misty A1 220
+1 Cyrus A2 150
+1 Irida A2a 072
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+2 Suicune ex A4a 020
+1 Mantyke A4a 023
+2 Professor's Research A4b 373
+1 Keldeo B1 070
+2 Mudkip B2 033
+1 Marshtomp B2 034
+2 Mega Swampert ex B2 036
+1 Wellspring Mask Ogerpon B2 048
+1 X Speed P-A 002

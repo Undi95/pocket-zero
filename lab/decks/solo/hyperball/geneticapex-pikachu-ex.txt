@@ -1,0 +1,14 @@
+Energy: Lightning
+1 Pikachu ex A1 096
+2 Voltorb A1 099
+1 Electrode A1 100
+2 Blitzle A1 105
+1 Zebstrika A1 106
+2 Tynamo A1 107
+2 Eelektrik A1 108
+1 Eelektross A1 109
+2 Helioptile A1 110
+1 Heliolisk A1 111
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

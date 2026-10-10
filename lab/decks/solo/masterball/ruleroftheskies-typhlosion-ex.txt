@@ -1,0 +1,15 @@
+Energy: Fire
+1 Pokémon Communication A2 146
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+1 Torkoal A3b 010
+1 Magby A4 032
+2 Professor's Research A4b 373
+2 Flame Patch B1 217
+1 Copycat B1 225
+1 Victini B3 025
+2 Cyndaquil B4 024
+1 Quilava B4 025
+2 Typhlosion ex B4 026
+1 Wally B4 153

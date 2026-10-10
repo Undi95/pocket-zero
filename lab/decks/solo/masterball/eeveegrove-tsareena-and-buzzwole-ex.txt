@@ -1,0 +1,12 @@
+Energy: Grass
+2 Leaf A1a 068
+2 Poké Ball A2b 111
+2 Rare Candy A3 144
+2 Leaf Cape A3 147
+2 Mallow A3 154
+2 Buzzwole ex A3a 006
+1 Lusamine A3a 069
+2 Bounsweet A3b 003
+1 Steenee A3b 004
+2 Tsareena A3b 005
+2 Professor's Research A4b 373

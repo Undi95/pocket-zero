@@ -1,0 +1,19 @@
+Energy: Grass
+1 Snivy A1a 004
+1 Servine A1a 005
+1 Serperior A1a 006
+1 Shaymin A2 022
+1 Sprigatito A2b 005
+1 Floragato A2b 006
+1 Meowscarada A2b 007
+2 Poké Ball A2b 111
+1 Rowlet A3 010
+1 Dartrix A3 011
+1 Pheromosa A3a 007
+1 Kartana A3a 008
+1 Hoppip A4 013
+1 Skiploom A4 014
+1 Jumpluff A4 015
+1 Cherubi A4 023
+1 Cherrim A4 024
+2 Professor's Research A4b 373

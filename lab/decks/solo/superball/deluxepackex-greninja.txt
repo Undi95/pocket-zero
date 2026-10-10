@@ -1,0 +1,19 @@
+Energy: Water
+1 Squirtle A1 053
+1 Wartortle A1 054
+1 Staryu A1 074
+1 Froakie A1 087
+1 Frogadier A1 088
+1 Greninja A1 089
+1 Magikarp A1a 017
+1 Vaporeon A1a 019
+1 Manaphy A2 050
+2 Poké Ball A2b 111
+1 Popplio A3b 022
+1 Brionne A3b 023
+1 Eevee A3b 055
+1 Horsea A4 041
+1 Seadra A4 042
+1 Corphish A4 060
+1 Crawdaunt A4 061
+2 Professor's Research A4b 373

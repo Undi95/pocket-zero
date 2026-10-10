@@ -1,0 +1,19 @@
+Energy: Grass
+1 Tangela A2 004
+1 Tangrowth A2 005
+1 Roselia A2 008
+1 Roserade A2 009
+1 Turtwig A2 010
+1 Grotle A2 011
+1 Torterra A2 012
+1 Kricketot A2 013
+1 Kricketune A2 014
+1 Burmy A2 015
+1 Wormadam A2 016
+1 Combee A2 017
+1 Vespiquen A2 018
+1 Carnivine A2 019
+1 Mow Rotom A2 021
+1 Shaymin A2 022
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

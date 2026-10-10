@@ -1,0 +1,13 @@
+Energy: Fire
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Charmander B1a 011
+2 Charmeleon B1a 012
+1 Mega Charizard Y ex B1a 014
+2 Houndour B1a 015
+2 Houndoom B1a 016
+2 Buneary B1a 062
+1 Lopunny B1a 063
+2 Bouffalant B1a 064
+1 Potion P-A 001
+1 X Speed P-A 002

@@ -1,0 +1,17 @@
+Energy: Water
+2 Poké Ball A2b 111
+2 Totodile A4 046
+1 Croconaw A4 047
+1 Feraligatr A4 048
+1 Marill A4 049
+1 Azumarill A4 050
+1 Wooper A4 051
+1 Quagsire A4 052
+2 Corsola A4 054
+1 Suicune A4 059
+1 Spearow A4 129
+1 Fearow A4 130
+1 Sentret A4 138
+1 Furret A4 139
+1 Elemental Switch A4 151
+2 Professor's Research A4b 373

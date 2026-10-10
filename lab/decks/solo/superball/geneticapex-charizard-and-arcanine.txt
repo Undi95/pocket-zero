@@ -1,0 +1,19 @@
+Energy: Fire
+1 Charmander A1 033
+1 Charmeleon A1 034
+1 Charizard A1 035
+1 Growlithe A1 039
+1 Arcanine A1 040
+1 Salandit A1 049
+1 Salazzle A1 050
+1 Sizzlipede A1 051
+1 Centiskorch A1 052
+1 Rattata A1 189
+1 Raticate A1 190
+1 Spearow A1 191
+1 Fearow A1 192
+1 Jigglypuff A1 193
+1 Wigglytuff A1 194
+1 Chansey A1 202
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373

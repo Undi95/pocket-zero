@@ -1,0 +1,19 @@
+Energy: Water
+2 Poké Ball A2b 111
+1 Psyduck B1 048
+1 Lotad B1 053
+1 Lombre B1 054
+1 Wailmer B1 056
+1 Corphish B1 058
+1 Panpour B1 061
+1 Tympole B1 063
+1 Palpitoad B1 064
+1 Frillish B1 068
+2 Froakie B1 071
+1 Frogadier B1 072
+1 Bergmite B1 074
+1 Chewtle B1 076
+1 Arrokuda B1 078
+1 Pidgey B1 180
+1 Pidgeotto B1 181
+1 Zigzagoon B1 188

@@ -1,0 +1,15 @@
+Energy: Fighting, Grass
+2 Exeggcute A1a 001
+1 Exeggutor A1a 002
+2 Mankey A1a 041
+1 Primeape A1a 042
+2 Pidgey A1a 057
+2 Pidgeotto A1a 058
+1 Pidgeot ex A1a 059
+1 Tauros A1a 060
+1 Eevee A1a 061
+1 Pokémon Flute A1a 064
+1 Blue A1a 067
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

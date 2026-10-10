@@ -1,0 +1,14 @@
+Energy: Grass
+2 Oddish A2 001
+2 Gloom A2 002
+1 Bellossom A2 003
+2 Yanma A2 006
+1 Yanmega ex A2 007
+2 Roselia A2 008
+1 Roserade A2 009
+2 Combee A2 017
+1 Vespiquen A2 018
+1 Rocky Helmet A2 148
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 X Speed P-A 002

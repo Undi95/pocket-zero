@@ -1,0 +1,18 @@
+Energy: Fighting
+1 Sandshrew A1 137
+2 Sandslash A1 138
+2 Mankey A1 141
+1 Machop A1 143
+1 Geodude A1 147
+1 Graveler A1 148
+1 Cubone A1 151
+1 Rhyhorn A1 156
+1 Mienfoo A1 160
+1 Clobbopus A1 162
+1 Grapploct A1 163
+1 Pidgey A1 186
+1 Pidgeotto A1 187
+1 Rattata A1 189
+1 Spearow A1 191
+1 Doduo A1 199
+2 Poké Ball A2b 111

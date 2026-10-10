@@ -1,0 +1,14 @@
+Energy: Grass
+1 Erika A1 219
+1 Cyrus A2 150
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Quick-Grow Extract B1a 067
+1 Celebi B3 004
+2 Treecko B3 005
+2 Grovyle B3 006
+2 Mega Sceptile ex B3 008
+2 Durant B3 018
+1 Field Blower B3 147
+1 Fragrant Forest B3 153
+1 X Speed P-A 002

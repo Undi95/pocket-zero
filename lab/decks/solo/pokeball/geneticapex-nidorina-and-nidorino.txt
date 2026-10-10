@@ -1,0 +1,16 @@
+Energy: Darkness
+2 Ekans A1 164
+1 Nidoran♀ A1 166
+1 Nidorina A1 167
+1 Nidoran♂ A1 169
+1 Nidorino A1 170
+2 Zubat A1 172
+2 Grimer A1 174
+2 Koffing A1 176
+1 Pidgey A1 186
+1 Pidgeotto A1 187
+1 Spearow A1 191
+1 Doduo A1 199
+1 Minccino A1 212
+1 Wooloo A1 214
+2 Poké Ball A2b 111

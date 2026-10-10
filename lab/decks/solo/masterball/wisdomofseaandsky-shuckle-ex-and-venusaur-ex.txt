@@ -1,0 +1,12 @@
+Energy: Grass
+2 Bulbasaur A1 001
+2 Ivysaur A1 002
+2 Venusaur ex A1 004
+2 Erika A1 219
+2 Shaymin A2 022
+2 Poké Ball A2b 111
+1 Rare Candy A3 144
+2 Leaf Cape A3 147
+2 Shuckle ex A4 021
+1 Lyra A4 157
+2 Professor's Research A4b 373

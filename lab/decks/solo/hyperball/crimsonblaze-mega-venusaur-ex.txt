@@ -1,0 +1,14 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+2 Bulbasaur B1a 001
+2 Ivysaur B1a 002
+1 Mega Venusaur ex B1a 004
+2 Sunkern B1a 007
+2 Sunflora B1a 008
+2 Burmy B1a 009
+1 Mothim B1a 010
+1 Bouffalant B1a 064
+1 Furfrou B1a 065
+1 Quick-Grow Extract B1a 067
+1 X Speed P-A 002

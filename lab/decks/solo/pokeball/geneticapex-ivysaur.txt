@@ -1,0 +1,13 @@
+Energy: Grass
+1 Bulbasaur A1 001
+1 Ivysaur A1 002
+2 Paras A1 014
+2 Exeggcute A1 021
+2 Cottonee A1 027
+2 Petilil A1 029
+2 Pidgey A1 186
+2 Rattata A1 189
+1 Spearow A1 191
+2 Jigglypuff A1 193
+1 Doduo A1 199
+2 Poké Ball A2b 111

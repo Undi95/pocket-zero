@@ -1,0 +1,16 @@
+Energy: Grass
+2 Poké Ball A2b 111
+2 Exeggcute A3 001
+1 Alolan Exeggutor A3 002
+1 Maractus A3 005
+1 Rowlet A3 009
+1 Rowlet A3 010
+2 Dartrix A3 011
+1 Decidueye ex A3 012
+2 Fomantis A3 014
+1 Lurantis A3 015
+1 Tapu Bulu A3 024
+1 Tauros A3 128
+1 Rare Candy A3 144
+1 Leaf Cape A3 147
+2 Professor's Research A4b 373

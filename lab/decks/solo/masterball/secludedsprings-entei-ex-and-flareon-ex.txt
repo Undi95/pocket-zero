@@ -1,0 +1,14 @@
+Energy: Fire
+1 Sabrina A1 225
+1 Rocky Helmet A2 148
+1 Cyrus A2 150
+1 Red A2b 071
+2 Poké Ball A2b 111
+2 Flareon ex A3b 009
+2 Eevee Bag A3b 066
+2 Magby A4 032
+2 Eevee A4 134
+1 Elemental Switch A4 151
+2 Entei ex A4a 010
+2 Professor's Research A4b 373
+1 X Speed P-A 002

@@ -1,0 +1,14 @@
+Energy: Grass
+2 Bulbasaur A1 001
+2 Ivysaur A1 002
+1 Venusaur ex A1 004
+2 Exeggcute A1 021
+1 Exeggutor A1 022
+2 Skiddo A1 031
+1 Gogoat A1 032
+2 Rattata A1 189
+1 Raticate A1 190
+1 Erika A1 219
+2 Poké Ball A2b 111
+2 Professor's Research A4b 373
+1 Potion P-A 001
