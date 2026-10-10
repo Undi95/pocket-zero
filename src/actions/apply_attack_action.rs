@@ -5007,11 +5007,13 @@ fn extra_damage_if_tool_attached(
 }
 
 fn damage_per_own_tool_attached(state: &State, damage_per: u32) -> AttackOutcomes {
+    // "for each Pokémon Tool attached": a Pokémon holding two Tools (Revavroom's Dual
+    // Customization) counts twice.
     let current_player = state.current_player;
-    let tool_count = state
+    let tool_count: u32 = state
         .enumerate_in_play_pokemon(current_player)
-        .filter(|(_, pokemon)| pokemon.has_tool_attached())
-        .count() as u32;
+        .map(|(_, pokemon)| pokemon.attached_tools.len() as u32)
+        .sum();
     active_damage_doutcome(damage_per * tool_count)
 }
 

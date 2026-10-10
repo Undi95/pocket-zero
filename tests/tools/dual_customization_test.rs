@@ -9,9 +9,9 @@ use deckgym::{
     card_ids::CardId,
     database::get_card_by_enum,
     effects::CardEffect,
-    models::{Card, PlayedCard},
+    models::{Card, EnergyType, PlayedCard},
     state::GameOutcome,
-    test_support::get_test_game_with_board,
+    test_support::{attack_action, get_test_game_with_board},
     Game,
 };
 
@@ -315,4 +315,33 @@ fn test_field_blower_can_pick_either_of_two_tools() {
 
     let state = game.get_state_clone();
     assert_eq!(state.get_active(0).attached_tools.len(), 1);
+}
+
+#[test]
+fn test_dede_circuit_counts_both_tools_on_revavroom() {
+    // Dedenne ex's Dede-Circuit: "40 damage for each Pokémon Tool attached to all of your
+    // Pokémon". Giant Cape on Dedenne + Rocky Helmet and Leaf Cape on Revavroom = 3 Tools.
+    let mut game = get_test_game_with_board(
+        vec![
+            PlayedCard::from_id(CardId::B3b024DedenneEx)
+                .with_energy(vec![EnergyType::Lightning, EnergyType::Lightning])
+                .with_tool(get_card_by_enum(CardId::A2147GiantCape)),
+            PlayedCard::from_id(CardId::B4115Revavroom)
+                .with_tool(get_card_by_enum(CardId::A2148RockyHelmet))
+                .with_tool(get_card_by_enum(CardId::A3147LeafCape)),
+        ],
+        vec![PlayedCard::from_id(CardId::B1102MegaAltariaEx)],
+    );
+
+    game.apply_action(&Action {
+        actor: 0,
+        action: attack_action(CardId::B3b024DedenneEx, 0),
+        is_stack: false,
+    });
+
+    let state = game.get_state_clone();
+    let defender = state.in_play_pokemon[1][0]
+        .as_ref()
+        .expect("Mega Altaria ex survives 120 damage");
+    assert_eq!(defender.get_remaining_hp(), 190 - 3 * 40);
 }
