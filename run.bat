@@ -5,6 +5,7 @@ rem   run.bat search  [options]   recherche de decks sur toutes les cartes avec 
 rem   run.bat solo    [options]   tournoi des decks du mode solo (Poké Ball à Master Ball)
 rem   run.bat update              récupère la dernière version (git pull + binaires)
 rem   run.bat help                aide détaillée
+rem (fins de ligne Windows CRLF obligatoires pour cmd : voir .gitattributes)
 setlocal
 cd /d "%~dp0"
 set PY=%~dp0.venv\Scripts\python.exe

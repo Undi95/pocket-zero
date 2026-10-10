@@ -1,0 +1,4 @@
+# cmd.exe misreads batch files with Unix line endings (labels and goto land mid-line):
+# always check them out with CRLF, whatever the platform or core.autocrlf.
+*.bat text eol=crlf
+*.cmd text eol=crlf
