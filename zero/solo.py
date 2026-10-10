@@ -51,8 +51,8 @@ def main():
             md.append(f'| {i} | {solo_name(k)} | {100 * r:.0f} % ({w}/{g}) |')
         md.append('')
         for i, (k, r, w, g) in enumerate(rows[:5], 1):
-            print(f'  {i}. {solo_name(k)} — {100 * r:.0f} %', flush=True)
-        print(f'  … lanterne rouge : {solo_name(rows[-1][0])} — {100 * rows[-1][1]:.0f} %', flush=True)
+            print(f'  {i}. {solo_name(k)} - {100 * r:.0f} %', flush=True)
+        print(f'  ... lanterne rouge : {solo_name(rows[-1][0])} - {100 * rows[-1][1]:.0f} %', flush=True)
         for k, *_ in rows[:a.top]:
             shutil.copy(os.path.join(folder, k + '.txt'), os.path.join(finals, f'{rank}-{k}.txt'))
     meta = os.path.join(engine.ROOT, 'lab', 'decks', 'meta')
@@ -72,7 +72,7 @@ def main():
            '| # | Deck | Victoires |', '|---|---|---|']
     for i, (k, r, w, g) in enumerate(rows, 1):
         md.append(f'| {i} | {name(k)} | {100 * r:.0f} % ({w}/{g}) |')
-        print(f'  {i:2}. {name(k)} — {100 * r:.0f} %', flush=True)
+        print(f'  {i:2}. {name(k)} - {100 * r:.0f} %', flush=True)
     path = os.path.join(out_dir, 'CLASSEMENT.md')
     open(path, 'w', encoding='utf-8').write('\n'.join(md) + '\n')
     print(f'Classement complet : {path} ({(time.time() - t0) / 60:.1f} min)', flush=True)

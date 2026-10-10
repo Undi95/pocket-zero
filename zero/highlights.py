@@ -11,6 +11,11 @@ def fmt_int(n):
     return f'{n:,}'.replace(',', ' ')
 
 
+def tag(name):
+    """Fixed-width label, plain ASCII so any console (cmd included) shows it."""
+    return f'[{name}]'.ljust(11)
+
+
 def pct(x):
     return f'{100 * x:.0f} %'
 
@@ -67,37 +72,37 @@ def summarize(paths, labels, iteration):
             seq[arch(stem)].append(won)
 
     rate = lambda t, k: t[k][0] / t[k][1]
-    out = [f"── Moments forts de l'itération {iteration} ({fmt_int(len(games))} parties) ──"]
+    out = [f"---- Moments forts de l'itération {iteration} ({fmt_int(len(games))} parties) ----"]
 
     cands = [k for k, (w, n) in deck.items() if n >= 6]
     if cands:
         best = max(cands, key=lambda k: (rate(deck, k), deck[k][1]))
         w, n = deck[best]
-        out.append(f"🏆 Deck de l'itération : {label(best)} — {w} victoires sur {n} ({pct(w / n)})")
+        out.append(f"{tag('TOP')}Deck de l'itération : {label(best)} - {w} victoires sur {n} ({pct(w / n)})")
     ranked = sorted((k for k, (w, n) in meta.items() if n >= 30), key=lambda k: -rate(meta, k))
     if len(ranked) >= 4:
-        top = ' · '.join(f'{k} {pct(rate(meta, k))}' for k in ranked[:3])
-        out.append(f'📊 Méta (contre tout le pool) : {top} … lanterne rouge : '
+        top = ', '.join(f'{k} {pct(rate(meta, k))}' for k in ranked[:3])
+        out.append(f'{tag("META")}Contre tout le pool : {top} ... lanterne rouge : '
                    f'{ranked[-1]} {pct(rate(meta, ranked[-1]))}')
     devs = [k for k, (w, n) in deck.items() if kind(k) == "solo" and n >= 6]
     if devs:
         best = max(devs, key=lambda k: (rate(deck, k), deck[k][1]))
         w, n = deck[best]
-        out.append(f'🎮 Meilleur deck des devs : {label(best)} — {w} victoires sur {n} ({pct(w / n)})')
+        out.append(f'{tag("DEVS")}Meilleur deck des devs : {label(best)} - {w} victoires sur {n} ({pct(w / n)})')
     shiny = sorted((k for k, (w, n) in gems.items() if n >= 40), key=lambda k: -rate(gems, k))
     if shiny:
-        out.append('💎 Pépites hors méta : ' + ' · '.join(
+        out.append(tag('PEPITES') + 'Hors méta : ' + ', '.join(
             f'{k} {pct(rate(gems, k))} ({gems[k][1]} parties)' for k in shiny[:3]))
     streak_arch = max(seq, key=lambda k: longest_streak(seq[k]))
     streak = longest_streak(seq[streak_arch])
     if streak >= 2:
-        out.append(f"🔥 Plus longue série : {streak_arch} — {streak} victoires d'affilée")
+        out.append(f"{tag('SERIE')}Plus longue série : {streak_arch} - {streak} victoires d'affilée")
     wins = [g for g in games if g[3] >= 0]
     if wins:
         a, b, first, winner, turns, pa, pb = min(wins, key=lambda g: (g[4], -max(g[5], g[6])))
         w_stem, l_stem = (a, b) if winner == 0 else (b, a)
         score = f'{max(pa, pb)}-{min(pa, pb)}'
-        out.append(f'⚡ Victoire éclair : {label(w_stem)} bat {label(l_stem)} au tour {turns} ({score})')
+        out.append(f'{tag("ECLAIR")}Victoire éclair : {label(w_stem)} bat {label(l_stem)} au tour {turns} ({score})')
     solid = {k for k, (w, n) in group.items() if n >= 40}
     upsets = [(rate(group, arch(l)) - rate(group, arch(w)), w, l)
               for a, b, _, winner, *_ in wins
@@ -106,13 +111,13 @@ def summarize(paths, labels, iteration):
     if upsets:
         gap, w, l = max(upsets)
         if gap > 0.2:
-            out.append(f'🎯 Exploit : {arch(w)} ({pct(rate(group, arch(w)))} de victoires) a battu '
+            out.append(f'{tag("EXPLOIT")}{arch(w)} ({pct(rate(group, arch(w)))} de victoires) a battu '
                        f'{arch(l)} ({pct(rate(group, arch(l)))})')
     a, b, *_, turns, _, _ = max(games, key=lambda g: g[4])
-    line = f'🐢 Marathon : {turns} tours entre {label(a)} et {label(b)}'
+    line = f'{tag("MARATHON")}{turns} tours entre {label(a)} et {label(b)}'
     if ties:
-        line += f' · {ties} partie{"s" if ties > 1 else ""} nulle{"s" if ties > 1 else ""}'
+        line += f', {ties} partie{"s" if ties > 1 else ""} nulle{"s" if ties > 1 else ""}'
     out.append(line)
     if decided:
-        out.append(f'🎲 Le joueur qui commence gagne {pct(first_wins / decided)} des parties')
+        out.append(f'{tag("DEPART")}Le joueur qui commence gagne {pct(first_wins / decided)} des parties')
     return out

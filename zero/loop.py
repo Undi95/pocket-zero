@@ -58,11 +58,11 @@ def records(metrics_f, vs_e3, streak=None):
     out = []
     if best is None or vs_e3 > best[0]:
         old = f' (ancien : {100 * best[0]:.1f} % à l\'itération {best[1]})' if best else ''
-        out.append(f'🎉 Nouveau record contre e3 : {100 * vs_e3:.1f} %{old}')
+        out.append(f'[RECORD]   Nouveau record contre e3 : {100 * vs_e3:.1f} % !{old}')
     else:
-        out.append(f'📈 Record du run contre e3 : {100 * best[0]:.1f} % (itération {best[1]})')
+        out.append(f'[RECORD]   Record du run contre e3 : {100 * best[0]:.1f} % (itération {best[1]})')
     if streak and streak >= 2:
-        out.append(f"🔥 Plus longue série contre e3 : {streak} victoires d'affilée")
+        out.append(f"[SERIE]    Plus longue série contre e3 : {streak} victoires d'affilée")
     return out
 
 
@@ -126,7 +126,7 @@ def main():
         s = time.strftime('%H:%M:%S ') + ' '.join(str(v) for v in x)
         try:
             print(s, flush=True)
-        except UnicodeEncodeError:  # a console that can't show the emojis of the highlights
+        except UnicodeEncodeError:  # a console without some character of the line
             print(s.encode('ascii', 'replace').decode(), flush=True)
         log_f.write(s + '\n')
         log_f.flush()
