@@ -27,7 +27,19 @@ def load_weights(model, path):
 def batches(buf, batch, rng):
     idx = rng.permutation(len(buf))
     for i in range(0, len(idx) - batch + 1, batch):
-        yield buf[np.sort(idx[i:i + batch])]
+        sel = np.sort(idx[i:i + batch])
+        yield sel, buf[sel]
+
+
+def value_subset(buf, frac):
+    """Positions whose result trains the value head. Chosen from a hash of the position itself,
+    so a position keeps the same draw across passes and iterations (the window slides)."""
+    h = np.zeros(len(buf), dtype=np.uint64)
+    for i in range(0, len(buf), 65536):
+        d = np.ascontiguousarray(buf['dense'][i:i + 65536]).view(np.uint32).astype(np.uint64)
+        h[i:i + 65536] = (d * np.arange(1, d.shape[1] + 1, dtype=np.uint64)).sum(1)
+    h = (h * np.uint64(2654435761)) % np.uint64(1 << 32)
+    return h.astype(np.float64) / float(1 << 32) < frac
 
 
 def to_tensors(b, device):
@@ -37,14 +49,17 @@ def to_tensors(b, device):
             t(b['z'], torch.float32), t(b['q'], torch.float32))
 
 
-def losses(model, b, device, arange, q_mix):
+def losses(model, b, device, arange, q_mix, vmask=None):
     dense, tokens, adense, atok, n, pi, z, q = to_tensors(b, device)
     value, logits = model(dense, tokens, adense, atok)
     mask = arange.unsqueeze(0) < n.unsqueeze(1)
     logits = logits.masked_fill(~mask, -1e9)
     policy_loss = -(pi * F.log_softmax(logits, -1)).sum(-1).mean()
     target = (1 - q_mix) * z + q_mix * q
-    return policy_loss, F.mse_loss(value, target)
+    if vmask is None:
+        return policy_loss, F.mse_loss(value, target)
+    m = torch.from_numpy(vmask).to(device=device, dtype=torch.float32)
+    return policy_loss, ((value - target) ** 2 * m).sum() / m.sum().clamp(min=1.0)
 
 
 def evaluate_losses(model, buf, device, q_mix, batch=2048):
@@ -61,13 +76,17 @@ def evaluate_losses(model, buf, device, q_mix, batch=2048):
 
 
 def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=print, seed=0,
-          holdout=0.03):
+          holdout=0.03, value_frac=0.2):
     """`q_mix` blends the search value into the value target (helps early, when results are noisy).
     The most recent `holdout` fraction of positions is kept out of training to measure
-    generalisation (a value loss far below the held-out one means memorised games)."""
+    generalisation (a value loss far below the held-out one means memorised games).
+    Only a fixed `value_frac` of positions train the value head: positions of one game share its
+    result and look alike, so using them all teaches the network to recognise games rather than
+    to judge positions (the reason AlphaGo trained its value net on one position per game)."""
     n_val = int(len(buf) * holdout) if len(buf) > 2000 else 0
     val, buf = (buf[len(buf) - n_val:], buf[:len(buf) - n_val]) if n_val else (None, buf)
     rng = np.random.default_rng(seed)
+    keep = value_subset(buf, value_frac)
     ma = buf['pi'].shape[1]
     arange = torch.arange(ma, device=device)
     stats = {'policy_loss': 0.0, 'value_loss': 0.0, 'steps': 0}
@@ -75,8 +94,8 @@ def train(model, optimizer, buf, device, epochs=2, batch=1024, q_mix=0.25, log=p
     t0 = time.time()
     for epoch in range(epochs):
         model.train()
-        for b in batches(buf, min(batch, len(buf)), rng):
-            policy_loss, value_loss = losses(model, b, device, arange, q_mix)
+        for sel, b in batches(buf, min(batch, len(buf)), rng):
+            policy_loss, value_loss = losses(model, b, device, arange, q_mix, keep[sel])
             loss = policy_loss + value_loss
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
