@@ -38,6 +38,16 @@ struct Decision {
     root_value: f32,
 }
 
+/// A finished game, for the highlights shown after each iteration (zero/highlights.py).
+struct GameRecord {
+    decks: (usize, usize),
+    first: usize,
+    winner: Option<usize>,
+    turns: u8,
+    points: [u8; 2],
+    decisions: usize,
+}
+
 struct Slot {
     state: State,
     rng: StdRng,
@@ -48,11 +58,16 @@ struct Slot {
     finished: Vec<(Sample, f32, bool)>,
     outcomes: Vec<Option<GameOutcome>>,
     active: bool,
+    decks: (usize, usize),
+    first: usize,
+    records: Vec<GameRecord>,
 }
 
 pub struct BatchSelfPlay {
     cfg: SelfPlayConfig,
     decks: Vec<Deck>,
+    deck_names: Vec<String>,
+    games_log: Option<std::io::BufWriter<std::fs::File>>,
     slots: Vec<Slot>,
     games_target: usize,
     games_started: usize,
@@ -154,9 +169,11 @@ fn z_for(outcome: Option<GameOutcome>, actor: usize) -> f32 {
 impl Slot {
     fn new_game(&mut self, decks: &[Deck], seed: u64) {
         self.rng = StdRng::seed_from_u64(seed);
-        let a = &decks[self.rng.gen_range(0..decks.len())];
-        let b = &decks[self.rng.gen_range(0..decks.len())];
-        self.state = State::initialize(a, b, &mut self.rng);
+        let a = self.rng.gen_range(0..decks.len());
+        let b = self.rng.gen_range(0..decks.len());
+        self.state = State::initialize(&decks[a], &decks[b], &mut self.rng);
+        self.decks = (a, b);
+        self.first = self.state.current_player;
         self.samples.clear();
         self.decisions = 0;
         self.decision = None;
@@ -177,6 +194,17 @@ impl Slot {
                             let z = z_for(outcome, s.actor);
                             self.finished.push((s, z, k + 1 == n));
                         }
+                        self.records.push(GameRecord {
+                            decks: self.decks,
+                            first: self.first,
+                            winner: match outcome {
+                                Some(GameOutcome::Win(p)) => Some(p),
+                                _ => None,
+                            },
+                            turns: self.state.turn_count,
+                            points: self.state.points,
+                            decisions: self.decisions,
+                        });
                         self.outcomes.push(outcome);
                         self.active = false;
                         return true;
@@ -366,19 +394,37 @@ pub struct Batch {
 }
 
 impl BatchSelfPlay {
+    /// `deck_names[i]` names `decks[i]` in the optional `games_log` (CSV, one line per game:
+    /// deck_a,deck_b,first,winner,turns,points_a,points_b,decisions; winner -1 = tie).
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cfg: SelfPlayConfig,
         decks: Vec<Deck>,
+        deck_names: Vec<String>,
         games: usize,
         concurrency: usize,
         seed: u64,
         out: &str,
+        games_log: Option<&str>,
     ) -> std::io::Result<Self> {
         let mut writer = std::io::BufWriter::new(std::fs::File::create(out)?);
         write_header(&mut writer)?;
+        let games_log = match games_log {
+            Some(path) => {
+                let mut w = std::io::BufWriter::new(std::fs::File::create(path)?);
+                writeln!(
+                    w,
+                    "deck_a,deck_b,first,winner,turns,points_a,points_b,decisions"
+                )?;
+                Some(w)
+            }
+            None => None,
+        };
         let mut bsp = BatchSelfPlay {
             cfg,
             decks,
+            deck_names,
+            games_log,
             slots: Vec::new(),
             games_target: games,
             games_started: 0,
@@ -400,6 +446,9 @@ impl BatchSelfPlay {
                 finished: vec![],
                 outcomes: vec![],
                 active: false,
+                decks: (0, 0),
+                first: 0,
+                records: vec![],
             };
             slot.new_game(&bsp.decks, bsp.next_seed());
             bsp.games_started += 1;
@@ -446,6 +495,24 @@ impl BatchSelfPlay {
                     write_sample(&mut self.writer, s, *z, *last)?;
                 }
                 self.samples_written += finished.len();
+                let records = std::mem::take(&mut self.slots[i].records);
+                if let Some(log) = self.games_log.as_mut() {
+                    for r in &records {
+                        let name = |k: usize| self.deck_names.get(k).map_or("?", |s| s.as_str());
+                        writeln!(
+                            log,
+                            "{},{},{},{},{},{},{},{}",
+                            name(r.decks.0),
+                            name(r.decks.1),
+                            r.first,
+                            r.winner.map_or(-1, |w| w as i64),
+                            r.turns,
+                            r.points[0],
+                            r.points[1],
+                            r.decisions
+                        )?;
+                    }
+                }
                 for outcome in self.slots[i].outcomes.drain(..) {
                     self.games_done += 1;
                     match outcome {
@@ -469,6 +536,9 @@ impl BatchSelfPlay {
         }
         if self.done() {
             self.writer.flush()?;
+            if let Some(log) = self.games_log.as_mut() {
+                log.flush()?;
+            }
         }
         let mut b = Batch {
             n: 0,
@@ -535,7 +605,18 @@ mod tests {
             },
             temperature_moves: 5,
         };
-        let mut bsp = BatchSelfPlay::new(cfg, vec![deck], 6, 4, 1, out.to_str().unwrap()).unwrap();
+        let log = std::env::temp_dir().join("pz_batch_test.csv");
+        let mut bsp = BatchSelfPlay::new(
+            cfg,
+            vec![deck],
+            vec!["test".into()],
+            6,
+            4,
+            1,
+            out.to_str().unwrap(),
+            log.to_str(),
+        )
+        .unwrap();
         let mut rounds = 0;
         while !bsp.done() {
             let b = bsp.collect().unwrap();
@@ -552,5 +633,11 @@ mod tests {
         let (done, target, samples, _, _) = bsp.progress();
         assert_eq!(done, target);
         assert!(samples > 0);
+        let lines = std::fs::read_to_string(&log).unwrap();
+        assert_eq!(
+            lines.lines().count(),
+            1 + 6,
+            "a header and one line per game"
+        );
     }
 }

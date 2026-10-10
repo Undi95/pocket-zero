@@ -18,7 +18,8 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import COVERAGE_MARK, build_pool, extend_pool
+from .decks import COVERAGE_MARK, build_pool, deck_labels, extend_pool
+from .highlights import summarize
 from .model import ZeroNet, export_weights
 from .train import train
 
@@ -40,6 +41,29 @@ def validate(player, games, threads, log):
         errs.append(sim - real)
         log(f'    {a:10} vs {b:8} sim {sim:5.1f}  réel {real:5.1f}  écart {sim - real:+5.1f}')
     return (sum(e * e for e in errs) / len(errs)) ** 0.5
+
+
+def records(metrics_f, vs_e3, streak=None):
+    """Record lines against e3, compared with the previous iterations of the run."""
+    best = None
+    try:
+        with open(metrics_f, newline='') as f:
+            for r in csv.DictReader(f):
+                if r.get('vs_e3'):
+                    v = float(r['vs_e3'])
+                    if best is None or v > best[0]:
+                        best = (v, r['iteration'])
+    except (OSError, ValueError):
+        pass
+    out = []
+    if best is None or vs_e3 > best[0]:
+        old = f' (ancien : {100 * best[0]:.1f} % à l\'itération {best[1]})' if best else ''
+        out.append(f'🎉 Nouveau record contre e3 : {100 * vs_e3:.1f} %{old}')
+    else:
+        out.append(f'📈 Record du run contre e3 : {100 * best[0]:.1f} % (itération {best[1]})')
+    if streak and streak >= 2:
+        out.append(f"🔥 Plus longue série contre e3 : {streak} victoires d'affilée")
+    return out
 
 
 def trend(metrics_f, key, n=5):
@@ -100,7 +124,10 @@ def main():
 
     def log(*x):
         s = time.strftime('%H:%M:%S ') + ' '.join(str(v) for v in x)
-        print(s, flush=True)
+        try:
+            print(s, flush=True)
+        except UnicodeEncodeError:  # a console that can't show the emojis of the highlights
+            print(s.encode('ascii', 'replace').decode(), flush=True)
         log_f.write(s + '\n')
         log_f.flush()
 
@@ -143,6 +170,8 @@ def main():
             w.writerow(header)
 
     shard_dir = os.path.join(run_dir, 'shards')
+    games_dir = os.path.join(run_dir, 'games')
+    os.makedirs(games_dir, exist_ok=True)
 
     def prune():
         """Deletes the self-play files that fell out of the training window (they are never
@@ -205,9 +234,20 @@ def main():
             deck_paths = sorted(os.path.join(decks, f) for f in os.listdir(decks) if f.endswith('.txt'))
             sp, _ = gpu_selfplay.run(deck_paths, a.games, a.sims, shard, prev, info, seed=it,
                                      devices=devices, concurrency=a.concurrency,
-                                     temperature_moves=a.temperature_moves)
+                                     temperature_moves=a.temperature_moves, games_dir=games_dir)
         t_sp = time.time() - t0
         log(f'  self-play : {sp["games"]} parties, {sp["samples"]} positions ({t_sp / 60:.1f} min)')
+        # Highlights of this iteration's games; only the latest iteration's logs are kept.
+        logs = sorted(os.path.join(games_dir, f) for f in os.listdir(games_dir) if f.endswith('.csv'))
+        mine = [f for f in logs if os.path.basename(f).startswith(f'iter_{it:03d}_')]
+        try:
+            for line in summarize(mine, deck_labels(decks), it + 1):
+                log('  ' + line)
+        except Exception as e:  # a summary must never stop the training
+            log(f'  (résumé indisponible : {e})')
+        for f in logs:
+            if f not in mine:
+                os.remove(f)
 
         shards = sorted(os.path.join(run_dir, 'shards', f) for f in os.listdir(os.path.join(run_dir, 'shards')))
         buf = load_buffer(shards, a.window)
@@ -224,9 +264,12 @@ def main():
         vs_prev = engine.arena(engine.zspec(a.eval_sims, new), engine.zspec(a.eval_sims, prev), meta,
                                a.eval_games, threads, seed=it)['a_score']
         vs_e2 = engine.arena(engine.zspec(a.eval_sims, new), 'e2', meta, a.eval_games, threads, seed=it)['a_score']
-        vs_e3 = engine.arena(engine.zspec(a.eval_sims, new), 'e3', meta, a.eval_games, threads, seed=it)['a_score']
+        res_e3 = engine.arena(engine.zspec(a.eval_sims, new), 'e3', meta, a.eval_games, threads, seed=it)
+        vs_e3 = res_e3['a_score']
         log(f'  nouveau réseau : {100 * vs_prev:.1f} % contre le précédent (~50 % est normal : un petit pas '
             f'par itération), {100 * vs_e2:.1f} % contre e2, {100 * vs_e3:.1f} % contre e3')
+        for line in records(metrics_f, vs_e3, res_e3.get('a_streak')):
+            log('  ' + line)
         shutil.copy(new, latest)
 
         rmse = ''

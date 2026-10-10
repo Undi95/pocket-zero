@@ -25,6 +25,10 @@ vrais matchups Limitless (écart moyen, RMSE ; le bot `e3` est à ~10-12 points)
 Tout se trouve dans `runs\principal\` : `log.txt`, `metrics.csv`, `weights\latest.bin`.
 L'entraînement reprend où il s'est arrêté : relance simplement la même commande.
 
+Après chaque autojeu, un petit résumé des moments forts : deck de l'itération, classement de la
+méta contre tout le pool, pépites hors méta, plus longue série, victoire éclair, exploit,
+marathon ; après l'évaluation, les records contre `e3`.
+
 Lire les résultats : « contre le précédent » reste vers 50 % (chaque itération n'est qu'un petit
 pas, et 400 parties mesurent à ±5 %). La progression se lit sur `vs_e3` dans la durée : le log
 affiche la moyenne des 5 dernières itérations à côté des 5 précédentes.

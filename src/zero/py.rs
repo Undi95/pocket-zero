@@ -34,7 +34,7 @@ pub struct PyBatchSelfPlay {
 #[pymethods]
 impl PyBatchSelfPlay {
     #[new]
-    #[pyo3(signature = (deck_paths, games, sims, out, seed=0, concurrency=1024, temperature_moves=20, noise=0.25))]
+    #[pyo3(signature = (deck_paths, games, sims, out, seed=0, concurrency=1024, temperature_moves=20, noise=0.25, games_log=None))]
     #[allow(clippy::too_many_arguments)]
     fn new(
         deck_paths: Vec<String>,
@@ -45,11 +45,18 @@ impl PyBatchSelfPlay {
         concurrency: usize,
         temperature_moves: usize,
         noise: f32,
+        games_log: Option<String>,
     ) -> PyResult<Self> {
-        let decks: Vec<Deck> = deck_paths
+        let (decks, names): (Vec<Deck>, Vec<String>) = deck_paths
             .iter()
-            .filter_map(|p| Deck::from_file(p).ok().filter(|d| d.is_valid()))
-            .collect();
+            .filter_map(|p| {
+                let d = Deck::from_file(p).ok().filter(|d| d.is_valid())?;
+                let name = std::path::Path::new(p)
+                    .file_stem()
+                    .map_or_else(|| p.clone(), |s| s.to_string_lossy().into_owned());
+                Some((d, name))
+            })
+            .unzip();
         if decks.is_empty() {
             return Err(PyRuntimeError::new_err("no valid deck"));
         }
@@ -62,8 +69,17 @@ impl PyBatchSelfPlay {
             },
             temperature_moves,
         };
-        let inner = BatchSelfPlay::new(cfg, decks, games, concurrency, seed, &out)
-            .map_err(|e| PyRuntimeError::new_err(format!("{out}: {e}")))?;
+        let inner = BatchSelfPlay::new(
+            cfg,
+            decks,
+            names,
+            games,
+            concurrency,
+            seed,
+            &out,
+            games_log.as_deref(),
+        )
+        .map_err(|e| PyRuntimeError::new_err(format!("{out}: {e}")))?;
         Ok(PyBatchSelfPlay { inner })
     }
 

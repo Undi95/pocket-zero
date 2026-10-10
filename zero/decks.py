@@ -4,7 +4,9 @@
 - one deck per attacker line in the whole card pool (generic shell, Rare Candy for Stage 2);
 - random two-line decks and random mutations of meta decks (odd cards, incomplete lines...).
 """
+import collections
 import importlib.util
+import json
 import os
 import random
 import shutil
@@ -113,3 +115,42 @@ def extend_pool(out_dir, seed=1, log=print):
     open(os.path.join(out_dir, COVERAGE_MARK), 'w').close()
     log(f'couverture : {added} decks ajoutés pour les cartes jamais jouées à l\'entraînement')
     return added
+
+
+KINDS = {'meta': 'méta', 'line': 'lignée', 'pair': 'paire', 'mutant': 'mutant', 'cover': 'découverte'}
+LABELS_FILE = '.noms.json'
+
+
+def deck_labels(decks_dir):
+    """{file stem: [label, archetype, kind]} for the highlights: meta lists by their name, other
+    decks by their two strongest attackers; the archetype is the strongest attacker. Cached."""
+    cache_f = os.path.join(decks_dir, LABELS_FILE)
+    try:
+        labels = json.load(open(cache_f, encoding='utf-8'))
+    except (OSError, ValueError):
+        labels = {}
+    stems = [f[:-4] for f in os.listdir(decks_dir) if f.endswith('.txt')]
+    missing = [s for s in stems if s not in labels]
+    if missing:
+        p = _pipeline()
+        for stem in missing:
+            d = p.parse_deck(os.path.join(decks_dir, stem + '.txt'))
+            cnt = collections.Counter(d['c'])
+            pre = {p.CARD[x].get('evolves_from') for x in cnt}
+            att = collections.Counter()
+            for cid, k in cnt.items():
+                c = p.CARD[cid]
+                if p.is_poke(c) and c['name'] not in pre:
+                    att[c['name']] = max(att[c['name']], p.atk_value(c) * k + 1)
+            top = [n for n, _ in att.most_common(2)] or ['?']
+            kind = stem.split('-', 1)[0]
+            if kind == 'meta':
+                name = ' '.join(w.capitalize() for w in stem.split('-')[1:-1])
+                labels[stem] = [f'{name} (méta)', name, kind]
+            else:
+                labels[stem] = [f"{' + '.join(top)} ({KINDS.get(kind, kind)})", top[0], kind]
+        try:
+            json.dump(labels, open(cache_f, 'w', encoding='utf-8'), ensure_ascii=False)
+        except OSError:
+            pass
+    return labels

@@ -23,9 +23,16 @@ def shard_paths(out, games):
     return [out] if games < 2 else [out[:-4] + 'a.bin', out[:-4] + 'b.bin']
 
 
+def games_log_path(games_dir, shard):
+    """Where the engine logs the games of `shard` (None: no log)."""
+    if not games_dir:
+        return None
+    return os.path.join(games_dir, os.path.basename(shard)[:-4] + '.csv')
+
+
 def _worker(rank, args, results):
     (deck_paths, games, sims, out, seed, weights, info, device, concurrency, threads,
-     temperature_moves, noise) = args
+     temperature_moves, noise, games_dir) = args
     # The engine's thread pool is sized from this variable on first use.
     os.environ['RAYON_NUM_THREADS'] = str(threads)
     from deckgym.deckgym import BatchSelfPlay
@@ -43,9 +50,14 @@ def _worker(rank, args, results):
     model.to(device).eval()
     paths = shard_paths(out, games)
     halves = [games - games // 2, games // 2][:len(paths)]
-    envs = [BatchSelfPlay(deck_paths, g, sims, p, seed * 2 + k, max(1, concurrency // len(paths)),
-                          temperature_moves, noise)
-            for k, (g, p) in enumerate(zip(halves, paths))]
+    def make_env(k, g, p):
+        args = (deck_paths, g, sims, p, seed * 2 + k, max(1, concurrency // len(paths)), temperature_moves, noise)
+        try:
+            return BatchSelfPlay(*args, games_log=games_log_path(games_dir, p))
+        except TypeError:  # engine module older than the game logs
+            return BatchSelfPlay(*args)
+
+    envs = [make_env(k, g, p) for k, (g, p) in enumerate(zip(halves, paths))]
 
     def evaluate(batch):
         n, d, t, ad, at, ow = batch
@@ -92,8 +104,9 @@ def _worker(rank, args, results):
 
 
 def run(deck_paths, games, sims, out_prefix, weights, info, seed=0, devices=None, concurrency=1024,
-        temperature_moves=20, noise=0.25):
-    """Returns (stats dict, list of shard paths)."""
+        temperature_moves=20, noise=0.25, games_dir=None):
+    """Returns (stats dict, list of shard paths). With `games_dir`, every game is also logged
+    there (one CSV per shard) for the highlights."""
     if devices is None:
         devices = [f'cuda:{i}' for i in range(torch.cuda.device_count())] or ['cpu']
     cores = os.cpu_count() or 4
@@ -104,7 +117,7 @@ def run(deck_paths, games, sims, out_prefix, weights, info, seed=0, devices=None
     manager = mp.get_context('spawn').Manager()
     results = manager.dict()
     jobs = [(deck_paths, per[i], sims, outs[i], seed * 100 + i, weights, info, devices[i], concurrency,
-             threads, temperature_moves, noise) for i in range(len(devices))]
+             threads, temperature_moves, noise, games_dir) for i in range(len(devices))]
     if len(devices) == 1:
         _worker(0, jobs[0], results)
     else:

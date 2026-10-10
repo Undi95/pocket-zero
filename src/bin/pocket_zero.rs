@@ -350,46 +350,52 @@ fn main() {
             seed,
         } => {
             let decks = Arc::new(load_decks(&decks));
-            let a_wins = AtomicUsize::new(0);
-            let b_wins = AtomicUsize::new(0);
-            let ties = AtomicUsize::new(0);
             let done = AtomicUsize::new(0);
-            (0..games).into_par_iter().for_each(|g| {
-                // Pair 2k / 2k+1 use the same decks and seed with the seats swapped.
-                let pair = g / 2;
-                let mut rng =
-                    StdRng::seed_from_u64(seed.wrapping_mul(7919).wrapping_add(pair as u64));
-                let d1 = decks[rng.gen_range(0..decks.len())].clone();
-                let d2 = decks[rng.gen_range(0..decks.len())].clone();
-                let game_seed: u64 = rng.gen();
-                let a_first = g % 2 == 0;
-                let (da, db) = if a_first { (d1, d2) } else { (d2, d1) };
-                let pa = make_player(&a, da);
-                let pb = make_player(&b, db);
-                let players = if a_first { vec![pa, pb] } else { vec![pb, pa] };
-                let mut game = Game::new(players, game_seed);
-                let a_seat = if a_first { 0 } else { 1 };
-                match game.play() {
-                    Some(GameOutcome::Win(p)) if p == a_seat => {
-                        a_wins.fetch_add(1, Ordering::Relaxed)
+            // +1 a wins, -1 b wins, 0 tie; in game order, for the win streaks.
+            let results: Vec<i8> = (0..games)
+                .into_par_iter()
+                .map(|g| {
+                    // Pair 2k / 2k+1 use the same decks and seed with the seats swapped.
+                    let pair = g / 2;
+                    let mut rng =
+                        StdRng::seed_from_u64(seed.wrapping_mul(7919).wrapping_add(pair as u64));
+                    let d1 = decks[rng.gen_range(0..decks.len())].clone();
+                    let d2 = decks[rng.gen_range(0..decks.len())].clone();
+                    let game_seed: u64 = rng.gen();
+                    let a_first = g % 2 == 0;
+                    let (da, db) = if a_first { (d1, d2) } else { (d2, d1) };
+                    let pa = make_player(&a, da);
+                    let pb = make_player(&b, db);
+                    let players = if a_first { vec![pa, pb] } else { vec![pb, pa] };
+                    let mut game = Game::new(players, game_seed);
+                    let a_seat = if a_first { 0 } else { 1 };
+                    let r = match game.play() {
+                        Some(GameOutcome::Win(p)) if p == a_seat => 1,
+                        Some(GameOutcome::Win(_)) => -1,
+                        _ => 0,
+                    };
+                    let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+                    if n.is_multiple_of(20) {
+                        eprintln!("arena {n}/{games}");
                     }
-                    Some(GameOutcome::Win(_)) => b_wins.fetch_add(1, Ordering::Relaxed),
-                    _ => ties.fetch_add(1, Ordering::Relaxed),
-                };
-                let n = done.fetch_add(1, Ordering::Relaxed) + 1;
-                if n.is_multiple_of(20) {
-                    eprintln!("arena {n}/{games}");
+                    r
+                })
+                .collect();
+            let count = |v: i8| results.iter().filter(|&&r| r == v).count();
+            let (aw, bw, t) = (count(1), count(-1), count(0));
+            let streak = |v: i8| {
+                let (mut best, mut cur) = (0usize, 0usize);
+                for &r in &results {
+                    cur = if r == v { cur + 1 } else { 0 };
+                    best = best.max(cur);
                 }
-            });
-            let (aw, bw, t) = (
-                a_wins.load(Ordering::Relaxed),
-                b_wins.load(Ordering::Relaxed),
-                ties.load(Ordering::Relaxed),
-            );
+                best
+            };
             println!(
                 "{}",
                 json!({"a": a, "b": b, "a_wins": aw, "b_wins": bw, "ties": t,
-                       "a_score": (aw as f64 + t as f64 / 2.0) / games.max(1) as f64})
+                       "a_score": (aw as f64 + t as f64 / 2.0) / games.max(1) as f64,
+                       "a_streak": streak(1), "b_streak": streak(-1)})
             );
         }
         Cmd::Match {
@@ -462,13 +468,16 @@ fn main() {
                 temperature_moves: 8,
             };
             let out = std::env::temp_dir().join("pz_bench.bin");
+            let names = (0..decks.len()).map(|i| format!("deck{i}")).collect();
             let mut bsp = deckgym::zero::batch::BatchSelfPlay::new(
                 cfg,
                 decks,
+                names,
                 games,
                 concurrency,
                 1,
                 out.to_str().unwrap(),
+                None,
             )
             .unwrap_or_else(|e| panic!("{e}"));
             let start = std::time::Instant::now();
