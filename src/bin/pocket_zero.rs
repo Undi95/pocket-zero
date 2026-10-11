@@ -97,6 +97,9 @@ enum Cmd {
         /// Player spec used by both sides: z<sims>[:weights], e<depth>, ...
         #[arg(long)]
         player: String,
+        /// Another player for deck B (who misplays a matchup?); default: the same as --player
+        #[arg(long)]
+        player_b: Option<String>,
         #[arg(long, default_value_t = 100)]
         games: usize,
         #[arg(long, default_value_t = 0)]
@@ -420,9 +423,11 @@ fn main() {
             deck_a,
             deck_b,
             player,
+            player_b,
             games,
             seed,
         } => {
+            let player_b = player_b.unwrap_or_else(|| player.clone());
             let da = Deck::from_file(&deck_a).unwrap_or_else(|e| panic!("{deck_a}: {e}"));
             let db = Deck::from_file(&deck_b).unwrap_or_else(|e| panic!("{deck_b}: {e}"));
             let results: Vec<f64> = (0..games)
@@ -432,7 +437,7 @@ fn main() {
                         StdRng::seed_from_u64(seed.wrapping_mul(104_729).wrapping_add(g as u64));
                     let players = vec![
                         make_player(&player, da.clone()),
-                        make_player(&player, db.clone()),
+                        make_player(&player_b, db.clone()),
                     ];
                     match Game::new(players, rng.gen()).play() {
                         Some(GameOutcome::Win(0)) => 1.0,
