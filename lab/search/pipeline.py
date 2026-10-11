@@ -209,6 +209,19 @@ def run_games(d, per_opp, player, folder):
                          f'Sortie :\n{txt[-3000:] or "(vide)"}')
     return per
 
+def check():
+    """--check: one deck against the meta, with the engine's raw output and what was read."""
+    d = parse_deck(os.path.join(META, 'dedenne.txt'))
+    with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f: path = f.name
+    write_deck(d, path)
+    cmd = [BIN, 'simulate', path, META, '--num', str(len(opponents(META))), '--players', f'{SCREEN},{SCREEN}', '-p']
+    out = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', cwd=ROOT)
+    print('Commande :', ' '.join(cmd))
+    print('Code de sortie :', out.returncode)
+    print('--- début de la sortie ---'); print((out.stdout + out.stderr)[:2500]); print('--- fin ---')
+    print('Lu :', run_games(d, 1, SCREEN, META))
+    print('Score (méta) :', evaluate(d, 1, SCREEN))
+
 def evaluate(d, per_opp, player=SCREEN, folder=None):
     """Accumulates games in the cache; returns score(d)."""
     rec = CACHE.setdefault(f'{player}:{key(d)}', {})
@@ -463,7 +476,11 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--lock', default='', help='cartes imposées, ex "B1a 42,B1a 62"')
     ap.add_argument('--gens', type=int, default=25)
+    ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
     a = ap.parse_args()
+    if a.check:
+        check()
+        raise SystemExit(0)
     lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
     lock = tuple(CANON.get(sig(CARD[c]), c) for c in lock)
     t0 = time.time()

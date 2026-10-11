@@ -27,6 +27,7 @@ def main():
     ap.add_argument('--gens', type=int, default=25)
     ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
     ap.add_argument('--threads', type=int, default=0)
+    ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
     a = ap.parse_args()
 
     if not os.path.exists(a.weights):
@@ -44,6 +45,8 @@ def main():
     cmd = [sys.executable, os.path.join(ROOT, 'lab', 'search', 'pipeline.py'), '--gens', str(a.gens)]
     if a.lock:
         cmd += ['--lock', a.lock]
+    if a.check:
+        cmd += ['--check']
     print(f'Recherche "{a.name}" : criblage {a.screen}, génétique {a.search}, validation {a.final}, '
           f'réseau {a.weights}', flush=True)
     sys.exit(subprocess.call(cmd, env=env, cwd=ROOT))
