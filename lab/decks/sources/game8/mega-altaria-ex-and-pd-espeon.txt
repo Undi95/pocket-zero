@@ -1,0 +1,20 @@
+# archetype: Mega Altaria ex and PD Espeon
+# site: Game8 (Best Decks Tier List)
+# source: https://game8.co/games/Pokemon-TCG-Pocket/archives/477754
+# retrieved: 2026-10-11
+# published: 2026-09-30
+# tier: S
+Energy: Psychic
+2 Igglybuff A4a 59
+1 Mega Altaria ex B1 102
+2 Eevee B1 184
+1 Swablu B1 196
+2 Darkrai B2b 40
+2 Espeon B3a 20
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Professor's Research A4b 373
+2 Copycat B1 225
+1 Training Area B2 153
+1 Small Balloon B3b 64
+2 Poké Ball P-A 5

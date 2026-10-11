@@ -1,0 +1,19 @@
+# archetype: Vespiquen ex and Shuckle ex
+# site: Game8 (Best Decks Tier List)
+# source: https://game8.co/games/Pokemon-TCG-Pocket/archives/477754
+# retrieved: 2026-10-11
+# published: 2026-09-30
+# tier: A+
+Energy: Grass
+1 Vespiquen A2 18
+2 Shuckle ex A4 21
+1 Teal Mask Ogerpon ex B2 17
+2 Combee B4 10
+2 Vespiquen ex B4 11
+1 Cyrus A2 150
+2 Leaf Cape A3 147
+2 Professor's Research A4b 373
+2 Copycat B1 225
+2 Field Blower B3 147
+2 Fragrant Forest B3 153
+1 X Speed P-A 2

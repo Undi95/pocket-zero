@@ -1,0 +1,20 @@
+# archetype: Mega Rayquaza ex and Gouging Fire
+# site: Game8 (Best Decks Tier List)
+# source: https://game8.co/games/Pokemon-TCG-Pocket/archives/477754
+# retrieved: 2026-10-11
+# published: 2026-09-30
+# tier: A+
+Energy: Fire, Lightning
+2 Dratini B2b 51
+2 Gouging Fire B3a 54
+2 Dragonair B4 117
+1 Mega Rayquaza ex B4 120
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Professor's Research A4b 373
+1 May B1 223
+2 Copycat B1 225
+1 Ancient Booster Energy Capsule B3a 69
+1 Professor Sada B3a 72
+2 Rainbow Cave B4 155
+2 Poké Ball P-A 5

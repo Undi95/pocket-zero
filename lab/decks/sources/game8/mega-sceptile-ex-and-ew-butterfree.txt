@@ -1,0 +1,21 @@
+# archetype: Mega Sceptile ex and EW Butterfree
+# site: Game8 (Best Decks Tier List)
+# source: https://game8.co/games/Pokemon-TCG-Pocket/archives/477754
+# retrieved: 2026-10-11
+# published: 2026-09-30
+# tier: A+
+Energy: Grass
+1 Chingling B1 109
+1 Treecko B3 5
+1 Grovyle B3 6
+1 Mega Sceptile ex B3 8
+2 Caterpie B3b 1
+2 Metapod B3b 2
+2 Butterfree B3b 3
+1 Cyrus A2 150
+1 Rare Candy A3 144
+2 Professor's Research A4b 373
+1 Copycat B1 225
+2 Quick-Grow Extract B1a 67
+1 Field Blower B3 147
+2 Fragrant Forest B3 153
