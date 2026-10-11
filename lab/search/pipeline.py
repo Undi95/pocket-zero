@@ -26,14 +26,14 @@ _EXE = 'deckgym.exe' if os.name == 'nt' else 'deckgym'
 BIN = os.environ.get('PZ_DECKGYM') or next(
     (p for p in (os.path.join(ROOT, 'bin', _EXE), os.path.join(ROOT, 'target', 'release', _EXE)) if os.path.exists(p)),
     os.path.join(ROOT, 'target', 'release', _EXE))
-META = os.path.join(ROOT, 'lab/decks/meta')
+META = os.path.normpath(os.path.join(ROOT, 'lab', 'decks', 'meta'))
 RES = os.environ.get('PZ_RESULTS') or os.path.join(ROOT, 'lab/results')
 # Players (engine player codes). The defaults are the expectiminimax bots; pocket-zero sets
 # PZ_SCREEN / PZ_SEARCH to its trained network, e.g. z0 (network policy) and z16 (16-sim MCTS).
 SCREEN = os.environ.get('PZ_SCREEN', 'e2')
 SEARCH = os.environ.get('PZ_SEARCH', 'e3')
 FINAL = os.environ.get('PZ_FINAL', SEARCH)  # stage D (final validation)
-GAUNTLET = os.path.join(RES, 'gauntlet')  # meta decks + field decks, one folder for the simulator
+GAUNTLET = os.path.normpath(os.path.join(RES, 'gauntlet'))  # meta decks + field decks, one folder for the simulator
 _LOG = []
 
 def log(*a):
@@ -203,7 +203,8 @@ def run_games(d, per_opp, player, folder):
         m = re.search(r': (\S+)\.txt', blk); w = re.search(r'Player 0 won: (\d+)', blk); dr = re.search(r'Draws: (\d+)', blk)
         g = re.search(r'Running (\d+) games', blk)
         if m and w and g:
-            per[m.group(1)] = (int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, int(g.group(1)))
+            # The engine may print the folder with the name ("meta\\altaria" on Windows): keep the file name.
+            per[re.split(r'[\\/]', m.group(1))[-1]] = (int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, int(g.group(1)))
     if not per:  # never score a deck 0 because the engine failed: say why and stop
         raise SystemExit(f'Le moteur n\'a rendu aucun résultat.\nCommande : {" ".join(cmd)}\n'
                          f'Sortie :\n{txt[-3000:] or "(vide)"}')
