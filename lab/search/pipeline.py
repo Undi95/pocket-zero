@@ -46,6 +46,7 @@ def log(*a):
 WEIGHTS = {'altaria': 7.7, 'lucario': 7.7, 'butterfree': 5.2, 'vespiquen': 4.5, 'suicune': 4.2, 'rayquaza': 3.1,
            'hydreigon': 3.1, 'hoopa': 2.9, 'blaziken': 2.9, 'magnezone': 2.7, 'altaria-greninja': 2.6, 'weezing': 2.5,
            'charizard': 2.4, 'dedenne': 4.0, 'manectric': 2.1, 'sceptile-greninja': 1.8, 'flygon': 1.5}
+POLISH = os.environ.get('PZ_POLISH', '1') != '0'  # card-level tuning of the finalists (paired games)
 FIELD_SHARE = 0.5  # final score = (1 - FIELD_SHARE) * meta (weighted) + FIELD_SHARE * field (uniform)
 
 # ------------------------------------------------------------------ cards
@@ -185,12 +186,14 @@ def save_cache(force=False):
 
 def opponents(folder): return sorted(f[:-4] for f in os.listdir(folder) if f.endswith('.txt'))
 
-def run_games(d, per_opp, player, folder):
+def run_games(d, per_opp, player, folder, seed=None):
     with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f: path = f.name
     write_deck(d, path)
     n_opp = len(opponents(folder))
     cmd = [BIN, 'simulate', path, folder, '--num', str(per_opp * n_opp), '--players', f'{player},{player}', '-p',
            '-j', os.environ.get('THREADS', str(os.cpu_count() or 2))]  # no --seed: older engines replayed one game
+    if seed is not None:  # paired comparisons (polish): same games for two decks
+        cmd += ['--seed', str(seed)]
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
                              timeout=3600, cwd=ROOT)
@@ -432,11 +435,59 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
         json.dump({'gen': g + 1, 'pop': P}, open(f, 'w')); save_cache(True)
     return P
 
-def stage_D(P, top=6, per_opp=30, tag='D'):
+def score_of(per):
+    """full_score's total from one run's results {opponent: (wins, games)}."""
+    wr = {o: w / n for o, (w, n) in per.items() if n}
+    meta = [(WEIGHTS[o], v) for o, v in wr.items() if o in WEIGHTS]
+    field = [v for o, v in wr.items() if o.startswith('field-')]
+    m = sum(w * v for w, v in meta) / sum(w for w, _ in meta) if meta else 0.0
+    return m if not field else (1 - FIELD_SHARE) * m + FIELD_SHARE * sum(field) / len(field)
+
+def polish(d, lock=(), per_opp=6, n_alts=8, margin=0.01):
+    """Card-level tuning. A one-card change moves the win rate by ~1 %, far below the noise of
+    a few hundred games, so the search leaves filler cards to chance (a Potion where Lucky Ice
+    Pop does better). Here the deck and each variant play the SAME seeded games (same shuffles,
+    same coin flips): only the card's effect differs. Each trainer card is tried against the
+    trainers most played in the real meta lists; the gains are combined, then confirmed on new
+    seeds."""
+    usage = collections.Counter()
+    for f in os.listdir(META):
+        if f.endswith('.txt'):
+            for c in set(parse_deck(os.path.join(META, f))['c']):
+                if CARD[c]['kind'] == 'Trainer' and not is_fossil(CARD[c]): usage[CARD[c]['name']] += 1
+    alts = [BY_NAME[n][0] for n, _ in usage.most_common(n_alts) if BY_NAME.get(n)]
+    seed = random.randrange(1 << 30)
+    base = score_of(run_games(d, per_opp, SEARCH, GAUNTLET, seed))
+    gains = []
+    for out in sorted({c for c in d['c'] if CARD[c]['kind'] == 'Trainer' and c not in lock}):
+        for alt in alts:
+            if CARD[alt]['name'] == CARD[out]['name']: continue
+            cards = list(d['c']); cards.remove(out); cards.append(alt)
+            v = mk(cards, d['e'])
+            if not valid(v, lock): continue
+            g = score_of(run_games(v, per_opp, SEARCH, GAUNTLET, seed)) - base
+            if g > margin: gains.append((g, out, alt))
+    best, used = d, set()
+    for g, out, alt in sorted(gains, reverse=True):
+        if out in used or alt in used: continue
+        cards = list(best['c']); cards.remove(out); cards.append(alt)
+        v = mk(cards, best['e'])
+        if valid(v, lock): best = v; used |= {out, alt}; log(f'  polish : {CARD[out]["name"]} -> {CARD[alt]["name"]} (+{100 * g:.1f} pts)')
+    if best is d: return d
+    seed = random.randrange(1 << 30)  # confirm the combination on games it was not chosen on
+    a = score_of(run_games(d, per_opp * 2, SEARCH, GAUNTLET, seed))
+    b = score_of(run_games(best, per_opp * 2, SEARCH, GAUNTLET, seed))
+    log(f'  polish : confirmation {100 * a:.1f} % -> {100 * b:.1f} %' + ('' if b > a else ' (refusé)'))
+    return best if b > a else d
+
+def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
     out, seen = [], set()
     for d in P:  # best deck of each archetype
         if species(d) in seen: continue
         seen.add(species(d))
+        if POLISH:
+            log(f'{tag}: polissage de {species(d)}')
+            d = polish(d, lock)
         evaluate(d, per_opp, FINAL, GAUNTLET)
         out.append({'deck': d, **full_score(d, FINAL)})
         log(f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} parties)')
@@ -503,5 +554,5 @@ if __name__ == '__main__':
             base = shell(list(dict.fromkeys(ch)) * 2)
             seeds = [base] if base and valid(base, lock) else []
     P = stage_C(seeds, immigrants, gens=a.gens, lock=lock, tag=tag)
-    stage_D(P, tag='D' if not lock else 'D_lock')
+    stage_D(P, tag='D' if not lock else 'D_lock', lock=lock)
     log(f'FINI en {(time.time()-t0)/3600:.1f} h')
