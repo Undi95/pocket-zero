@@ -44,9 +44,10 @@ impl Deck {
         let mut energy_types = HashSet::new();
         let mut cards = Vec::new();
         for line in contents.lines() {
-            // if line is empty or starts with "Pokemon:" or "Trainer:, skip it
+            // Skip empty lines, "Pokémon:" / "Trainer:" headers and "#" comments (sources, notes)
             let trimmed = line.trim();
             if trimmed.is_empty()
+                || trimmed.starts_with('#')
                 || trimmed.starts_with("Pokémon:")
                 || trimmed.starts_with("Trainer:")
             {
@@ -243,6 +244,15 @@ mod tests {
         } else {
             panic!("Expected first card to be Bulbasaur");
         }
+    }
+
+    #[test]
+    fn test_deck_from_string_skips_comment_lines() {
+        let deck = Deck::from_string(
+            "# source: https://example.org/deck\n# share: 4.2%\nEnergy: Lightning\n2 Oricorio A3 66\n",
+        )
+        .expect("comments should be ignored");
+        assert_eq!(deck.cards.len(), 2);
     }
 
     #[test]
