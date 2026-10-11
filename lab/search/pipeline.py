@@ -192,7 +192,8 @@ def run_games(d, per_opp, player, folder):
     cmd = [BIN, 'simulate', path, folder, '--num', str(per_opp * n_opp), '--players', f'{player},{player}', '-p',
            '-j', os.environ.get('THREADS', str(os.cpu_count() or 2)), '--seed', str(random.randrange(1 << 30))]
     try:
-        out = subprocess.run(cmd, capture_output=True, text=True, timeout=3600, cwd=ROOT)
+        out = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
+                             timeout=3600, cwd=ROOT)
         txt = out.stdout + out.stderr
     except subprocess.TimeoutExpired:
         txt = ''
@@ -203,6 +204,9 @@ def run_games(d, per_opp, player, folder):
         g = re.search(r'Running (\d+) games', blk)
         if m and w and g:
             per[m.group(1)] = (int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, int(g.group(1)))
+    if not per:  # never score a deck 0 because the engine failed: say why and stop
+        raise SystemExit(f'Le moteur n\'a rendu aucun résultat.\nCommande : {" ".join(cmd)}\n'
+                         f'Sortie :\n{txt[-3000:] or "(vide)"}')
     return per
 
 def evaluate(d, per_opp, player=SCREEN, folder=None):
