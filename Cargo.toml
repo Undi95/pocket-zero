@@ -44,21 +44,6 @@ csv-export = ["csv"]
 name = "deckgym"
 crate-type = ["cdylib", "rlib"]
 
-[dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
-
-[[bench]]
-name = "play_benchmark"
-harness = false
-
-[[bench]]
-name = "card_lookup_benchmark"
-harness = false
-
-[[bench]]
-name = "rare_candy_benchmark"
-harness = false
-
 [[bin]]
 name = "pocket-zero"
 path = "src/bin/pocket_zero.rs"
@@ -68,10 +53,3 @@ name = "tui"
 path = "src/bin/tui.rs"
 required-features = ["tui"]
 
-[[bin]]
-name = "temp_deck_generator"
-path = "src/bin/temp_deck_generator.rs"
-
-[[example]]
-name = "sylveon_deck_draw_speed"
-required-features = ["csv-export"]
