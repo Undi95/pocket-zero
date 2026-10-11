@@ -66,15 +66,32 @@ def upgrade(a):
     return out
 
 
+def widen(a, dt):
+    """Records of an older input layout in the layout of `dt`: the inputs a newer layout appended
+    (after the old dense features, after the old tokens) are zero, i.e. absent."""
+    if a.dtype == dt:
+        return a
+    out = np.zeros(len(a), dtype=dt)
+    for name in a.dtype.names:
+        if name in ('dense', 'tokens'):
+            out[name][:, :a[name].shape[1]] = a[name]
+        else:
+            out[name] = a[name]
+    return out
+
+
 def load_buffer(paths, max_samples):
-    """Most recent shards first until `max_samples`, returned as one in-memory array."""
-    chunks, total = [], 0
+    """Most recent shards first until `max_samples`, returned as one in-memory array (in the
+    layout of the newest shard)."""
+    chunks, total, dt = [], 0, None
     for p in reversed(paths):
         a = read_shard(p)
         take = min(len(a), max_samples - total)
         if take <= 0:
             break
         c = upgrade(np.array(a[-take:]))
+        dt = dt or c.dtype
+        c = widen(c, dt)
         # A shard boundary is a game boundary: an interrupted file may end mid-game, and value
         # targets must never bootstrap from another file's first position.
         c['last'][-1] = 1

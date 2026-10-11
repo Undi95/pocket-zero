@@ -20,7 +20,7 @@ from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
 from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, build_pool, deck_labels, extend_pool
 from .highlights import summarize
-from .model import ZeroNet, export_weights
+from .model import ZeroNet, export_weights, migrate_state_dict
 from .train import train
 
 TD_LAMBDA = 0.9
@@ -41,6 +41,34 @@ def validate(player, games, threads, log):
         errs.append(sim - real)
         log(f'    {a:10} vs {b:8} sim {sim:5.1f}  réel {real:5.1f}  écart {sim - real:+5.1f}')
     return (sum(e * e for e in errs) / len(errs)) ** 0.5
+
+
+def compatible(old, new):
+    """A run can continue across these input changes: layout 1 -> 2 and vocabulary changes
+    (migrate_state_dict), everything else equal."""
+    if not old:
+        return False
+    keep = ('n_slots', 'bags', 'action_dense', 'action_tokens', 'action_type_buckets',
+            'action_detail_buckets', 'max_actions', 'embed_dim', 'action_embed', 'h1', 'h2', 'h',
+            'vh', 'ph', 'action_in')
+    return all(old.get(k) == new.get(k) for k in keep) and \
+        old.get('trunk_in') in (new['trunk_in'], new['trunk_in_v1'])
+
+
+def migrate_checkpoint(c, model, info):
+    """Checkpoint of an older layout or vocabulary: weights and their AdamW moments are moved
+    the same way (new inputs start at zero, embedding rows follow their card ids)."""
+    names = [n for n, _ in model.named_parameters()]
+    c['model'] = migrate_state_dict(dict(c['model']), info, c.get('vocab_table'))
+    for i, st in c['optimizer']['state'].items():
+        name = names[int(i)]
+        if name in ('fc1.weight', 'card_emb.weight'):
+            for k in ('exp_avg', 'exp_avg_sq'):
+                if k in st:
+                    st[k] = migrate_state_dict({'fc1.weight': c['model']['fc1.weight'], 'card_emb.weight': st[k]}
+                                               if name == 'card_emb.weight' else
+                                               {'card_emb.weight': c['model']['card_emb.weight'], 'fc1.weight': st[k]},
+                                               info, c.get('vocab_table'))[name]
 
 
 def records(metrics_f, vs_e3, streak=None):
@@ -133,9 +161,12 @@ def main():
 
     threads = a.threads or None
     info = engine.info()
+    # The vocabulary travels with the weights (they follow card ids), not with the run.
+    dims = {k: v for k, v in info.items() if k != 'vocab_table'}
     state_f = os.path.join(run_dir, 'state.json')
-    state = json.load(open(state_f)) if os.path.exists(state_f) else {'iteration': 0, 'info': info}
-    if state.get('info') != info:
+    state = json.load(open(state_f)) if os.path.exists(state_f) else {'iteration': 0, 'info': dims}
+    migrating = state.get('info') != dims
+    if migrating and not compatible(state.get('info', {}), dims):
         raise SystemExit('Le format des entrées a changé depuis le début de ce run : utilise un nouveau --run.')
     decks = os.path.join(run_dir, 'decks')
     if not os.path.isdir(decks):
@@ -151,8 +182,15 @@ def main():
     ckpt = os.path.join(run_dir, 'weights', 'checkpoint.pt')
     if os.path.exists(ckpt):
         c = torch.load(ckpt, map_location=a.device)
+        if migrating:
+            migrate_checkpoint(c, model, info)
         model.load_state_dict(c['model'])
         optimizer.load_state_dict(c['optimizer'])
+    if migrating:
+        log('nouvelles entrées du réseau (outils, cartes sous chaque Pokémon, effets, historique '
+            'public...) : le réseau continue tel quel et apprend à les utiliser')
+        state['info'] = dims
+        json.dump(state, open(state_f, 'w'))
     latest = os.path.join(run_dir, 'weights', 'latest.bin')
     log(f'run {a.run} : reprise à l\'itération {state["iteration"]}, appareil {a.device}, '
         f'{torch.cuda.device_count()} GPU')
@@ -205,7 +243,8 @@ def main():
         del buf
         export_weights(model, latest, m['value_scale'])
         shutil.copy(latest, os.path.join(run_dir, 'weights', 'warmup.bin'))
-        torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict()}, ckpt)
+        torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'vocab_table': info['vocab_table']}, ckpt)
         vs_e2 = engine.arena(engine.zspec(a.eval_sims, latest), 'e2', meta, a.eval_games, threads)['a_score']
         log(f'  après échauffement : {100 * vs_e2:.1f} % contre e2')
         state['warmup_done'] = True
@@ -262,7 +301,8 @@ def main():
         prune()
         new = os.path.join(run_dir, 'weights', f'iter_{it:03d}.bin')
         export_weights(model, new, m['value_scale'])
-        torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict()}, ckpt)
+        torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'vocab_table': info['vocab_table']}, ckpt)
 
         vs_prev = engine.arena(engine.zspec(a.eval_sims, new), engine.zspec(a.eval_sims, prev), meta,
                                a.eval_games, threads, seed=it)['a_score']

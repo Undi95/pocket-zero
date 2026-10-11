@@ -7,6 +7,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from .model import migrate_state_dict
+
 
 def load_weights(model, path):
     """Loads a PZW1 file (as written by export_weights) into `model`."""
@@ -21,7 +23,10 @@ def load_weights(model, path):
             dims = struct.unpack(f'<{nd}I', f.read(4 * nd))
             count = int(np.prod(dims))
             sd[name] = torch.from_numpy(np.frombuffer(f.read(4 * count), dtype='<f4').reshape(dims).copy())
-    model.load_state_dict(sd)
+    table = sd.pop('vocab.table', None)
+    if table is not None:
+        table = table.numpy().astype(np.uint8).tobytes().decode()
+    model.load_state_dict(migrate_state_dict(sd, model.info, table))
 
 
 def batches(buf, batch, rng):

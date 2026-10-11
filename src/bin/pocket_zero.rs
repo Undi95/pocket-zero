@@ -301,6 +301,12 @@ fn main() {
                 "h1": net::H1, "h2": net::H2, "h": net::H, "vh": net::VH, "ph": net::PH,
                 "trunk_in": net::TRUNK_IN,
                 "action_in": net::ACTION_IN,
+                "layout": encode::LAYOUT,
+                "state_dense_v1": encode::STATE_DENSE_V1,
+                "trunk_in_v1": net::TRUNK_IN_V1,
+                "attached_start": encode::ATTACHED_START,
+                "attached_max": encode::ATTACHED_MAX,
+                "vocab_table": net::vocab_table(),
             });
             println!("{}", serde_json::to_string_pretty(&info).unwrap());
         }

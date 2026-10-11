@@ -20,7 +20,7 @@ use crate::actions::{Action, SimpleAction};
 use crate::card_ids::CardId;
 use crate::database::get_card_by_enum;
 use crate::fxhash::{FxBuildHasher, FxHasher};
-use crate::hooks::get_stage;
+use crate::hooks::{get_retreat_cost, get_stage};
 use crate::models::{Card, EnergyType, PlayedCard, TrainerType};
 use crate::State;
 
@@ -31,8 +31,12 @@ pub const N_SLOTS: usize = 8; // my 4 in-play slots, then the opponent's
 pub const HAND_MAX: usize = 10;
 pub const DISCARD_MAX: usize = 30;
 pub const DECK_MAX: usize = 20;
-/// Token layout: 8 slot cards, stadium, my hand, my discard, opponent discard, my remaining deck.
-pub const N_TOKENS: usize = N_SLOTS + 1 + HAND_MAX + DISCARD_MAX + DISCARD_MAX + DECK_MAX;
+/// Token layout: 8 slot cards, stadium, my hand, my discard, opponent discard, my remaining deck,
+/// then (layout 2) per slot the cards attached to it: its Tools, then the cards under it.
+pub const N_TOKENS_V1: usize = N_SLOTS + 1 + HAND_MAX + DISCARD_MAX + DISCARD_MAX + DECK_MAX;
+pub const ATTACHED_MAX: usize = 4;
+pub const ATTACHED_START: usize = N_TOKENS_V1;
+pub const N_TOKENS: usize = N_TOKENS_V1 + N_SLOTS * ATTACHED_MAX;
 pub const BAGS: [(usize, usize); 4] = [
     (N_SLOTS + 1, HAND_MAX),
     (N_SLOTS + 1 + HAND_MAX, DISCARD_MAX),
@@ -47,7 +51,20 @@ pub const CARD_STATIC_DIM: usize = 40;
 const SLOT_DIM: usize = 1 + 3 + N_ENERGY + 1 + 5 + 2 + 1 + EFFECT_BUCKETS + CARD_STATIC_DIM;
 const GLOBAL_DIM: usize =
     1 + 2 + 2 + 2 + 2 + 2 + 4 * (N_ENERGY + 1) + 2 * N_ENERGY + 8 + 3 + 2 * TURN_EFFECT_BUCKETS;
-pub const STATE_DENSE: usize = GLOBAL_DIM + N_SLOTS * SLOT_DIM;
+
+/// Input layout version. Layout 2 appends, after everything layout 1 had, the rest of what a
+/// player sees on the board (attached tools and the cards under each Pokémon, effective retreat
+/// cost, every effect by name and amount, knock-outs and attacks of the last turns...). Nothing of
+/// layout 1 moves, so a layout-1 network extends to layout 2 with zero weights on the new inputs
+/// and plays exactly as before until it learns to use them (`net.rs` / `zero/model.py` migrate).
+pub const LAYOUT: u32 = 2;
+/// One fixed input per `CardEffect` / `TurnEffect` variant, by name (see the tables below).
+pub const N_EFFECT_SLOTS: usize = 32;
+pub const N_TURN_EFFECT_SLOTS: usize = 24;
+const SLOT_EXTRA_DIM: usize = 1 + 9 + 1 + N_EFFECT_SLOTS;
+const GLOBAL_EXTRA_DIM: usize = 2 * N_TURN_EFFECT_SLOTS + 4 + 2 + 2 * N_ENERGY + 2 + 4 + 12 + 1;
+pub const STATE_DENSE_V1: usize = GLOBAL_DIM + N_SLOTS * SLOT_DIM;
+pub const STATE_DENSE: usize = STATE_DENSE_V1 + GLOBAL_EXTRA_DIM + N_SLOTS * SLOT_EXTRA_DIM;
 
 pub const ACTION_TYPE_BUCKETS: usize = 256;
 pub const ACTION_DETAIL_BUCKETS: usize = 1024;
@@ -232,6 +249,196 @@ fn encode_slot(out: &mut Vec<f32>, slot: &Option<PlayedCard>) {
     debug_assert_eq!(out.len() - start, SLOT_DIM);
 }
 
+/// `CardEffect` variants, one input each. Append new variants at the end (their position is
+/// their input); an unknown name falls into the last input.
+const CARD_EFFECT_NAMES: [&str; 26] = [
+    "NoRetreat",
+    "ReducedDamage",
+    "IncreasedVulnerability",
+    "IncreasedAttackCost",
+    "IncreasedRetreatCost",
+    "CannotAttack",
+    "CannotUseAttack",
+    "IncreasedDamageForAttack",
+    "IncreasedSpreadDamageForAttack",
+    "PreventAllDamageAndEffects",
+    "PreventDamageIfLessOrEqual",
+    "PreventDamageFromBasic",
+    "NoWeakness",
+    "AbilitiesDisabled",
+    "CoinFlipToBlockAttack",
+    "DelayedDamage",
+    "Counterattack",
+    "ReducedDamageFromEx",
+    "AsleepWhenEnergyAttachedFromZone",
+    "DamageNewActiveOnOpponentRetreat",
+    "ReduceDamageFromAttacks",
+    "ReduceOpponentActiveDamage",
+    "PreventAllDamageFromEx",
+    "PreventDamageWhileBenched",
+    "CoinFlipToPreventIncomingDamage",
+    "CoinFlipToReduceIncomingDamage",
+];
+
+/// `TurnEffect` variants, same rules.
+const TURN_EFFECT_NAMES: [&str; 23] = [
+    "NoSupportCards",
+    "NoItemCards",
+    "NoTrainerCards",
+    "NoEnergyFromZoneToActive",
+    "ReducedRetreatCost",
+    "ReducedDamageForType",
+    "ReducedDamageForSpecificPokemon",
+    "ReducedDamageForAllPokemon",
+    "SurviveKnockOutForSpecificPokemon",
+    "IncreasedDamage",
+    "IncreasedDamageForType",
+    "IncreasedDamageAgainstEx",
+    "IncreasedDamageForEeveeEvolutions",
+    "IncreasedDamageForSpecificPokemon",
+    "IncreasedDamageForSpecificPokemonAgainstEx",
+    "IncreasedDamageForTypeAgainstEx",
+    "DelayedSpotDamage",
+    "DelayedSpotKnockOut",
+    "NoEvolutionFromHand",
+    "ForceFirstHeads",
+    "ExtraRandomSpreadHits",
+    "BonusPointForHaxorusActiveKO",
+    "ReducedAttackCostForSpecificPokemon",
+];
+
+fn effect_slot(names: &[&str], slots: usize, name: &str) -> usize {
+    names.iter().position(|n| *n == name).unwrap_or(slots - 1)
+}
+
+/// Sum of the numbers in an effect's payload (its amounts), and which player it is for when it
+/// names one. Effect names alone can't tell -10 damage from -30.
+fn effect_payload<T: serde::Serialize>(e: &T) -> (String, f32, Option<usize>) {
+    fn add(v: &Value, key: &str, amount: &mut f32, player: &mut Option<usize>) {
+        match v {
+            Value::Number(n) if key == "player" => *player = n.as_u64().map(|p| p as usize),
+            Value::Number(n) => *amount += n.as_f64().unwrap_or(0.0) as f32,
+            Value::Object(m) => m.iter().for_each(|(k, x)| add(x, k, amount, player)),
+            Value::Array(a) => a.iter().for_each(|x| add(x, key, amount, player)),
+            _ => {}
+        }
+    }
+    let (mut amount, mut player) = (0.0, None);
+    match serde_json::to_value(e) {
+        Ok(Value::String(s)) => (s, 0.0, None),
+        Ok(Value::Object(m)) => {
+            let (name, body) = m.into_iter().next().unwrap_or_default();
+            add(&body, "", &mut amount, &mut player);
+            (name, amount, player)
+        }
+        _ => (String::new(), 0.0, None),
+    }
+}
+
+/// Layout-2 inputs of one slot: what the board shows beyond layout 1.
+fn encode_slot_extra(out: &mut Vec<f32>, state: &State, player: usize, idx: usize) {
+    let start = out.len();
+    let Some(p) = &state.in_play_pokemon[player][idx] else {
+        out.resize(start + SLOT_EXTRA_DIM, 0.0);
+        return;
+    };
+    let details = p.public_details();
+    out.push(get_retreat_cost(state, p).len() as f32 / 4.0);
+    out.extend_from_slice(&[
+        details.poison_damage as f32 / 20.0,
+        (details.paralyzed_on_turn == Some(state.turn_count)) as u8 as f32,
+        details.heal_blocked as u8 as f32,
+        details.abilities_disabled as u8 as f32,
+        details.damaged_this_turn as u8 as f32,
+        details.damaged_last_turn as u8 as f32,
+        p.moved_to_active_this_turn as u8 as f32,
+        p.has_attacked_since_play as u8 as f32,
+        p.prevent_first_attack_damage_used as u8 as f32,
+    ]);
+    out.push(state.effective_attached_energy(player, idx).len() as f32 / 4.0);
+    // Stored effects and those its own or the board's Abilities give it, by name and amount.
+    let mut effects = [0f32; N_EFFECT_SLOTS];
+    for e in &details.effective_effects {
+        let (name, amount, _) = effect_payload(e);
+        effects[effect_slot(&CARD_EFFECT_NAMES, N_EFFECT_SLOTS, &name)] += 1.0 + amount / 100.0;
+    }
+    out.extend_from_slice(&effects);
+    debug_assert_eq!(out.len() - start, SLOT_EXTRA_DIM);
+}
+
+/// Layout-2 global inputs: public history of the last turns, once-per-game effects, and every
+/// scheduled turn effect by name, amount and beneficiary.
+fn encode_global_extra(d: &mut Vec<f32>, state: &State, me: usize) {
+    let start = d.len();
+    let opp = 1 - me;
+    for turn in [state.turn_count, state.turn_count.saturating_add(1)] {
+        let mut v = [0f32; N_TURN_EFFECT_SLOTS];
+        if let Some(effects) = state.public_turn_effects().get(&turn) {
+            for e in effects {
+                let (name, amount, player) = effect_payload(e);
+                let sign = if player.is_some_and(|p| p != me) {
+                    -1.0
+                } else {
+                    1.0
+                };
+                v[effect_slot(&TURN_EFFECT_NAMES, N_TURN_EFFECT_SLOTS, &name)] +=
+                    sign * (1.0 + amount / 100.0);
+            }
+        }
+        d.extend_from_slice(&v);
+    }
+    let ctx = state.public_context(me);
+    d.extend_from_slice(&[
+        ctx.has_used_victory_star[0] as u8 as f32,
+        ctx.has_used_victory_star[1] as u8 as f32,
+        ctx.has_used_luxury_coin[0] as u8 as f32,
+        ctx.has_used_luxury_coin[1] as u8 as f32,
+        ctx.knocked_out_this_turn as u8 as f32,
+        ctx.knocked_out_last_turn as u8 as f32,
+    ]);
+    for types in [
+        ctx.knocked_out_types_this_turn,
+        ctx.knocked_out_types_last_turn,
+    ] {
+        let mut v = [0f32; N_ENERGY];
+        for e in types {
+            v[energy_index(*e)] = 1.0;
+        }
+        d.extend_from_slice(&v);
+    }
+    d.extend_from_slice(&[
+        ctx.own_knocked_out_count[0] as f32 / 3.0,
+        ctx.own_knocked_out_count[1] as f32 / 3.0,
+        ctx.points_at_own_turn_start[0] as f32 / 3.0,
+        ctx.points_at_own_turn_start[1] as f32 / 3.0,
+        ctx.points_gained_during_own_last_turn[0] as f32 / 3.0,
+        ctx.points_gained_during_own_last_turn[1] as f32 / 3.0,
+    ]);
+    // Each active Pokémon's attacks: used by their owner this turn, last turn, how often.
+    for (k, p) in [me, opp].into_iter().enumerate() {
+        let attacks = match state.in_play_pokemon[p][0].as_ref().map(|c| &c.card) {
+            Some(Card::Pokemon(pc)) => pc.attacks.iter().map(|a| a.title.clone()).collect(),
+            _ => Vec::new(),
+        };
+        for i in 0..2 {
+            match attacks.get(i) {
+                Some(title) => d.extend_from_slice(&[
+                    (ctx.attack_name_used_this_turn[k].as_ref() == Some(title)) as u8 as f32,
+                    (ctx.attack_name_used_last_turn[k].as_ref() == Some(title)) as u8 as f32,
+                    ctx.attack_name_used_count[k]
+                        .get(title)
+                        .copied()
+                        .unwrap_or(0) as f32
+                        / 3.0,
+                ]),
+                None => d.extend_from_slice(&[0.0; 3]),
+            }
+        }
+    }
+    d.push(state.observed_coin_reflip(me).is_some() as u8 as f32);
+    debug_assert_eq!(d.len() - start, GLOBAL_EXTRA_DIM);
+}
+
 fn push_bag(tokens: &mut Vec<u32>, cards: &[Card], max: usize) {
     let start = tokens.len();
     for c in cards.iter().take(max) {
@@ -321,6 +528,27 @@ pub fn encode_state(state: &State, me: usize) -> Obs {
     deck.truncate(DECK_MAX);
     deck.resize(DECK_MAX, 0);
     tokens.extend(deck);
+
+    // Layout 2, after all of layout 1.
+    debug_assert_eq!(d.len(), STATE_DENSE_V1);
+    encode_global_extra(&mut d, state, me);
+    for p in [me, opp] {
+        for idx in 0..4 {
+            encode_slot_extra(&mut d, state, p, idx);
+        }
+    }
+    for p in [me, opp] {
+        for slot in &state.in_play_pokemon[p] {
+            let start = tokens.len();
+            if let Some(c) = slot {
+                let under = c.cards_behind.iter().rev();
+                for card in c.attached_tools.iter().chain(under).take(ATTACHED_MAX) {
+                    tokens.push(card_token(card));
+                }
+            }
+            tokens.resize(start + ATTACHED_MAX, 0);
+        }
+    }
 
     debug_assert_eq!(d.len(), STATE_DENSE);
     debug_assert_eq!(tokens.len(), N_TOKENS);

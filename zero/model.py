@@ -1,5 +1,6 @@
 """PyTorch twin of src/zero/net.rs. Layer names and shapes must match the Rust side exactly;
 `python -m zero.parity` checks both networks give the same outputs."""
+import os
 import struct
 
 import numpy as np
@@ -29,6 +30,8 @@ class ZeroNet(nn.Module):
         n_slots = info['n_slots']
         self.slot_tokens = n_slots + 1
         self.bags = [tuple(b) for b in info['bags']]
+        # Layout 2: the cards attached to each slot (Tools, cards under it), summed per slot.
+        self.attached = (info['attached_start'], n_slots, info['attached_max'])
 
     def trunk(self, dense, tokens):
         b = dense.shape[0]
@@ -38,6 +41,9 @@ class ZeroNet(nn.Module):
             mask = (t != 0).float().unsqueeze(-1)
             s = (self.card_emb(t) * mask).sum(1)
             parts.append(s / mask.sum(1).clamp(min=1.0))
+        start, n_slots, per = self.attached
+        t = tokens[:, start:start + n_slots * per]
+        parts.append(self.card_emb(t).reshape(b, n_slots, per, -1).sum(2).reshape(b, -1))
         x = torch.cat(parts, 1)
         h = self.dropout(F.relu(self.fc1(x)))
         h = self.dropout(F.relu(self.fc2(h)))
@@ -64,6 +70,39 @@ class ZeroNet(nn.Module):
         return value, self.p_out(q).squeeze(-1)
 
 
+def migrate_state_dict(sd, info, table=None):
+    """Brings weights of another vocabulary or of input layout 1 to the current ones, like
+    Net::load (src/zero/net.rs): embedding rows follow their card ids (`table` is the
+    "id<TAB>row" text the weights were trained with, layout-1 networks used vocab_v1.txt), and a
+    layout-1 fc1 gets zero columns for the layout-2 inputs. `sd` holds tensors or arrays."""
+    if table is None:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'src', 'zero', 'vocab_v1.txt')) as f:
+            table = f.read()
+    old = dict((i, int(r)) for i, r in (l.split('\t') for l in table.splitlines() if '\t' in l))
+    new = dict((i, int(r)) for i, r in (l.split('\t') for l in info['vocab_table'].splitlines() if '\t' in l))
+    emb = sd['card_emb.weight']
+    if old != new or emb.shape[0] != info['vocab']:
+        out = emb.new_zeros((info['vocab'], emb.shape[1])) if torch.is_tensor(emb) else \
+            np.zeros((info['vocab'], emb.shape[1]), dtype=emb.dtype)
+        out[0] = emb[0]  # padding
+        done = set()
+        for cid, row in new.items():
+            o = old.get(cid)
+            if o is not None and o < emb.shape[0] and row not in done:
+                out[row] = emb[o]
+                done.add(row)
+        sd['card_emb.weight'] = out
+    w = sd['fc1.weight']
+    if w.shape[1] == info['trunk_in_v1'] != info['trunk_in']:
+        d1, d2 = info['state_dense_v1'], info['state_dense']
+        tail = info['trunk_in'] - (w.shape[1] + d2 - d1)
+        cat = torch.cat if torch.is_tensor(w) else np.concatenate
+        zeros = (lambda n: w.new_zeros((w.shape[0], n))) if torch.is_tensor(w) else \
+            (lambda n: np.zeros((w.shape[0], n), dtype=w.dtype))
+        sd['fc1.weight'] = cat([w[:, :d1], zeros(d2 - d1), w[:, d1:], zeros(tail)], 1)
+    return sd
+
+
 def export_weights(model, path, value_scale=(1.0, 0.0)):
     """Writes the PZW1 format read by Net::load (see src/zero/net.rs). `value_scale` (a, b)
     turns the value into tanh(a * logit + b) in the exported file only (calibration, see
@@ -72,6 +111,7 @@ def export_weights(model, path, value_scale=(1.0, 0.0)):
     a, b = value_scale
     sd['v2.weight'] = sd['v2.weight'] * a
     sd['v2.bias'] = sd['v2.bias'] * a + b
+    sd['vocab.table'] = np.frombuffer(model.info['vocab_table'].encode(), dtype=np.uint8).astype('<f4')
     with open(path, 'wb') as f:
         f.write(b'PZW1')
         f.write(struct.pack('<I', len(sd)))
