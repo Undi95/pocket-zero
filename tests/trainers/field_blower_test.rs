@@ -137,3 +137,66 @@ fn test_field_blower_discards_active_stadium() {
         "Stadium should be in player's discard pile"
     );
 }
+
+/// Field Blower on Starting Plains: once the Stadium is gone, every Basic loses its +20 HP, and a
+/// Basic whose damage now reaches its printed HP is Knocked Out (its owner promotes).
+#[test]
+fn test_field_blower_on_starting_plains_removes_hp_bonus_and_knocks_out() {
+    use deckgym::test_support::{get_test_game_with_board, play_trainer, trainer_from_id};
+
+    let mut game = get_test_game_with_board(
+        vec![PlayedCard::from_id(CardId::A1001Bulbasaur)],
+        vec![
+            PlayedCard::from_id(CardId::A1001Bulbasaur),
+            PlayedCard::from_id(CardId::A1053Squirtle),
+        ],
+    );
+    let mut state = game.get_state_clone();
+    state.hands[0] = vec![
+        get_card_by_enum(CardId::B2154StartingPlains),
+        get_card_by_enum(CardId::B3147FieldBlower),
+    ];
+    game.set_state(state);
+    play_trainer(&mut game, 0, trainer_from_id(CardId::B2154StartingPlains));
+
+    // 80 damage on the opponent's 70-HP Bulbasaur (90 HP with Starting Plains).
+    game.apply_action(&Action {
+        actor: 0,
+        action: SimpleAction::ApplyDamage {
+            attacking_ref: (0, 0),
+            targets: vec![(80, 1, 0)],
+            is_from_active_attack: false,
+        },
+        is_stack: false,
+    });
+    assert_eq!(game.get_state_clone().get_active(1).get_remaining_hp(), 10);
+    assert_eq!(game.get_state_clone().get_active(0).get_remaining_hp(), 90);
+
+    play_trainer(&mut game, 0, trainer_from_id(CardId::B3147FieldBlower));
+    let (actor, choices) = game.get_state_clone().generate_possible_actions();
+    assert_eq!(actor, 0);
+    let discard_stadium = choices
+        .iter()
+        .find(|a| matches!(a.action, SimpleAction::DiscardActiveStadium))
+        .expect("Field Blower should offer the Stadium")
+        .clone();
+    game.apply_action(&discard_stadium);
+
+    let state = game.get_state_clone();
+    assert!(state.active_stadium.is_none());
+    assert_eq!(
+        state.get_active(0).get_remaining_hp(),
+        70,
+        "Bulbasaur should be back to its printed 70 HP"
+    );
+    assert!(
+        state.in_play_pokemon[1][0].is_none(),
+        "the 80-damage Bulbasaur has only 70 HP without Starting Plains: Knocked Out"
+    );
+    assert_eq!(state.points[0], 1);
+    let (actor, choices) = state.generate_possible_actions();
+    assert_eq!(actor, 1, "the opponent promotes a new Active");
+    assert!(choices
+        .iter()
+        .any(|a| matches!(a.action, SimpleAction::Activate { player: 1, .. })));
+}

@@ -185,9 +185,15 @@ impl State {
         self.active_stadium.as_ref().map(|c| c.get_name())
     }
 
+    // Every change of the Stadium in play goes through one of the three setters below, and each
+    // re-syncs the cached Starting Plains HP bonus: a Stadium that leaves play (Field Blower,
+    // Machop's Shatter) or is replaced takes its +20 HP with it. The caller still runs the
+    // knockout check for Pokémon whose damage now reaches their HP.
     pub fn set_active_stadium(&mut self, stadium: Card) -> Option<Card> {
         self.active_stadium_owner = None;
-        self.active_stadium.replace(stadium)
+        let old_stadium = self.active_stadium.replace(stadium);
+        self.refresh_starting_plains_bonus_all();
+        old_stadium
     }
 
     pub fn set_active_stadium_for_player(
@@ -197,12 +203,14 @@ impl State {
     ) -> Option<(Card, Option<usize>)> {
         let old_stadium = self.active_stadium.replace(stadium);
         let old_owner = self.active_stadium_owner.replace(player);
+        self.refresh_starting_plains_bonus_all();
         old_stadium.map(|stadium| (stadium, old_owner))
     }
 
     pub fn take_active_stadium(&mut self) -> Option<(Card, Option<usize>)> {
         let stadium = self.active_stadium.take();
         let owner = self.active_stadium_owner.take();
+        self.refresh_starting_plains_bonus_all();
         stadium.map(|stadium| (stadium, owner))
     }
 
