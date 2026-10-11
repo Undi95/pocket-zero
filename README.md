@@ -4,6 +4,9 @@ Bot AlphaZero et recherche de decks pour Pokémon TCG Pocket, construits sur le 
 [deckgym-core](https://github.com/bcollazo/deckgym-core) (AGPL-3.0), avec les règles et les cartes
 auditées dans Pocket Deck Lab (voir `lab/README.md`).
 
+**Guide complet : [`docs/GUIDE.md`](docs/GUIDE.md)** (entraînement, recherche de decks, ranked simulé,
+interface avec les images officielles, mise à jour de la méta, dépannage).
+
 ## Installation (Windows)
 
 1. Clone le dépôt, puis double-clique sur **`setup.bat`**.
@@ -68,6 +71,13 @@ run.bat solo
 les fait s'affronter avec le bot entraîné : un classement par rang, puis un grand tournoi des
 meilleurs de chaque rang contre les 17 listes de la méta (`results\solo\CLASSEMENT.md`, une
 dizaine de minutes, entraînement arrêté).
+
+## Ranked simulé, interface, méta
+
+- `run.bat ranked [--deck mon_deck.txt]` : saison de ranked simulée (règles officielles de
+  Débutant à Master Ball, méta pondérée par les vraies parts), `results\ranked\CLASSEMENT.md`.
+- `run.bat ui` : decklists avec les images officielles du jeu, dans le navigateur.
+- `run.bat meta` : met à jour les decks méta des autres sources (`lab\decks\sources\`).
 
 ## Utiliser le bot ailleurs
 
