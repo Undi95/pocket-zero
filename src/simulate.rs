@@ -224,7 +224,7 @@ impl Simulation {
             .and_then(|cbs| cbs.on_game_complete.as_ref());
 
         // Closure to run a single simulation
-        let run_single_simulation = |_| {
+        let run_single_simulation = |game_index| {
             // Make a thread-local event handler for this simulation
             let mut event_handler = CompositeSimulationEventHandler::new(
                 self.handler_factories
@@ -244,7 +244,12 @@ impl Simulation {
                     self.bot_timeout,
                 )
             };
-            let seed = self.seed.unwrap_or(rand::random::<u64>());
+            // A fixed seed must still give different games: one stream per game index (the same
+            // seed for every game replayed one game N times).
+            let seed = self
+                .seed
+                .map(|s| s.wrapping_add((game_index as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)))
+                .unwrap_or_else(rand::random::<u64>);
             let game_id = Uuid::new_v4();
             let player_names = [format!("{:?}", players[0]), format!("{:?}", players[1])];
             let decks = [players[0].get_deck(), players[1].get_deck()];

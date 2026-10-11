@@ -190,7 +190,7 @@ def run_games(d, per_opp, player, folder):
     write_deck(d, path)
     n_opp = len(opponents(folder))
     cmd = [BIN, 'simulate', path, folder, '--num', str(per_opp * n_opp), '--players', f'{player},{player}', '-p',
-           '-j', os.environ.get('THREADS', str(os.cpu_count() or 2)), '--seed', str(random.randrange(1 << 30))]
+           '-j', os.environ.get('THREADS', str(os.cpu_count() or 2))]  # no --seed: older engines replayed one game
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
                              timeout=3600, cwd=ROOT)
