@@ -47,7 +47,12 @@ WEIGHTS = {'altaria': 7.7, 'lucario': 7.7, 'butterfree': 5.2, 'vespiquen': 4.5, 
            'hydreigon': 3.1, 'hoopa': 2.9, 'blaziken': 2.9, 'magnezone': 2.7, 'altaria-greninja': 2.6, 'weezing': 2.5,
            'charizard': 2.4, 'dedenne': 4.0, 'manectric': 2.1, 'sceptile-greninja': 1.8, 'flygon': 1.5}
 POLISH = os.environ.get('PZ_POLISH', '1') != '0'  # card-level tuning of the finalists (paired games)
-FIELD_SHARE = 0.5  # final score = (1 - FIELD_SHARE) * meta (weighted) + FIELD_SHARE * field (uniform)
+# final score = (1 - FIELD_SHARE) * meta (weighted) + FIELD_SHARE * field (uniform). The field is
+# made of the search's own archetypes (mostly ex decks): at 50 % it rewarded Oricorio walls that
+# lose to the real meta, so the real meta now dominates.
+FIELD_SHARE = float(os.environ.get('PZ_FIELD_SHARE', '0.2'))
+# Fewest Pokémon in a deck: the leanest real meta lists (Hoopa, Flygon) play 4.
+MIN_POKEMON = int(os.environ.get('PZ_MIN_POKEMON', '4'))
 
 # ------------------------------------------------------------------ cards
 DB = json.load(open(os.path.join(ROOT, 'database.json'), encoding='utf-8'))
@@ -132,6 +137,7 @@ def valid(d, lock=()):
     names = collections.Counter(CARD[x]['name'] for x in c)
     if any(v > 2 for v in names.values()): return False
     if not any(is_basic(CARD[x]) for x in c): return False
+    if sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False
     return all(x in c for x in lock)
 
 def key(d): return ','.join(d['e']) + '#' + '|'.join(sorted(d['c']))

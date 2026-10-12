@@ -27,6 +27,9 @@ def main():
     ap.add_argument('--gens', type=int, default=25)
     ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
     ap.add_argument('--threads', type=int, default=0)
+    ap.add_argument('--field-share', type=float, default=0.2,
+                    help='part du terrain (archétypes trouvés par la recherche) dans le score, le reste = méta réelle')
+    ap.add_argument('--min-pokemon', type=int, default=4, help='Pokémon minimum par deck')
     ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
     a = ap.parse_args()
 
@@ -39,6 +42,8 @@ def main():
         'PZ_SEARCH': a.search,
         'PZ_FINAL': a.final,
         'PZ_RESULTS': os.path.join(ROOT, 'results', a.name),
+        'PZ_FIELD_SHARE': str(a.field_share),
+        'PZ_MIN_POKEMON': str(a.min_pokemon),
     })
     if a.threads:
         env['THREADS'] = str(a.threads)
