@@ -130,14 +130,29 @@ def auto_energy(cards):
 # A deck is {'e': [energy types], 'c': [20 card ids]}.
 def mk(cards, energy=None): return {'e': sorted(set(energy or auto_energy(cards))), 'c': list(cards)}
 
-def valid(d, lock=()):
+def playable_lines(c):
+    """Every evolution card can come into play: the card it evolves from is in the deck (any
+    printing, fossils included), or, for a Stage 2, Rare Candy and the Basic of its line.
+    A Luxray without Shinx and Luxio is a dead card the search used to keep."""
+    names = {CARD[x]['name'] for x in c}
+    for x in set(c):
+        prev = CARD[x].get('evolves_from')
+        if not is_poke(CARD[x]) or not prev or prev in names:
+            continue
+        ch = chain(x)
+        if not (CARD[x]['stage'] == 2 and RARE_CANDY in c and ch and CARD[ch[0]]['name'] in names):
+            return False
+    return True
+
+def valid(d, lock=(), strict=True):
     c = d['c']
     if len(c) != 20: return False
     if not 1 <= len(d['e']) <= 3 or any(t not in E for t in d['e']): return False
     names = collections.Counter(CARD[x]['name'] for x in c)
     if any(v > 2 for v in names.values()): return False
     if not any(is_basic(CARD[x]) for x in c): return False
-    if sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False
+    if not playable_lines(c): return False
+    if strict and sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False  # screening shells may be leaner
     return all(x in c for x in lock)
 
 def key(d): return ','.join(d['e']) + '#' + '|'.join(sorted(d['c']))
@@ -354,7 +369,7 @@ def stage_A(per_opp=4):
     for i, f in enumerate(finals):
         ch = chain(f)
         d = shell(line_cards(ch)) if ch else None
-        if d and valid(d):
+        if d and valid(d, strict=False):
             s, n = score(d)
             if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
             res.append({'final': f, 'deck': d, 'score': s})
@@ -375,7 +390,7 @@ def stage_B(A, top=30, per_opp=6):
         for j in range(i + 1, len(finals)):
             c1, c2 = chain(finals[i]), chain(finals[j])
             d = shell(line_cards(c1, True) + line_cards(c2, True))
-            if not d or not valid(d): continue
+            if not d or not valid(d, strict=False): continue
             s, n = score(d)
             if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
             res.append({'finals': [finals[i], finals[j]], 'deck': d, 'score': s})

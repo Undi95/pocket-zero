@@ -111,6 +111,7 @@ def main():
     ap = argparse.ArgumentParser(description='Boucle AlphaZero pocket-zero')
     ap.add_argument('--run', default='principal')
     ap.add_argument('--iterations', type=int, default=40)
+    ap.add_argument('--add-decks', default='', help='dossier de decks à ajouter au pool (ex. results\\forge\\<nom>\\decks)')
     ap.add_argument('--games', type=int, default=10000, help='parties de self-play par itération')
     ap.add_argument('--sims', type=int, default=200, help='simulations MCTS par décision en self-play')
     ap.add_argument('--temperature-moves', type=int, default=8,
@@ -176,6 +177,12 @@ def main():
             extend_pool(decks, log=log)
         if not os.path.exists(os.path.join(decks, SOLO_MARK)):
             add_solo_decks(decks, log=log)
+
+    if a.add_decks:  # e.g. forged decks: the network learns to pilot them before they are judged
+        added = [f for f in os.listdir(a.add_decks) if f.endswith('.txt')]
+        for f in added:
+            shutil.copy(os.path.join(a.add_decks, f), os.path.join(decks, 'forge-' + f))
+        log(f'{len(added)} decks ajoutés au pool d\'entraînement depuis {a.add_decks}')
 
     model = ZeroNet(info).to(a.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)
