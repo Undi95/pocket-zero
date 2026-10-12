@@ -255,6 +255,8 @@ def main():
         if a.reeval or 'final' not in s:
             seeds = [rng.randrange(1 << 30) for _ in range(6)]
             m, se, _ = J.paired(s['start'], s['best'], seeds, final_p, stop_bad=False)
+            if m < 0:  # the stronger bot disagrees with the climbing bot: keep the original
+                s['best'], s['changes'] = s['start'], [('annulés : ' + '; '.join(c[0] for c in s['changes']), 0, 0)] if s['changes'] else []
             per = collections.defaultdict(lambda: [0, 0])
             for sd in seeds:
                 J.score(s['best'], sd, final_p)

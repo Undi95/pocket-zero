@@ -148,6 +148,32 @@ def add_solo_decks(out_dir, log=print):
     open(os.path.join(out_dir, SOLO_MARK), 'w').close()
     log(f'decks du mode solo : {n} decks des développeurs ajoutés (Poké Ball à Master Ball)')
     return n
+SOURCES_DIR = os.path.join(ROOT, 'lab', 'decks', 'sources')
+
+
+def add_source_decks(out_dir, copies=10, log=print):
+    """Meta lists from the other sources (lab/decks/sources/<site>/), as many copies as the
+    Limitless lists get: a network that only ever played the Limitless versions pilots the other
+    printings badly (Game8's Rayquaza list with Dratini B2b: 7 % against the Limitless list, 40 %
+    with Dratini A1; the hand-written e3 bot: 53 % both). Refreshed at every start."""
+    for f in os.listdir(out_dir):
+        if f.startswith('src-'):
+            os.remove(os.path.join(out_dir, f))
+    n = 0
+    for site in sorted(os.listdir(SOURCES_DIR)) if os.path.isdir(SOURCES_DIR) else []:
+        folder = os.path.join(SOURCES_DIR, site)
+        if not os.path.isdir(folder):
+            continue
+        for f in sorted(os.listdir(folder)):
+            if f.endswith('.txt'):
+                for k in range(copies):
+                    shutil.copy(os.path.join(folder, f), os.path.join(out_dir, f'src-{site}-{f[:-4]}-{k:02d}.txt'))
+                n += 1
+    if n:
+        log(f'listes des autres sources : {n} decks x{copies} ajoutés au pool')
+    return n
+
+
 LABELS_FILE = '.noms.json'
 
 

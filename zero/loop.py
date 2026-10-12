@@ -18,7 +18,7 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, build_pool, deck_labels, extend_pool
+from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool
 from .highlights import summarize
 from .model import ZeroNet, export_weights, migrate_state_dict
 from .train import train
@@ -178,11 +178,13 @@ def main():
         if not os.path.exists(os.path.join(decks, SOLO_MARK)):
             add_solo_decks(decks, log=log)
 
+    add_source_decks(decks, log=log)
     if a.add_decks:  # e.g. forged decks: the network learns to pilot them before they are judged
         added = [f for f in os.listdir(a.add_decks) if f.endswith('.txt')]
         for f in added:
-            shutil.copy(os.path.join(a.add_decks, f), os.path.join(decks, 'forge-' + f))
-        log(f'{len(added)} decks ajoutés au pool d\'entraînement depuis {a.add_decks}')
+            for k in range(10):  # as many copies as a meta list: enough games to learn the deck
+                shutil.copy(os.path.join(a.add_decks, f), os.path.join(decks, f'forge-{f[:-4]}-{k:02d}.txt'))
+        log(f'{len(added)} decks x10 ajoutés au pool d\'entraînement depuis {a.add_decks}')
 
     model = ZeroNet(info).to(a.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)
