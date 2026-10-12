@@ -37,7 +37,7 @@ def _worker(rank, args, results):
     os.environ['RAYON_NUM_THREADS'] = str(threads)
     from deckgym.deckgym import BatchSelfPlay
 
-    from .model import ZeroNet
+    from .model import ZeroNet, sized, weight_sizes
     from .train import load_weights
 
     # The batches arrive as read-only bytes; they are only read (copied to the GPU), so torch's
@@ -45,7 +45,7 @@ def _worker(rank, args, results):
     warnings.filterwarnings('ignore', message='The given NumPy array is not writable')
     torch.set_num_threads(1)
     torch.backends.cuda.matmul.allow_tf32 = True
-    model = ZeroNet(info)
+    model = ZeroNet(sized(info, weight_sizes(weights)))  # the network's own widths
     load_weights(model, weights)
     model.to(device).eval()
     paths = shard_paths(out, games)

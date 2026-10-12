@@ -29,6 +29,10 @@ pub const PH: usize = 128;
 /// the cards attached to each slot.
 pub const TRUNK_IN: usize =
     STATE_DENSE + (N_SLOTS + 1) * EMBED_DIM + 4 * EMBED_DIM + N_SLOTS * EMBED_DIM;
+/// fc1's input width for a card embedding width `e` (layout 2).
+pub fn trunk_in(e: usize) -> usize {
+    STATE_DENSE + (N_SLOTS + 1) * e + 4 * e + N_SLOTS * e
+}
 pub const TRUNK_IN_V1: usize = STATE_DENSE_V1 + (N_SLOTS + 1) * EMBED_DIM + 4 * EMBED_DIM;
 /// Vocabulary of the layout-1 networks (they did not store theirs).
 pub const VOCAB_V1: &str = include_str!("vocab_v1.txt");
@@ -154,6 +158,8 @@ pub struct Net {
     type_emb: Vec<f32>,   // [ACTION_TYPE_BUCKETS, ACTION_EMBED]
     detail_emb: Vec<f32>, // [ACTION_DETAIL_BUCKETS, ACTION_EMBED]
     vocab: usize,
+    e: usize,  // card embedding width
+    ae: usize, // action embedding width
     fc1: Linear,
     fc2: Linear,
     fc3: Linear,
@@ -212,30 +218,26 @@ pub fn migrate(t: &mut Tensors) -> Result<(), String> {
         .get("card_emb.weight")
         .ok_or("missing card_emb.weight")?
         .clone();
-    if dims.len() != 2 || dims[1] != EMBED_DIM {
+    if dims.len() != 2 {
         return Err(format!("card_emb.weight: unexpected shape {dims:?}"));
     }
-    let old_rows = dims[0];
-    let mut new = vec![0f32; VOCAB.size * EMBED_DIM];
-    new[..EMBED_DIM].copy_from_slice(&emb[..EMBED_DIM]); // row 0: padding
+    let (old_rows, e) = (dims[0], dims[1]);
+    let mut new = vec![0f32; VOCAB.size * e];
+    new[..e].copy_from_slice(&emb[..e]); // row 0: padding
     let mut seen = vec![false; VOCAB.size];
     for (id, &row) in &VOCAB.by_id {
         let row = row as usize;
         match old.get(id.as_str()) {
             Some(&o) if o < old_rows && !seen[row] => {
-                new[row * EMBED_DIM..(row + 1) * EMBED_DIM]
-                    .copy_from_slice(&emb[o * EMBED_DIM..(o + 1) * EMBED_DIM]);
+                new[row * e..(row + 1) * e].copy_from_slice(&emb[o * e..(o + 1) * e]);
                 seen[row] = true;
             }
             _ => {}
         }
     }
-    t.insert(
-        "card_emb.weight".to_string(),
-        (vec![VOCAB.size, EMBED_DIM], new),
-    );
+    t.insert("card_emb.weight".to_string(), (vec![VOCAB.size, e], new));
     if let Some((d, w)) = t.get("fc1.weight").cloned() {
-        if d.len() == 2 && d[1] == TRUNK_IN_V1 {
+        if d.len() == 2 && e == EMBED_DIM && d[1] == TRUNK_IN_V1 {
             let mut out = Vec::with_capacity(d[0] * TRUNK_IN);
             for row in w.chunks(TRUNK_IN_V1) {
                 out.extend_from_slice(&row[..STATE_DENSE_V1]);
@@ -253,30 +255,50 @@ impl Net {
     pub fn load(path: &str) -> Result<Net, String> {
         let mut t = read_tensors(path).map_err(|e| format!("{path}: {e}"))?;
         migrate(&mut t).map_err(|e| format!("{path}: {e}"))?;
-        let v = VOCAB.size;
+        // Every size comes from the file: networks of any width load (small default, --net big).
+        let dim = |name: &str, k: usize| -> Result<usize, String> {
+            t.get(name)
+                .and_then(|(d, _)| d.get(k).copied())
+                .ok_or(format!("{path}: missing {name}"))
+        };
+        let (v, e, ae) = (
+            VOCAB.size,
+            dim("card_emb.weight", 1)?,
+            dim("type_emb.weight", 1)?,
+        );
+        let (h1, h2, h) = (
+            dim("fc1.weight", 0)?,
+            dim("fc2.weight", 0)?,
+            dim("fc3.weight", 0)?,
+        );
+        let (vh, ph) = (dim("v1.weight", 0)?, dim("p_state.weight", 0)?);
+        let trunk_in = trunk_in(e);
+        let action_in = ACTION_DENSE + ae + e + ae;
         Ok(Net {
-            card_emb: table(&t, "card_emb.weight", v, EMBED_DIM)?,
+            card_emb: table(&t, "card_emb.weight", v, e)?,
             type_emb: table(
                 &t,
                 "type_emb.weight",
                 super::encode::ACTION_TYPE_BUCKETS,
-                ACTION_EMBED,
+                ae,
             )?,
             detail_emb: table(
                 &t,
                 "detail_emb.weight",
                 super::encode::ACTION_DETAIL_BUCKETS,
-                ACTION_EMBED,
+                ae,
             )?,
             vocab: v,
-            fc1: Linear::from(&t, "fc1", TRUNK_IN, H1)?,
-            fc2: Linear::from(&t, "fc2", H1, H2)?,
-            fc3: Linear::from(&t, "fc3", H2, H)?,
-            v1: Linear::from(&t, "v1", H, VH)?,
-            v2: Linear::from(&t, "v2", VH, 1)?,
-            p_state: Linear::from(&t, "p_state", H, PH)?,
-            p_action: Linear::from(&t, "p_action", ACTION_IN, PH)?,
-            p_out: Linear::from(&t, "p_out", PH, 1)?,
+            e,
+            ae,
+            fc1: Linear::from(&t, "fc1", trunk_in, h1)?,
+            fc2: Linear::from(&t, "fc2", h1, h2)?,
+            fc3: Linear::from(&t, "fc3", h2, h)?,
+            v1: Linear::from(&t, "v1", h, vh)?,
+            v2: Linear::from(&t, "v2", vh, 1)?,
+            p_state: Linear::from(&t, "p_state", h, ph)?,
+            p_action: Linear::from(&t, "p_action", action_in, ph)?,
+            p_out: Linear::from(&t, "p_out", ph, 1)?,
         })
     }
 
@@ -285,25 +307,21 @@ impl Net {
     }
 
     fn trunk(&self, obs: &Obs) -> Vec<f32> {
-        let mut x = Vec::with_capacity(TRUNK_IN);
+        let e = self.e;
+        let mut x = Vec::with_capacity(trunk_in(e));
         x.extend_from_slice(&obs.dense);
         for &tok in &obs.tokens[..N_SLOTS + 1] {
             let i = (tok as usize).min(self.vocab - 1);
-            x.extend_from_slice(self.emb(&self.card_emb, i, EMBED_DIM));
+            x.extend_from_slice(self.emb(&self.card_emb, i, e));
         }
+        let mut acc = vec![0f32; e];
         for (start, len) in BAGS {
-            let mut acc = [0f32; EMBED_DIM];
+            acc.iter_mut().for_each(|a| *a = 0.0);
             let mut n = 0;
             for &tok in &obs.tokens[start..start + len] {
                 if tok != 0 {
-                    let e = self.emb(
-                        &self.card_emb,
-                        (tok as usize).min(self.vocab - 1),
-                        EMBED_DIM,
-                    );
-                    for k in 0..EMBED_DIM {
-                        acc[k] += e[k];
-                    }
+                    let row = self.emb(&self.card_emb, (tok as usize).min(self.vocab - 1), e);
+                    acc.iter_mut().zip(row).for_each(|(a, r)| *a += r);
                     n += 1;
                 }
             }
@@ -311,23 +329,17 @@ impl Net {
             x.extend(acc.iter().map(|a| a / n));
         }
         for slot in 0..N_SLOTS {
-            let mut acc = [0f32; EMBED_DIM];
+            acc.iter_mut().for_each(|a| *a = 0.0);
             let start = ATTACHED_START + slot * ATTACHED_MAX;
             for &tok in &obs.tokens[start..start + ATTACHED_MAX] {
                 if tok != 0 {
-                    let e = self.emb(
-                        &self.card_emb,
-                        (tok as usize).min(self.vocab - 1),
-                        EMBED_DIM,
-                    );
-                    for k in 0..EMBED_DIM {
-                        acc[k] += e[k];
-                    }
+                    let row = self.emb(&self.card_emb, (tok as usize).min(self.vocab - 1), e);
+                    acc.iter_mut().zip(row).for_each(|(a, r)| *a += r);
                 }
             }
             x.extend_from_slice(&acc);
         }
-        debug_assert_eq!(x.len(), TRUNK_IN);
+        debug_assert_eq!(x.len(), trunk_in(e));
         let mut h = self.fc1.forward(&x);
         relu(&mut h);
         let mut h = self.fc2.forward(&h);
@@ -345,18 +357,18 @@ impl Net {
 
         let ps = self.p_state.forward(&h);
         let mut logits = Vec::with_capacity(actions.len());
-        let mut a_in = Vec::with_capacity(ACTION_IN);
-        let mut q = Vec::with_capacity(PH);
+        let mut a_in = Vec::with_capacity(ACTION_DENSE + 2 * self.ae + self.e);
+        let mut q = Vec::new();
         for a in actions {
             a_in.clear();
             a_in.extend_from_slice(&a.dense);
-            a_in.extend_from_slice(self.emb(&self.type_emb, a.tokens[0] as usize, ACTION_EMBED));
+            a_in.extend_from_slice(self.emb(&self.type_emb, a.tokens[0] as usize, self.ae));
             a_in.extend_from_slice(self.emb(
                 &self.card_emb,
                 (a.tokens[1] as usize).min(self.vocab - 1),
-                EMBED_DIM,
+                self.e,
             ));
-            a_in.extend_from_slice(self.emb(&self.detail_emb, a.tokens[2] as usize, ACTION_EMBED));
+            a_in.extend_from_slice(self.emb(&self.detail_emb, a.tokens[2] as usize, self.ae));
             self.p_action.forward_into(&a_in, &mut q);
             for (qi, si) in q.iter_mut().zip(&ps) {
                 *qi = (*qi + si).max(0.0);

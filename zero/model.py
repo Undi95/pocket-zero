@@ -9,6 +9,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+# Network widths. 'small' is the original network; 'big' has ~3.5x the parameters (wider
+# layers, 64-wide card embeddings): more capacity for 4,300 cards and technical decks.
+NET_SIZES = {
+    'small': {'embed_dim': 32, 'action_embed': 16, 'h1': 512, 'h2': 512, 'h': 256, 'vh': 64, 'ph': 128},
+    'big': {'embed_dim': 64, 'action_embed': 32, 'h1': 1024, 'h2': 1024, 'h': 512, 'vh': 128, 'ph': 256},
+}
+
+
+def sized(info, sizes):
+    """`info` (from pocket-zero info) with the network widths of `sizes`."""
+    out = dict(info, **sizes)
+    e, ae, n = out['embed_dim'], out['action_embed'], info['n_slots']
+    out['trunk_in'] = info['state_dense'] + (n + 1) * e + 4 * e + n * e
+    out['action_in'] = info['action_dense'] + 2 * ae + e
+    return out
+
+
+def weight_sizes(path):
+    """The widths of a PZW1 weight file, read from its tensor shapes."""
+    shapes = {}
+    with open(path, 'rb') as f:
+        assert f.read(4) == b'PZW1', f'{path}: not a pocket-zero weight file'
+        (n,) = struct.unpack('<I', f.read(4))
+        for _ in range(n):
+            (ln,) = struct.unpack('<I', f.read(4))
+            name = f.read(ln).decode()
+            (nd,) = struct.unpack('<I', f.read(4))
+            dims = struct.unpack(f'<{nd}I', f.read(4 * nd))
+            shapes[name] = dims
+            f.seek(4 * int(np.prod(dims)), 1)
+    return {'embed_dim': shapes['card_emb.weight'][1], 'action_embed': shapes['type_emb.weight'][1],
+            'h1': shapes['fc1.weight'][0], 'h2': shapes['fc2.weight'][0], 'h': shapes['fc3.weight'][0],
+            'vh': shapes['v1.weight'][0], 'ph': shapes['p_state.weight'][0]}
+
+
 class ZeroNet(nn.Module):
     def __init__(self, info):
         super().__init__()
@@ -43,7 +78,8 @@ class ZeroNet(nn.Module):
             parts.append(s / mask.sum(1).clamp(min=1.0))
         start, n_slots, per = self.attached
         t = tokens[:, start:start + n_slots * per]
-        parts.append(self.card_emb(t).reshape(b, n_slots, per, -1).sum(2).reshape(b, -1))
+        m = (t != 0).float().unsqueeze(-1)  # empty places add nothing (as in net.rs)
+        parts.append((self.card_emb(t) * m).reshape(b, n_slots, per, -1).sum(2).reshape(b, -1))
         x = torch.cat(parts, 1)
         h = self.dropout(F.relu(self.fc1(x)))
         h = self.dropout(F.relu(self.fc2(h)))

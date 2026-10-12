@@ -13,12 +13,12 @@ import torch
 
 from . import engine
 from .data import read_shard
-from .model import ZeroNet, export_weights
+from .model import NET_SIZES, ZeroNet, export_weights, sized, weight_sizes
 
 
-def check(shard, weights=None, n=16, tol=1e-3):
+def check(shard, weights=None, n=16, tol=1e-3, net='small'):
     info = engine.info()
-    model = ZeroNet(info)
+    model = ZeroNet(sized(info, weight_sizes(weights) if weights else NET_SIZES[net]))
     tmp = None
     if weights is None:
         torch.manual_seed(0)
@@ -53,7 +53,8 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--shard', required=True)
     ap.add_argument('--weights')
+    ap.add_argument('--net', default='small', help='taille du réseau aléatoire testé sans --weights (small, big)')
     a = ap.parse_args()
-    worst, ok = check(a.shard, a.weights)
+    worst, ok = check(a.shard, a.weights, net=a.net)
     print(f'écart max Rust/PyTorch : {worst:.2e} -> {"OK" if ok else "ÉCHEC"}')
     sys.exit(0 if ok else 1)

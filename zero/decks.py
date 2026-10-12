@@ -118,7 +118,7 @@ def extend_pool(out_dir, seed=1, log=print):
     return added
 
 
-KINDS = {'meta': 'méta', 'line': 'lignée', 'pair': 'paire', 'mutant': 'mutant', 'cover': 'découverte',
+KINDS = {'src': 'autre source', 'forge': 'forgé', 'meta': 'méta', 'line': 'lignée', 'pair': 'paire', 'mutant': 'mutant', 'cover': 'découverte',
          'solo': 'solo'}
 RANKS = {'pokeball': 'Poké Ball', 'superball': 'Super Ball', 'hyperball': 'Hyper Ball', 'masterball': 'Master Ball'}
 SOLO_DIR = os.path.join(ROOT, 'lab', 'decks', 'solo')
@@ -225,6 +225,8 @@ def deck_labels(decks_dir):
                     att[c['name']] = max(att[c['name']], p.atk_value(c) * k + 1)
             top = [n for n, _ in att.most_common(2)] or ['?']
             kind = stem.split('-', 1)[0]
+            if kind == 'focus':  # extra copies of the real decks (focus_pool): label them as the original
+                kind = stem.split('-', 2)[1]
             if kind == 'meta':
                 name = ' '.join(w.capitalize() for w in stem.split('-')[1:-1])
                 labels[stem] = [f'{name} (méta)', name, kind]
