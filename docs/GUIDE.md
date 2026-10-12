@@ -46,6 +46,27 @@ méta réelle, moitié terrain d'archétypes. Résultat : `results\<nom>\RESULTA
 Options : `--gens 40` (plus long, plus fouillé), `--search z32` (plus fort, plus lent),
 `--lock` (cartes imposées, séparées par des virgules). Lance-la entraînement arrêté.
 
+## 3 bis. La forge : améliorer des decks, preuve à l'appui (recommandé)
+
+```
+run.bat forge --name forge1                      # les 10 listes méta les plus jouées
+run.bat forge --name forge1 --deck mon_deck.txt  # ton deck
+run.bat forge --name maison1 --new 12            # 12 archétypes maison, tirés de tout le pool
+```
+
+Chaque changement (dresseur, copie, lignée, énergie) est joué contre la méta réelle pondérée
+(DotGG), sur les MÊMES parties que le deck actuel : il n'est gardé que s'il gagne nettement
+(2 écarts-types), puis confirmé sur de nouvelles parties. Un gain mesuré entre deux versions du
+même deck est quasi insensible aux biais du bot. Résultat : `results\forge\<nom>\FORGE.md`
+(score, gain prouvé ✓ ou ≈, changements, matchups) et `decks\` (visibles dans `run.bat ui`).
+Reprend où elle s'est arrêtée si on la relance avec le même nom.
+
+Boucle complète pour les decks maison :
+1. `run.bat forge --name maison1 --new 12`
+2. `run.bat train --iterations 150 --add-decks results\forge\maison1\decks` (le bot apprend à les piloter)
+3. `run.bat forge --name maison1 --reeval` (nouvelle mesure, moins biaisée)
+4. `run.bat ranked --deck results\forge\maison1\decks\<deck>.txt`, puis en vrai dans le jeu
+
 ## 4. Tester en conditions réelles : le ranked simulé
 
 ```
