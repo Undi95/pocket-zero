@@ -556,6 +556,7 @@ fn main() {
                 1,
                 out.to_str().unwrap(),
                 None,
+                None,
             )
             .unwrap_or_else(|e| panic!("{e}"));
             let start = std::time::Instant::now();
