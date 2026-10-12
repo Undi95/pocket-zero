@@ -60,11 +60,24 @@ def population(extra):
     return decks
 
 
-def matrix(decks, player, games, threads, cache_f):
+def matrix(decks, player, games, threads, cache_f, weights=None):
     cache = json.load(open(cache_f)) if os.path.exists(cache_f) else {}
     paths = sorted(decks)
     pairs = [(a, b) for a, b in itertools.combinations(paths, 2)
              if f'{player}|{games}|{a}|{b}' not in cache]
+    from . import gpu_eval
+    if pairs and player.startswith('z') and weights and gpu_eval.available():
+        # Every matchup in one batched job on the GPUs.
+        judge = gpu_eval.GpuJudge(weights, engine.info())
+        idx = {p: i for i, p in enumerate(paths)}
+        games_list = [(idx[a], idx[b], k * 7919 + idx[a] * 104_729 + idx[b]) for a, b in pairs for k in range(games)]
+        print(f'  {len(games_list)} parties sur {len(judge.devices)} GPU...', flush=True)
+        res = judge.play(paths, games_list, int(player.split(':')[0][1:]))
+        judge.close()
+        for n, (a, b) in enumerate(pairs):
+            cache[f'{player}|{games}|{a}|{b}'] = sum(res[n * games:(n + 1) * games]) / games
+        json.dump(cache, open(cache_f, 'w'))
+        pairs = []
     for n, (a, b) in enumerate(pairs, 1):
         r = engine.match(a, b, player, games, threads)
         cache[f'{player}|{games}|{a}|{b}'] = r['score_a']
@@ -82,7 +95,7 @@ def matrix(decks, player, games, threads, cache_f):
 
 def main():
     ap = argparse.ArgumentParser(description='Saison de ranked simulée (règles officielles)')
-    ap.add_argument('--player', default='z8', help='bot des deux côtés (z8 : 8 simulations du réseau)')
+    ap.add_argument('--player', default='z64', help='bot des deux côtés (z64 : 64 simulations, sur GPU si disponible)')
     ap.add_argument('--weights', default=os.path.join(engine.ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
     ap.add_argument('--games', type=int, default=20, help='parties par paire de decks pour la matrice')
     ap.add_argument('--players', type=int, default=5000)
@@ -96,7 +109,7 @@ def main():
     player = engine.zspec(a.player[1:], a.weights) if a.player.startswith('z') and os.path.exists(a.weights) else a.player
     decks = population(a.deck)
     print(f'{len(decks)} decks, matrice {a.games} parties par paire avec {a.player}', flush=True)
-    score = matrix(decks, player, a.games, a.threads or None, os.path.join(out, 'matrix.json'))
+    score = matrix(decks, player, a.games, a.threads or None, os.path.join(out, 'matrix.json'), a.weights)
 
     rng = random.Random(a.seed)
     paths = sorted(decks)

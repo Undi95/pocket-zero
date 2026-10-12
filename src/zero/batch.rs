@@ -40,6 +40,7 @@ struct Decision {
 
 /// A finished game, for the highlights shown after each iteration (zero/highlights.py).
 struct GameRecord {
+    game: usize,
     decks: (usize, usize),
     first: usize,
     winner: Option<usize>,
@@ -59,6 +60,7 @@ struct Slot {
     outcomes: Vec<Option<GameOutcome>>,
     active: bool,
     decks: (usize, usize),
+    game: usize,
     first: usize,
     records: Vec<GameRecord>,
 }
@@ -75,7 +77,10 @@ pub struct BatchSelfPlay {
     samples_written: usize,
     first_player_wins: usize,
     ties: usize,
-    writer: std::io::BufWriter<std::fs::File>,
+    /// None in evaluation mode (no training positions written).
+    writer: Option<std::io::BufWriter<std::fs::File>>,
+    /// Evaluation mode: game g plays pairs[g] = (deck a, deck b, seed).
+    pairs: Option<Vec<(usize, usize, u64)>>,
     seed: u64,
 }
 
@@ -167,10 +172,24 @@ fn z_for(outcome: Option<GameOutcome>, actor: usize) -> f32 {
 }
 
 impl Slot {
-    fn new_game(&mut self, decks: &[Deck], seed: u64) {
-        self.rng = StdRng::seed_from_u64(seed);
-        let a = self.rng.gen_range(0..decks.len());
-        let b = self.rng.gen_range(0..decks.len());
+    /// `pair`: the two decks and the game's seed (evaluation: the same game for every deck
+    /// played against the same opponent with the same seed); None = random decks, `seed`.
+    fn new_game(
+        &mut self,
+        decks: &[Deck],
+        seed: u64,
+        pair: Option<(usize, usize, u64)>,
+        game: usize,
+    ) {
+        self.rng = StdRng::seed_from_u64(pair.map_or(seed, |p| p.2));
+        let (a, b) = match pair {
+            Some((a, b, _)) => (a, b),
+            None => (
+                self.rng.gen_range(0..decks.len()),
+                self.rng.gen_range(0..decks.len()),
+            ),
+        };
+        self.game = game;
         self.state = State::initialize(&decks[a], &decks[b], &mut self.rng);
         self.decks = (a, b);
         self.first = self.state.current_player;
@@ -195,6 +214,7 @@ impl Slot {
                             self.finished.push((s, z, k + 1 == n));
                         }
                         self.records.push(GameRecord {
+                            game: self.game,
                             decks: self.decks,
                             first: self.first,
                             winner: match outcome {
@@ -406,15 +426,22 @@ impl BatchSelfPlay {
         seed: u64,
         out: &str,
         games_log: Option<&str>,
+        pairs: Option<Vec<(usize, usize, u64)>>,
     ) -> std::io::Result<Self> {
-        let mut writer = std::io::BufWriter::new(std::fs::File::create(out)?);
-        write_header(&mut writer)?;
+        let writer = if out.is_empty() {
+            None
+        } else {
+            let mut w = std::io::BufWriter::new(std::fs::File::create(out)?);
+            write_header(&mut w)?;
+            Some(w)
+        };
+        let games = pairs.as_ref().map_or(games, |p| p.len());
         let games_log = match games_log {
             Some(path) => {
                 let mut w = std::io::BufWriter::new(std::fs::File::create(path)?);
                 writeln!(
                     w,
-                    "deck_a,deck_b,first,winner,turns,points_a,points_b,decisions"
+                    "deck_a,deck_b,first,winner,turns,points_a,points_b,decisions,game"
                 )?;
                 Some(w)
             }
@@ -433,6 +460,7 @@ impl BatchSelfPlay {
             first_player_wins: 0,
             ties: 0,
             writer,
+            pairs,
             seed,
         };
         for _ in 0..concurrency.min(games) {
@@ -447,14 +475,24 @@ impl BatchSelfPlay {
                 outcomes: vec![],
                 active: false,
                 decks: (0, 0),
+                game: 0,
                 first: 0,
                 records: vec![],
             };
-            slot.new_game(&bsp.decks, bsp.next_seed());
+            slot.new_game(
+                &bsp.decks,
+                bsp.next_seed(),
+                bsp.pair(bsp.games_started),
+                bsp.games_started,
+            );
             bsp.games_started += 1;
             bsp.slots.push(slot);
         }
         Ok(bsp)
+    }
+
+    fn pair(&self, game: usize) -> Option<(usize, usize, u64)> {
+        self.pairs.as_ref().map(|p| p[game])
     }
 
     fn next_seed(&self) -> u64 {
@@ -491,8 +529,10 @@ impl BatchSelfPlay {
             let mut restarted = false;
             for i in 0..self.slots.len() {
                 let finished = std::mem::take(&mut self.slots[i].finished);
-                for (s, z, last) in &finished {
-                    write_sample(&mut self.writer, s, *z, *last)?;
+                if let Some(w) = self.writer.as_mut() {
+                    for (s, z, last) in &finished {
+                        write_sample(w, s, *z, *last)?;
+                    }
                 }
                 self.samples_written += finished.len();
                 let records = std::mem::take(&mut self.slots[i].records);
@@ -501,7 +541,7 @@ impl BatchSelfPlay {
                         let name = |k: usize| self.deck_names.get(k).map_or("?", |s| s.as_str());
                         writeln!(
                             log,
-                            "{},{},{},{},{},{},{},{}",
+                            "{},{},{},{},{},{},{},{},{}",
                             name(r.decks.0),
                             name(r.decks.1),
                             r.first,
@@ -509,7 +549,8 @@ impl BatchSelfPlay {
                             r.turns,
                             r.points[0],
                             r.points[1],
-                            r.decisions
+                            r.decisions,
+                            r.game
                         )?;
                     }
                 }
@@ -523,8 +564,9 @@ impl BatchSelfPlay {
                 }
                 if !self.slots[i].active && self.games_started < self.games_target {
                     let seed = self.next_seed();
+                    let pair = self.pair(self.games_started);
                     let decks = std::mem::take(&mut self.decks);
-                    self.slots[i].new_game(&decks, seed);
+                    self.slots[i].new_game(&decks, seed, pair, self.games_started);
                     self.decks = decks;
                     self.games_started += 1;
                     restarted = true;
@@ -535,7 +577,9 @@ impl BatchSelfPlay {
             }
         }
         if self.done() {
-            self.writer.flush()?;
+            if let Some(w) = self.writer.as_mut() {
+                w.flush()?;
+            }
             if let Some(log) = self.games_log.as_mut() {
                 log.flush()?;
             }
@@ -615,6 +659,7 @@ mod tests {
             1,
             out.to_str().unwrap(),
             log.to_str(),
+            None,
         )
         .unwrap();
         let mut rounds = 0;

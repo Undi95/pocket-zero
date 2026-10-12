@@ -174,6 +174,31 @@ def add_source_decks(out_dir, copies=10, log=print):
     return n
 
 
+GOOD = ('meta-', 'src-', 'forge-')
+
+
+def focus_pool(out_dir, focus, log=print):
+    """Extra copies of the real decks (meta lists, other sources, forged decks) so that about
+    `focus` of the self-play games involve at least one of them: the network becomes an expert of
+    the decks that matter instead of playing everything a little. Refreshed at every start."""
+    for f in os.listdir(out_dir):
+        if f.startswith('focus-'):
+            os.remove(os.path.join(out_dir, f))
+    files = [f for f in os.listdir(out_dir) if f.endswith('.txt')]
+    good = sorted({f.rsplit('-', 1)[0] + '.txt': f for f in files if f.startswith(GOOD)}.items())
+    n_good = sum(f.startswith(GOOD) for f in files)
+    if not good or focus <= 0:
+        return 0
+    p = 1 - (1 - min(focus, 0.95)) ** 0.5  # both decks drawn independently: P(at least one) = focus
+    need = int((p * len(files) - n_good) / (1 - p))
+    k = max(0, -(-need // len(good)))
+    for base, src in good:
+        for j in range(k):
+            shutil.copy(os.path.join(out_dir, src), os.path.join(out_dir, f'focus-{base[:-4]}-{j:02d}.txt'))
+    log(f'entraînement ciblé : {len(good)} vrais decks x{k} copies en plus, ~{100 * focus:.0f} % des parties les impliquent')
+    return k
+
+
 LABELS_FILE = '.noms.json'
 
 

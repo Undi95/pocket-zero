@@ -34,7 +34,9 @@ pub struct PyBatchSelfPlay {
 #[pymethods]
 impl PyBatchSelfPlay {
     #[new]
-    #[pyo3(signature = (deck_paths, games, sims, out, seed=0, concurrency=1024, temperature_moves=20, noise=0.25, games_log=None))]
+    /// Evaluation mode: `pairs` = [(deck a, deck b, seed)], one game each, every deck must be
+    /// valid (indices are positions in `deck_paths`); `out` = "" writes no training positions.
+    #[pyo3(signature = (deck_paths, games, sims, out, seed=0, concurrency=1024, temperature_moves=20, noise=0.25, games_log=None, pairs=None))]
     #[allow(clippy::too_many_arguments)]
     fn new(
         deck_paths: Vec<String>,
@@ -46,7 +48,15 @@ impl PyBatchSelfPlay {
         temperature_moves: usize,
         noise: f32,
         games_log: Option<String>,
+        pairs: Option<Vec<(usize, usize, u64)>>,
     ) -> PyResult<Self> {
+        if pairs.is_some() {
+            for p in &deck_paths {
+                if !Deck::from_file(p).is_ok_and(|d| d.is_valid()) {
+                    return Err(PyRuntimeError::new_err(format!("invalid deck: {p}")));
+                }
+            }
+        }
         let (decks, names): (Vec<Deck>, Vec<String>) = deck_paths
             .iter()
             .filter_map(|p| {
@@ -78,6 +88,7 @@ impl PyBatchSelfPlay {
             seed,
             &out,
             games_log.as_deref(),
+            pairs,
         )
         .map_err(|e| PyRuntimeError::new_err(format!("{out}: {e}")))?;
         Ok(PyBatchSelfPlay { inner })

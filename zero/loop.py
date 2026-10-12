@@ -18,7 +18,7 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool
+from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool, focus_pool
 from .highlights import summarize
 from .model import ZeroNet, export_weights, migrate_state_dict
 from .train import train
@@ -111,6 +111,8 @@ def main():
     ap = argparse.ArgumentParser(description='Boucle AlphaZero pocket-zero')
     ap.add_argument('--run', default='principal')
     ap.add_argument('--iterations', type=int, default=40)
+    ap.add_argument('--focus', type=float, default=0.5,
+                    help='part des parties impliquant un vrai deck (méta, autres sources, forgés) ; 0 = pool uniforme')
     ap.add_argument('--add-decks', default='', help='dossier de decks à ajouter au pool (ex. results\\forge\\<nom>\\decks)')
     ap.add_argument('--games', type=int, default=10000, help='parties de self-play par itération')
     ap.add_argument('--sims', type=int, default=200, help='simulations MCTS par décision en self-play')
@@ -185,6 +187,7 @@ def main():
             for k in range(10):  # as many copies as a meta list: enough games to learn the deck
                 shutil.copy(os.path.join(a.add_decks, f), os.path.join(decks, f'forge-{f[:-4]}-{k:02d}.txt'))
         log(f'{len(added)} decks x10 ajoutés au pool d\'entraînement depuis {a.add_decks}')
+    focus_pool(decks, a.focus, log=log)
 
     model = ZeroNet(info).to(a.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-3)

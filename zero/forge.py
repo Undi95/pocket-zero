@@ -71,20 +71,19 @@ def population(P, folder):
 
 
 class Judge:
-    """Weighted meta score of a deck on seeded games, cached per (deck, seed, player)."""
+    """Weighted meta scores of decks on seeded games. Every deck of a call plays the same games
+    (same opponent, same seed per game): differences between them are the cards'. GPU backend
+    (batched engine, all decks of a call in one job) when available, else CPU processes."""
 
-    def __init__(self, P, folder, weights, per_opp):
-        self.P, self.folder, self.w, self.per_opp, self.cache = P, folder, weights, per_opp, {}
+    def __init__(self, P, folder, weights, per_opp, gpu=None):
+        self.P, self.folder, self.w, self.per_opp, self.gpu = P, folder, weights, per_opp, gpu
         self.opps = sorted(f[:-4] for f in os.listdir(folder) if f.endswith('.txt'))
 
-    def run(self, d, seed, player):
-        """All opponents at once: one engine process per opponent, enough of them to fill every
-        core (a single process plays the opponents one after another, a few games at a time)."""
+    def _cpu(self, d, seed, player):
         with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f:
             path = f.name
         self.P.write_deck(d, path)
         jobs = min(self.per_opp, os.cpu_count() or 2)
-        workers = max(1, (os.cpu_count() or 2) // jobs)
 
         def one(opp):
             cmd = [self.P.BIN, 'simulate', path, os.path.join(self.folder, opp + '.txt'), '--num', str(self.per_opp),
@@ -95,51 +94,69 @@ class Judge:
             if not w:
                 raise SystemExit(f'Le moteur n\'a rendu aucun résultat.\nCommande : {" ".join(cmd)}\nSortie :\n{txt[-2000:]}')
             return int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, self.per_opp
-
         try:
-            with ThreadPoolExecutor(workers) as ex:
+            with ThreadPoolExecutor(max(1, (os.cpu_count() or 2) // jobs)) as ex:
                 return dict(zip(self.opps, ex.map(one, self.opps)))
         finally:
             os.unlink(path)
 
-    def score(self, d, seed, player):
-        k = (self.P.key(d), seed, player)
-        if k not in self.cache:
-            per = self.run(d, seed, player)
-            tot = sum(self.w.get(o, 0) for o in per)
-            self.cache[k] = (sum(self.w.get(o, 0) * wn / n for o, (wn, n) in per.items() if n) / tot if tot else 0.0, per)
-        return self.cache[k][0]
+    def _gpu(self, decks, seed, player):
+        tmp = tempfile.mkdtemp(prefix='pz_forge_')
+        paths = []
+        for i, d in enumerate(decks):
+            paths.append(os.path.join(tmp, f'd{i}.txt'))
+            self.P.write_deck(d, paths[-1])
+        paths += [os.path.join(self.folder, o + '.txt') for o in self.opps]
+        nd = len(decks)
+        game_seed = lambda j, r: (seed * 1_000_003 + j * 10_007 + r) % (1 << 62)
+        pairs = [(i, nd + j, game_seed(j, r)) for i in range(nd) for j in range(len(self.opps)) for r in range(self.per_opp)]
+        res = self.gpu.play(paths, pairs, int(player.split(':')[0][1:]))
+        out, k = [], 0
+        for i in range(nd):
+            per = {}
+            for o in self.opps:
+                per[o] = (sum(res[k:k + self.per_opp]), self.per_opp)
+                k += self.per_opp
+            out.append(per)
+        for f in os.listdir(tmp):
+            os.remove(os.path.join(tmp, f))
+        os.rmdir(tmp)
+        return out
 
-    def paired(self, a, b, seeds, player, stop_bad=True):
-        """Mean and standard error of score(b) - score(a) over seeds; stops early when b is clearly worse."""
-        ds = []
-        for s in seeds:
-            ds.append(self.score(b, s, player) - self.score(a, s, player))
-            n, m = len(ds), sum(ds) / len(ds)
-            se = (sum((x - m) ** 2 for x in ds) / (n - 1)) ** 0.5 / n ** 0.5 if n > 1 else 1.0
-            if stop_bad and ((n == 1 and m < -0.06) or (n >= 2 and m + 1.5 * se < 0)):
-                break
-            if stop_bad and n >= 4 and m - 2 * se > 0:
-                break
-        return m, se, len(ds)
+    def weighted(self, per):
+        tot = sum(self.w.get(o, 0) for o in per)
+        return sum(self.w.get(o, 0) * wn / n for o, (wn, n) in per.items() if n) / tot if tot else 0.0
+
+    def scores(self, decks, seed, player):
+        """[(score, {opponent: (wins, games)})] for decks, all on the same games."""
+        pers = self._gpu(decks, seed, player) if self.gpu else [self._cpu(d, seed, player) for d in decks]
+        return [(self.weighted(p), p) for p in pers]
 
 
 def mutations(P, d, rng, usage, lock, k):
     """k distinct variants: meta-weighted trainer swaps, copy tweaks, structural changes."""
     trainers, tw = zip(*[(t, usage.get(P.CARD[t]['name'], 0) + 0.3) for t in P.TRAINERS])
+    played = [(c, usage[P.CARD[c]['name']]) for c in P.POKEMON if usage.get(P.CARD[c]['name'])]
+    pokes, pw = (list(x) for x in zip(*played)) if played else ([], [])
     out, seen = [], {P.key(d)}
     for _ in range(k * 30):
         if len(out) == k:
             break
         r, c = rng.random(), list(d['c'])
         free = [i for i, x in enumerate(c) if x not in lock or c.count(x) > 1]
-        if r < 0.45:
+        if r < 0.40:
             tr = [i for i in free if P.CARD[c[i]]['kind'] == 'Trainer'] or free
             c[rng.choice(tr)] = rng.choices(trainers, tw)[0]
             v = {'e': d['e'], 'c': c}
-        elif r < 0.65:
+        elif r < 0.55:
             c[rng.choice(free)] = rng.choice(c)
             v = {'e': d['e'], 'c': c}
+        elif r < 0.80 and pokes:  # a Pokémon line the real lists play, over trainers first
+            line = P.line_variant(rng.choices(pokes, pw)[0], rng)
+            slots = sorted(free, key=lambda i: (P.CARD[c[i]]['kind'] != 'Trainer', rng.random()))
+            for i, x in zip(slots, line):
+                c[i] = x
+            v = {'e': P.auto_energy(c) if rng.random() < 0.5 else d['e'], 'c': c}
         else:
             v = P.mutate(d, rng, lock)
         if v and P.valid(v, lock) and P.key(v) not in seen:
@@ -156,26 +173,54 @@ def diff(P, a, b):
     return ', '.join(out) or 'aucun changement'
 
 
+def stats(ds):
+    n = len(ds)
+    m = sum(ds) / n
+    se = (sum((x - m) ** 2 for x in ds) / (n - 1)) ** 0.5 / n ** 0.5 if n > 1 else 1.0
+    return m, se, n
+
+
 def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
+    """Each step: all variants play the same seeded games as the current deck, chunk after chunk
+    (one batched job per chunk); clearly worse ones drop out, a significantly better one (2
+    standard errors, at least 4 chunks) is confirmed on new seeds and becomes the deck."""
     best, changes = d, []
     for step in range(steps):
-        seeds = [rng.randrange(1 << 30) for _ in range(chunks)]
+        variants = mutations(P, best, rng, usage, lock, cands)
+        alive, deltas, winner = list(range(len(variants))), {i: [] for i in range(len(variants))}, None
         t0 = time.time()
-        for i, v in enumerate(mutations(P, best, rng, usage, lock, cands)):
-            if i % 5 == 0:
-                log(f'    étape {step + 1} : variante {i + 1}/{cands} ({(time.time() - t0) / 60:.0f} min)')
-            m, se, n = J.paired(best, v, seeds, player)
-            if n >= 4 and m - 2 * se > 0:
-                fresh = [rng.randrange(1 << 30) for _ in range(max(2, chunks // 2))]
-                m2, se2, _ = J.paired(best, v, fresh, player, stop_bad=False)
-                if m2 > 0:
-                    changes.append((diff(P, best, v), m, m2))
-                    log(f'    étape {step + 1} : {changes[-1][0]}  (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
-                    best = v
-                    break
-        else:
+        for c in range(chunks):
+            if not alive:
+                break
+            seed = rng.randrange(1 << 30)
+            sc = J.scores([best] + [variants[i] for i in alive], seed, player)
+            for i, (v, _) in zip(alive, sc[1:]):
+                deltas[i].append(v - sc[0][0])
+            keep = []
+            for i in alive:
+                m, se, n = stats(deltas[i])
+                if not ((n == 1 and m < -0.06) or (n >= 2 and m + 1.5 * se < 0)):
+                    keep.append(i)
+            alive = keep
+            log(f'    étape {step + 1}, graine {c + 1}/{chunks} : {len(alive)} variantes encore en course '
+                f'({(time.time() - t0) / 60:.0f} min)')
+            good = [i for i in alive if stats(deltas[i])[2] >= 4 and stats(deltas[i])[0] - 2 * stats(deltas[i])[1] > 0]
+            if good:
+                winner = max(good, key=lambda i: stats(deltas[i])[0])
+                break
+        if winner is None:
             log(f'    plus aucun changement gagnant après {step + 1} étapes')
             break
+        v = variants[winner]
+        fresh = [J.scores([best, v], rng.randrange(1 << 30), player) for _ in range(max(2, chunks // 2))]
+        m2 = sum(b[0] - a[0] for a, b in fresh) / len(fresh)
+        m = stats(deltas[winner])[0]
+        if m2 > 0:
+            changes.append((diff(P, best, v), m, m2))
+            log(f'    étape {step + 1} : {changes[-1][0]}  (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
+            best = v
+        else:
+            log(f'    étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f}), on continue')
     return best, changes
 
 
@@ -186,8 +231,8 @@ def main():
     ap.add_argument('--deck', action='append', default=[], help='deck(s) à améliorer (sinon : les listes méta)')
     ap.add_argument('--new', type=int, default=0, help='mode maison : nombre d\'archétypes tirés de tout le pool')
     ap.add_argument('--top', type=int, default=10, help='listes méta à améliorer (par part de méta)')
-    ap.add_argument('--climb', default='z8', help='bot pendant l\'amélioration')
-    ap.add_argument('--final', default='z32', help='bot de la mesure finale')
+    ap.add_argument('--climb', default='z32', help='bot pendant l\'amélioration')
+    ap.add_argument('--final', default='z128', help='bot de la mesure finale')
     ap.add_argument('--per-opp', type=int, default=4, help='parties par adversaire et par graine')
     ap.add_argument('--steps', type=int, default=12, help='changements maximum par deck')
     ap.add_argument('--cands', type=int, default=30, help='variantes essayées par étape')
@@ -195,6 +240,7 @@ def main():
     ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
     ap.add_argument('--reeval', action='store_true', help='refait seulement la mesure finale (après réentraînement)')
     ap.add_argument('--seed', type=int, default=0)
+    ap.add_argument('--engine', default='auto', choices=['auto', 'gpu', 'cpu'], help='où jouer les parties (auto : GPU si disponible)')
     a = ap.parse_args()
 
     res = os.path.join(engine.ROOT, 'results', 'forge', a.name)
@@ -204,7 +250,15 @@ def main():
     P = setup(res, a.weights, climb_p, final_p)
     log = P.log
     files, weights = population(P, os.path.join(res, 'opponents'))
-    J = Judge(P, os.path.join(res, 'opponents'), weights, a.per_opp)
+    gpu = None
+    if a.engine != 'cpu':
+        from . import gpu_eval
+        if gpu_eval.available():
+            gpu = gpu_eval.GpuJudge(a.weights, engine.info())
+        elif a.engine == 'gpu':
+            raise SystemExit('GPU ou module moteur indisponible : relance avec --engine cpu')
+    log_engine = f'{len(gpu.devices)} GPU' if gpu else 'processeur'
+    J = Judge(P, os.path.join(res, 'opponents'), weights, a.per_opp, gpu)
     usage = collections.Counter()
     for rel in files:
         for c in set(P.parse_deck(os.path.join(engine.ROOT, rel))['c']):
@@ -232,7 +286,7 @@ def main():
     state = json.load(open(state_f)) if os.path.exists(state_f) else {}
     rng = random.Random(a.seed)
     log(f'Forge "{a.name}" : {len(starts)} decks, amélioration {a.climb}, mesure finale {a.final}, '
-        f'{len(weights)} adversaires pondérés par la méta réelle')
+        f'{len(weights)} adversaires pondérés par la méta réelle, parties sur {log_engine}')
     for name, d in starts:
         if name in state and 'best' in state[name]:
             continue
@@ -253,18 +307,18 @@ def main():
         if 'best' not in s:
             continue
         if a.reeval or 'final' not in s:
-            seeds = [rng.randrange(1 << 30) for _ in range(6)]
-            m, se, _ = J.paired(s['start'], s['best'], seeds, final_p, stop_bad=False)
+            runs = [J.scores([s['start'], s['best']], rng.randrange(1 << 30), final_p) for _ in range(6)]
+            m, se, _ = stats([b[0] - a_[0] for a_, b in runs])
+            k = 1
             if m < 0:  # the stronger bot disagrees with the climbing bot: keep the original
-                s['best'], s['changes'] = s['start'], [('annulés : ' + '; '.join(c[0] for c in s['changes']), 0, 0)] if s['changes'] else []
+                s['best'], s['changes'], k = s['start'], ([('annulés : ' + '; '.join(c[0] for c in s['changes']), 0, 0)]
+                                                          if s['changes'] else []), 0
             per = collections.defaultdict(lambda: [0, 0])
-            for sd in seeds:
-                J.score(s['best'], sd, final_p)
-                for o, (w, n) in J.cache[(P.key(s['best']), sd, final_p)][1].items():
+            for r in runs:
+                for o, (w, n) in r[k][1].items():
                     per[o][0] += w
                     per[o][1] += n
-            absolute = sum(J.score(s['best'], sd, final_p) for sd in seeds) / len(seeds)
-            s['final'] = {'gain': m, 'se': se, 'score': absolute,
+            s['final'] = {'gain': max(m, 0.0) if k else 0.0, 'se': se, 'score': sum(r[k][0] for r in runs) / len(runs),
                           'per': {o: w / n for o, (w, n) in per.items() if n}}
             json.dump(state, open(state_f, 'w'))
         P.write_deck(s['best'], os.path.join(res, 'decks', name + '.txt'))
@@ -288,6 +342,8 @@ def main():
     for sc, name, s in rows:
         log(f"  {name:40} {100 * sc:5.1f} %   gain {100 * s['final']['gain']:+.1f} pts")
     log(f'Résultats : {os.path.join(res, "FORGE.md")} et {os.path.join(res, "decks")}')
+    if gpu:
+        gpu.close()
 
 
 if __name__ == '__main__':
