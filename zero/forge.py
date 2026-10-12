@@ -25,9 +25,13 @@ import json
 import math
 import os
 import random
+import re
 import shutil
+import subprocess
 import sys
+import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from . import engine
 
@@ -71,11 +75,37 @@ class Judge:
 
     def __init__(self, P, folder, weights, per_opp):
         self.P, self.folder, self.w, self.per_opp, self.cache = P, folder, weights, per_opp, {}
+        self.opps = sorted(f[:-4] for f in os.listdir(folder) if f.endswith('.txt'))
+
+    def run(self, d, seed, player):
+        """All opponents at once: one engine process per opponent, enough of them to fill every
+        core (a single process plays the opponents one after another, a few games at a time)."""
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f:
+            path = f.name
+        self.P.write_deck(d, path)
+        jobs = min(self.per_opp, os.cpu_count() or 2)
+        workers = max(1, (os.cpu_count() or 2) // jobs)
+
+        def one(opp):
+            cmd = [self.P.BIN, 'simulate', path, os.path.join(self.folder, opp + '.txt'), '--num', str(self.per_opp),
+                   '--players', f'{player},{player}', '-p', '-j', str(jobs), '--seed', str(seed)]
+            out = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', cwd=engine.ROOT)
+            txt = out.stdout + out.stderr
+            w, dr = re.search(r'Player 0 won: (\d+)', txt), re.search(r'Draws: (\d+)', txt)
+            if not w:
+                raise SystemExit(f'Le moteur n\'a rendu aucun résultat.\nCommande : {" ".join(cmd)}\nSortie :\n{txt[-2000:]}')
+            return int(w.group(1)) + (int(dr.group(1)) if dr else 0) / 2, self.per_opp
+
+        try:
+            with ThreadPoolExecutor(workers) as ex:
+                return dict(zip(self.opps, ex.map(one, self.opps)))
+        finally:
+            os.unlink(path)
 
     def score(self, d, seed, player):
         k = (self.P.key(d), seed, player)
         if k not in self.cache:
-            per = self.P.run_games(d, self.per_opp, player, self.folder, seed)
+            per = self.run(d, seed, player)
             tot = sum(self.w.get(o, 0) for o in per)
             self.cache[k] = (sum(self.w.get(o, 0) * wn / n for o, (wn, n) in per.items() if n) / tot if tot else 0.0, per)
         return self.cache[k][0]
@@ -130,7 +160,10 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
     best, changes = d, []
     for step in range(steps):
         seeds = [rng.randrange(1 << 30) for _ in range(chunks)]
-        for v in mutations(P, best, rng, usage, lock, cands):
+        t0 = time.time()
+        for i, v in enumerate(mutations(P, best, rng, usage, lock, cands)):
+            if i % 5 == 0:
+                log(f'    étape {step + 1} : variante {i + 1}/{cands} ({(time.time() - t0) / 60:.0f} min)')
             m, se, n = J.paired(best, v, seeds, player)
             if n >= 4 and m - 2 * se > 0:
                 fresh = [rng.randrange(1 << 30) for _ in range(max(2, chunks // 2))]
