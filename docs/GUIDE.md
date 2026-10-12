@@ -31,7 +31,10 @@ run.bat train --iterations 140
 - Changement d'entrées du réseau (couche 2 : outils, cartes sous chaque Pokémon, effets,
   historique public) : un run existant continue, le réseau garde sa force et apprend à
   utiliser les nouvelles entrées. Rien à faire.
-- Nouveau run depuis zéro : `--run autre_nom`.
+- Nouveau run depuis zéro : `--run autre_nom`. Gros réseau (~3,5x plus de paramètres, meilleur
+  pilotage des decks techniques) : `--run grand --net big` (la taille est fixée au début du run).
+- Entraînement ciblé : `--focus 0.5` (défaut) fait jouer la moitié des parties avec de vrais decks
+  (méta, autres sources, decks forgés ajoutés par `--add-decks`) ; `--focus 0` = pool uniforme.
 
 ## 3. Trouver des decks (le but)
 
@@ -54,7 +57,8 @@ run.bat forge --name forge1 --deck mon_deck.txt  # ton deck
 run.bat forge --name maison1 --new 12            # 12 archétypes maison, tirés de tout le pool
 ```
 
-Chaque changement (dresseur, copie, lignée, énergie) est joué contre la méta réelle pondérée
+Les parties se jouent sur les GPU (moteur par lots, `--engine cpu` pour forcer le processeur) :
+amélioration en z32, mesure finale en z128. Chaque changement (dresseur, copie, lignée, énergie) est joué contre la méta réelle pondérée
 (DotGG), sur les MÊMES parties que le deck actuel : il n'est gardé que s'il gagne nettement
 (2 écarts-types), puis confirmé sur de nouvelles parties. Un gain mesuré entre deux versions du
 même deck est quasi insensible aux biais du bot. Résultat : `results\forge\<nom>\FORGE.md`
