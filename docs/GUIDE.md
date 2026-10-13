@@ -111,8 +111,8 @@ haut). Itération, étape, fin estimée, courbes (contre e3/e2, RMSE, pertes), d
 validation, moments forts, journal, et **les decks qui gagnent le plus** dans l'auto-jeu (dernière
 itération, 10 dernières ou tout le run ; tous, maison ou vrais decks). Un clic sur un deck
 affiche ses cartes. C'est un repérage (contre tout le pool, decks faibles compris) : à confirmer
-avec `run.bat forge --deck` ou le ranked. Laisse `run.bat ui` ouvert pendant l'entraînement :
-les résultats de chaque itération sont enregistrés (`runs\<run>\victoires.json`).
+avec `run.bat forge --deck` ou le ranked. Les résultats de chaque itération
+sont enregistrés dans `runs\<run>\victoires.json`.
 
 ## 6. Les decks des développeurs (mode solo)
 
