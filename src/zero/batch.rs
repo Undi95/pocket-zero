@@ -106,6 +106,10 @@ fn select(
                 return Walk::Terminal(terminal_value(state, root_actor), path);
             }
             let (actor, actions) = state.generate_possible_actions();
+            if actions.is_empty() {
+                // A forced choice with nothing to choose (rare, in sampled positions): scored as it stands.
+                return Walk::Terminal(terminal_value(state, root_actor), path);
+            }
             if actions.len() == 1 {
                 apply_action(rng, state, &actions[0]);
                 continue;
@@ -230,6 +234,10 @@ impl Slot {
                         return true;
                     }
                     let (actor, actions) = self.state.generate_possible_actions();
+                    if actions.is_empty() {
+                        steps = 5001; // no legal move: the game ends here (a tie)
+                        continue;
+                    }
                     if actions.len() == 1 {
                         apply_action(&mut self.rng, &mut self.state, &actions[0]);
                         steps += 1;

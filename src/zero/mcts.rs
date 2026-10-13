@@ -298,6 +298,9 @@ impl<E: Evaluator> Search<'_, E> {
                 return terminal_value(state, self.root);
             }
             let (actor, actions) = state.generate_possible_actions();
+            if actions.is_empty() {
+                return terminal_value(state, self.root); // rare engine dead end
+            }
             if actions.len() == 1 {
                 apply_action(rng, state, &actions[0]);
                 continue;
