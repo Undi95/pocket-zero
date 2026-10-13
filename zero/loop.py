@@ -19,7 +19,7 @@ import torch
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
 from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool, focus_pool
-from .highlights import summarize
+from .highlights import record, summarize
 from .model import NET_SIZES, ZeroNet, export_weights, migrate_state_dict, sized
 from .train import train
 
@@ -308,6 +308,10 @@ def main():
                 log('  ' + line)
         except Exception as e:  # a summary must never stop the training
             log(f'  (résumé indisponible : {e})')
+        try:
+            record(run_dir, it + 1, mine)  # the "top decks" of run.bat ui
+        except Exception:
+            pass
         for f in logs:
             if f not in mine:
                 os.remove(f)

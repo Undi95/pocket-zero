@@ -5,7 +5,7 @@ rem   run.bat search  [options]   recherche de decks sur toutes les cartes avec 
 rem   run.bat solo    [options]   tournoi des decks du mode solo (Poké Ball à Master Ball)
 rem   run.bat forge   [options]   améliore des decks, changement par changement (parties appariées)
 rem   run.bat ranked  [options]   saison de ranked simulée (règles officielles, méta réelle)
-rem   run.bat ui                  decklists avec les images officielles (navigateur)
+rem   run.bat ui                  decklists (images officielles) + entraînement en direct (/train)
 rem   run.bat meta                met à jour les decks méta des autres sources
 rem   run.bat update              récupère la dernière version (git pull + binaires)
 rem   run.bat help                aide détaillée

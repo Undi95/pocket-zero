@@ -5,6 +5,10 @@ Reads the game logs written by the engine (one CSV per self-play environment, se
 src/zero/batch.rs) and the deck labels of zero/decks.py."""
 import collections
 import csv
+import json
+import os
+
+STATS_FILE = 'victoires.json'  # runs/<run>/: per-deck results of every iteration (run.bat ui)
 
 
 def fmt_int(n):
@@ -31,6 +35,37 @@ def read_games(paths):
         except (OSError, KeyError, ValueError):
             continue
     return games
+
+
+def deck_results(paths):
+    """{deck file stem: [wins, games]} over the games logged in `paths`."""
+    out = collections.defaultdict(lambda: [0, 0])
+    for a, b, _, winner, *_ in read_games(paths):
+        for side, stem in ((0, a), (1, b)):
+            out[stem][0] += winner == side
+            out[stem][1] += 1
+    return dict(out)
+
+
+def record(run_dir, iteration, paths):
+    """Adds the per-deck results of one iteration's self-play to runs/<run>/victoires.json, read
+    by the training page of run.bat ui. Recording an iteration twice changes nothing."""
+    f = os.path.join(run_dir, STATS_FILE)
+    try:
+        with open(f, encoding='utf-8') as fh:
+            stats = json.load(fh)
+    except (OSError, ValueError):
+        stats = {}
+    if str(iteration) in stats:
+        return False
+    res = deck_results(paths)
+    if not res:
+        return False
+    stats[str(iteration)] = res
+    with open(f + '.tmp', 'w', encoding='utf-8') as fh:
+        json.dump(stats, fh, separators=(',', ':'))
+    os.replace(f + '.tmp', f)
+    return True
 
 
 def longest_streak(results):

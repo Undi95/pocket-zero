@@ -91,16 +91,26 @@ Résultat `results\ranked\CLASSEMENT.md` : victoires par deck et par rang, part 
 atteignent Master Ball, parties nécessaires. Options : `--player z32`, `--games 40`,
 `--players`, `--matches`.
 
-## 5. Voir et exporter une decklist (images officielles)
+## 5. L'interface : decklists et entraînement en direct
 
 ```
-run.bat ui
+run.bat ui                  # decklists
+run.bat ui --train          # directement la page de l'entraînement
+run.bat ui --host 0.0.0.0   # accessible depuis le téléphone (même réseau ou VPN)
 ```
 
-Ouvre `http://localhost:8765` : tous les decks du projet (méta, autres sources, mode solo,
-résultats de recherche) ou une liste collée, affichés en cartes (images TCGdex, français ou
-anglais), avec les vérifications du jeu (20 cartes, 2 exemplaires, un Pokémon de base).
+`http://localhost:8765` : tous les decks du projet (méta, autres sources, mode solo, résultats
+de recherche) ou une liste collée, affichés en cartes (images en français depuis Poképédia, ou
+en anglais), avec les vérifications du jeu (20 cartes, 2 exemplaires, un Pokémon de base).
 « Copier le texte » pour le moteur, « Imprimer / PDF » pour la garder.
+
+`http://localhost:8765/train` : le run en cours, rafraîchi toutes les 20 s (choix du run en
+haut). Itération, étape, fin estimée, courbes (contre e3/e2, RMSE, pertes), dernière
+validation, moments forts, journal, et **les decks qui gagnent le plus** dans l'auto-jeu (dernière
+itération, 10 dernières ou tout le run ; tous, maison ou vrais decks). Un clic sur un deck
+affiche ses cartes. C'est un repérage (contre tout le pool, decks faibles compris) : à confirmer
+avec `run.bat forge --deck` ou le ranked. Laisse `run.bat ui` ouvert pendant l'entraînement :
+les résultats de chaque itération sont enregistrés (`runs\<run>\victoires.json`).
 
 ## 6. Les decks des développeurs (mode solo)
 
