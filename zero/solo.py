@@ -2,7 +2,7 @@
 played by the trained network: a ranking per rank, then a grand tournament of the best of each
 rank against the meta lists.
 
-    python -m zero.solo [--weights runs\\principal\\weights\\latest.bin] [--player z8]
+    python -m zero.solo [--weights runs\\<run>\\weights\\latest.bin] [--player z8]
 
 Results: results/solo/CLASSEMENT.md. Run it with training stopped (they share the CPU).
 """
@@ -23,14 +23,14 @@ def ranking(res):
 
 def main():
     ap = argparse.ArgumentParser(description='Tournoi des decks du mode solo')
-    ap.add_argument('--weights', default=os.path.join(engine.ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
+    ap.add_argument('--weights', default=engine.default_weights())
     ap.add_argument('--player', default='z8', help='joueur des deux côtés (z8 : 8 simulations)')
     ap.add_argument('--games', type=int, default=40, help='parties par deck dans chaque tournoi')
     ap.add_argument('--top', type=int, default=4, help='decks de chaque rang qualifiés pour le grand tournoi')
     ap.add_argument('--threads', type=int, default=0)
     a = ap.parse_args()
     if not os.path.exists(a.weights):
-        sys.exit(f'Réseau introuvable : {a.weights}')
+        sys.exit(engine.NO_NETWORK.format(a.weights))
     player = engine.zspec(int(a.player[1:]), os.path.abspath(a.weights)) if a.player.startswith('z') else a.player
     threads = a.threads or None
     out_dir = os.path.join(engine.ROOT, 'results', 'solo')

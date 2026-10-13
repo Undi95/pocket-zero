@@ -1,0 +1,22 @@
+# archetype: Mega Lucario ex Teal Mask Ogerpon ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ac2df1785920e4d2536404a/player/yamirai/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-06
+# share: 1.1 % des joueurs (23 sur 2138, 20 tournois de 14 jours)
+# win_rate: 41.2 %
+# list: yamirai, 10e sur 101 (6-2-0), ⭐Nuggie's POG Deluxe Tourney #16! 1st $15 + FA⭐
+Energy: Fighting
+1 Lucario A2 92
+2 Tyrogue A4 101
+1 Teal Mask Ogerpon ex B2 17
+2 Riolu B3 79
+2 Mega Lucario ex B3 81
+1 Sabrina A1 225
+1 Cyrus A2 150
+2 Copycat B1 225
+1 Korrina B3 149
+2 Arena of Antiquity B3 154
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

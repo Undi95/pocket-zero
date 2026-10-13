@@ -1,0 +1,20 @@
+# archetype: Dedenne ex Indeedee ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/golfermt/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-03
+# share: 4.0 % des joueurs (85 sur 2138, 20 tournois de 14 jours)
+# win_rate: 51.9 %
+# list: golfermt, 1e sur 181 (12-1-0), Dark League Pocket Tournament 100$usd
+Energy: Grass, Lightning, Psychic
+2 Oricorio A3 66
+2 Indeedee ex B1 121
+1 Teal Mask Ogerpon ex B2 17
+2 Dedenne ex B3b 24
+2 Giant Cape A2 147
+1 Cyrus A2 150
+2 Copycat B1 225
+2 Protective Poncho B2 147
+2 Small Balloon B3b 64
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

@@ -1,0 +1,22 @@
+# archetype: Suicune ex Baxcalibur
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6abf6e31880ed327106e1948/player/hectordf/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-03
+# share: 8.0 % des joueurs (171 sur 2138, 20 tournois de 14 jours)
+# win_rate: 50.4 %
+# list: hectordf, 1e sur 110 (10-0-1), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #14
+Energy: Water
+2 Suicune ex A4a 20
+2 Frigibax B2a 34
+2 Baxcalibur B2a 36
+1 Chien-Pao ex B2a 37
+2 Giant Cape A2 147
+1 Cyrus A2 150
+1 Pokémon Center Lady A2b 70
+2 Rare Candy A3 144
+1 Inflatable Boat A4a 67
+1 Copycat B1 225
+1 Soothing Shore B4 154
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

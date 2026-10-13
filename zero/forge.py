@@ -227,7 +227,7 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
 def main():
     ap = argparse.ArgumentParser(description='Forge de decks : améliorations prouvées sur parties appariées')
     ap.add_argument('--name', default='forge')
-    ap.add_argument('--weights', default=os.path.join(engine.ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
+    ap.add_argument('--weights', default=engine.default_weights())
     ap.add_argument('--deck', action='append', default=[], help='deck(s) à améliorer (sinon : les listes méta)')
     ap.add_argument('--new', type=int, default=0, help='mode maison : nombre d\'archétypes tirés de tout le pool')
     ap.add_argument('--top', type=int, default=10, help='listes méta à améliorer (par part de méta)')

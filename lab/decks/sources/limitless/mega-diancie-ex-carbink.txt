@@ -1,0 +1,22 @@
+# archetype: Mega Diancie ex Carbink
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ac8b1778a8383117e3e7747/player/harian/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-10
+# share: 1.0 % des joueurs (22 sur 2138, 20 tournois de 14 jours)
+# win_rate: 50.8 %
+# list: harian, 2e sur 120 (9-1-1), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #15
+Energy: Psychic
+2 Carbink B3b 31
+2 Mega Diancie ex B3b 32
+1 Flutter Mane B3b 35
+2 Giant Cape A2 147
+1 Cyrus A2 150
+1 Pokémon Center Lady A2b 70
+2 Copycat B1 225
+1 Lisia B1 226
+1 Lucky Ice Pop B2 145
+1 Starting Plains B2 154
+2 Peculiar Plaza B2 155
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

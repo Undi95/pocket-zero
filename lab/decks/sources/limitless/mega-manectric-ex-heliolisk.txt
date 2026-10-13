@@ -1,0 +1,22 @@
+# archetype: Mega Manectric ex Heliolisk
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ac8b1778a8383117e3e7747/player/javiee333/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-10
+# share: 1.4 % des joueurs (31 sur 2138, 20 tournois de 14 jours)
+# win_rate: 40.5 %
+# list: javiee333, 10e sur 120 (6-2-0), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #15
+Energy: Lightning
+2 Helioptile B1a 28
+1 Electrike B2b 26
+2 Mega Manectric ex B2b 27
+2 Heliolisk B4 61
+1 Giant Cape A2 147
+1 Cyrus A2 150
+1 Copycat B1 225
+2 Clemont's Backpack B1a 66
+2 Clemont B1a 68
+1 Training Area B2 153
+1 Field Blower B3 147
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

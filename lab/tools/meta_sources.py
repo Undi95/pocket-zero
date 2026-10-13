@@ -1,13 +1,18 @@
-"""Fetches meta decklists from sources other than Limitless into lab/decks/sources/<source>/.
+"""Fetches the current meta decklists into lab/decks/sources/<source>/ (run.bat meta, and the
+"Meta update" GitHub workflow twice a week).
 
-    python lab/tools/meta_sources.py            # every source
-    python lab/tools/meta_sources.py game8      # one source
+    python lab/tools/meta_sources.py                    # every source
+    python lab/tools/meta_sources.py limitless game8    # some sources
+    python lab/tools/meta_sources.py --summary FILE     # also writes a Markdown report
 
-Each deck file starts with # lines (archetype, site, source URL, dates, tier or share) that the
-engine ignores, so the lists can be compared between sources and refreshed at every update.
-Standard library only. A source whose page layout changed prints an error and is skipped:
-the files already there stay as they are.
+Sources: Limitless (tournament results of the last two weeks, public API), Game8 (tier list),
+ptcgpocket.gg / DotGG (meta shares). Each deck file starts with # lines (archetype, site, source
+URL, dates, tier or share) that the engine ignores. A file is rewritten only when its cards
+change, decks that left a source's list are removed, and a list with a card the engine does not
+know yet (new expansion) is skipped and reported. Standard library only. A source whose page
+layout changed prints an error and is skipped: the files already there stay as they are.
 """
+import calendar
 import html
 import json
 import os
@@ -25,6 +30,21 @@ ENERGY = ['Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darknes
 def fetch(url):
     with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
         return r.read().decode('utf-8', 'replace')
+
+
+def write_if_changed(path, content):
+    """Writes `content` unless the file already says the same thing apart from its retrieval
+    date: a weekly update that finds the same lists changes nothing."""
+    strip = lambda t: [l for l in t.splitlines() if not l.startswith('# retrieved:') and '"retrieved"' not in l]
+    try:
+        with open(path, encoding='utf-8') as f:
+            if strip(f.read()) == strip(content):
+                return False
+    except OSError:
+        pass
+    with open(path, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(content)
+    return True
 
 
 def text(s):
@@ -64,9 +84,79 @@ def write_deck(source, name, cards, energy, header):
     for cid, n in sorted(cards.items(), key=lambda kv: (db[kv[0]][0] != 'Pokemon', kv[0])):
         st, num = cid.split()
         lines.append(f'{n} {db[cid][1]["name"]} {st} {int(num)}')
-    with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('\n'.join(lines) + '\n')
+    write_if_changed(path, '\n'.join(lines) + '\n')
     return path, None
+
+
+def limitless(days=14, min_players=32, max_tournaments=20, min_share=0.01):
+    """Limitless (play.limitlesstcg.com) public API: the standard-format tournaments of the last
+    `days` days with at least `min_players` players. Per archetype (Limitless's own naming): its
+    share of all the players, its win rate, and the list of its best finisher (most wins, then
+    the biggest tournament). Archetypes under `min_share` are left out."""
+    api = 'https://play.limitlesstcg.com/api'
+    cutoff = time.time() - days * 86400
+    when = lambda t: calendar.timegm(time.strptime(t['date'][:19], '%Y-%m-%dT%H:%M:%S'))
+    tours = []
+    for page in range(1, 4):
+        batch = json.loads(fetch(f'{api}/tournaments?game=POCKET&limit=100&page={page}'))
+        tours += [t for t in batch if t.get('format') in (None, 'STANDARD') and t.get('players', 0) >= min_players
+                  and when(t) >= cutoff]
+        if not batch or when(batch[-1]) < cutoff:
+            break
+    tours = sorted(tours, key=lambda t: -t['players'])[:max_tournaments]
+    arch, total = {}, 0
+    for t in tours:
+        for r in json.loads(fetch(f'{api}/tournaments/{t["id"]}/standings')):
+            if not r.get('deck') or not r.get('decklist'):
+                continue
+            rec = r.get('record') or {}
+            w, l, d = rec.get('wins', 0), rec.get('losses', 0), rec.get('ties', 0)
+            a = arch.setdefault(r['deck']['id'], {'name': r['deck']['name'], 'players': 0, 'w': 0, 'l': 0, 'd': 0, 'best': None})
+            a['players'] += 1
+            a['w'], a['l'], a['d'] = a['w'] + w, a['l'] + l, a['d'] + d
+            score = (w - l, t['players'], -(r.get('placing') or 999))
+            if a['best'] is None or score > a['best'][0]:
+                a['best'] = (score, t, r)
+            total += 1
+        time.sleep(0.5)  # be gentle with the API
+    if not total:
+        raise RuntimeError('aucune liste dans les tournois récents')
+    db, out, shares = database(), [], {}
+    for key, a in sorted(arch.items(), key=lambda kv: -kv[1]['players']):
+        share = a['players'] / total
+        games = a['w'] + a['l'] + a['d']
+        shares[a['name']] = {'share': round(share, 4), 'players': a['players'],
+                             'win_rate': round((a['w'] + a['d'] / 2) / games, 3) if games else None}
+        if share < min_share:
+            continue
+        _, t, r = a['best']
+        counts, bad = {}, []
+        for c in r['decklist'].get('pokemon', []) + r['decklist'].get('trainer', []):
+            cid = f'{c["set"]} {int(c["number"]):03d}' if str(c.get('number', '')).isdigit() else None
+            if cid not in db:
+                cid = by_name(c.get('name', ''))
+            if cid is None:
+                bad.append(f'{c.get("name")} {c.get("set")} {c.get("number")}')
+                continue
+            counts[cid] = counts.get(cid, 0) + int(c['count'])
+        rec = r.get('record') or {}
+        header = {'archetype': a['name'], 'site': 'Limitless (play.limitlesstcg.com)',
+                  'source': f'https://play.limitlesstcg.com/tournament/{t["id"]}/player/{r["player"]}/decklist',
+                  'retrieved': time.strftime('%Y-%m-%d'), 'published': t['date'][:10],
+                  'share': f'{100 * share:.1f} % des joueurs ({a["players"]} sur {total}, {len(tours)} tournois de {days} jours)',
+                  'win_rate': f'{100 * shares[a["name"]]["win_rate"]:.1f} %' if shares[a['name']]['win_rate'] is not None else '',
+                  'list': f'{r["player"]}, {r.get("placing")}e sur {t["players"]} ({rec.get("wins", 0)}-{rec.get("losses", 0)}-{rec.get("ties", 0)}), {t["name"]}'}
+        if bad:
+            out.append((a['name'], f'{100 * share:.1f} %', None, 'cartes inconnues du moteur : ' + ', '.join(bad)))
+            continue
+        path, err = write_deck('limitless', a['name'], counts, r['decklist'].get('energy') or [], header)
+        out.append((a['name'], f'{100 * share:.1f} %', path, err))
+    os.makedirs(os.path.join(OUT, 'limitless'), exist_ok=True)
+    write_if_changed(os.path.join(OUT, 'limitless', 'shares.json'), json.dumps(
+        {'site': 'Limitless (play.limitlesstcg.com)', 'source': f'{api}/tournaments?game=POCKET',
+         'retrieved': time.strftime('%Y-%m-%d'), 'days': days, 'tournaments': len(tours), 'players': total,
+         'shares': shares}, indent=1, ensure_ascii=False) + '\n')
+    return out
 
 
 def by_name(name):
@@ -139,11 +229,10 @@ def dotgg():
     for r in cur:
         shares[r['name']] = shares.get(r['name'], 0) + int(r['total_decks']) / total
     os.makedirs(os.path.join(OUT, 'dotgg'), exist_ok=True)
-    with open(os.path.join(OUT, 'dotgg', 'shares.json'), 'w', encoding='utf-8') as f:
-        json.dump({'source': url, 'site': 'ptcgpocket.gg (DotGG)', 'retrieved': time.strftime('%Y-%m-%d'),
-                   'period': '-'.join(map(str, latest)), 'decks': total,
-                   'shares': dict(sorted(shares.items(), key=lambda kv: -kv[1]))}, f, indent=1, ensure_ascii=False)
-    match_shares(shares)
+    write_if_changed(os.path.join(OUT, 'dotgg', 'shares.json'), json.dumps(
+        {'source': url, 'site': 'ptcgpocket.gg (DotGG)', 'retrieved': time.strftime('%Y-%m-%d'),
+         'period': '-'.join(map(str, latest)), 'decks': total,
+         'shares': dict(sorted(shares.items(), key=lambda kv: -kv[1]))}, indent=1, ensure_ascii=False) + '\n')
     return [(n, f'{100 * v:.1f} %', 'dotgg/shares.json', None) for n, v in sorted(shares.items(), key=lambda kv: -kv[1])[:15]]
 
 
@@ -180,25 +269,58 @@ def match_shares(shares):
             out[arch] = {'share': round(share, 4), 'decks': [os.path.relpath(f, ROOT).replace(os.sep, '/') for f in hit]}
         else:
             unmatched.append(arch)
-    with open(os.path.join(OUT, 'meta_share.json'), 'w', encoding='utf-8') as f:
-        json.dump({'archetypes': out, 'unmatched': unmatched[:40]}, f, indent=1, ensure_ascii=False)
+    write_if_changed(os.path.join(OUT, 'meta_share.json'),
+                     json.dumps({'archetypes': out, 'unmatched': unmatched[:40]}, indent=1, ensure_ascii=False) + '\n')
 
 
-SOURCES = {'game8': game8, 'dotgg': dotgg}
+def remove_stale(source, kept):
+    """Deletes the deck files of a source that its latest list no longer has."""
+    folder = os.path.join(OUT, source)
+    gone = []
+    for f in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        p = os.path.join(folder, f)
+        if f.endswith('.txt') and p not in kept:
+            os.remove(p)
+            gone.append(f[:-4])
+    return gone
+
+
+SOURCES = {'limitless': limitless, 'game8': game8, 'dotgg': dotgg}
 
 
 def main():
-    names = sys.argv[1:] or list(SOURCES)
-    for n in names:
+    args = sys.argv[1:]
+    summary = None
+    if '--summary' in args:
+        i = args.index('--summary')
+        summary = args[i + 1]
+        del args[i:i + 2]
+    report = [f'# Meta update {time.strftime("%Y-%m-%d")}', '']
+    for n in args or list(SOURCES):
         try:
             res = SOURCES[n]()
         except Exception as e:  # layout change, network: keep the files already there
             print(f'{n} : échec ({e})')
+            report += [f'## {n}: failed', '', f'`{e}` (previous files kept)', '']
             continue
-        ok = [r for r in res if r[2]]
-        print(f'{n} : {len(ok)} decks écrits sur {len(res)}')
+        kept = {r[2] for r in res if r[2] and r[2].endswith('.txt')}
+        gone = remove_stale(n, kept) if len(kept) >= 3 else []  # a near-empty result is suspicious
+        print(f'{n} : {len(kept) or len([r for r in res if r[2]])} decks sur {len(res)}'
+              + (f', retirés : {", ".join(gone)}' if gone else ''))
+        report += [f'## {n}', '']
         for name, tier, path, err in res:
             print(f'  [{tier or "-"}] {name}' + (f'  -> ignoré : {err}' if err else ''))
+            report.append(f'- [{tier or "-"}] {name}' + (f' — **skipped**: {err}' if err else ''))
+        if gone:
+            report.append(f'- removed (no longer listed): {", ".join(gone)}')
+        report.append('')
+    try:
+        match_shares(json.load(open(os.path.join(OUT, 'dotgg', 'shares.json'), encoding='utf-8'))['shares'])
+    except (OSError, ValueError, KeyError) as e:
+        print(f'meta_share.json : non mis à jour ({e})')
+    if summary:
+        with open(summary, 'a', encoding='utf-8') as f:
+            f.write('\n'.join(report) + '\n')
 
 
 if __name__ == '__main__':

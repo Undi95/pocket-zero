@@ -15,6 +15,21 @@ def binary():
     sys.exit(f'{EXE} introuvable : lance setup.ps1 (Windows) ou `cargo build --release --bin pocket-zero`.')
 
 
+NO_NETWORK = ("Réseau introuvable / network not found: {}\n"
+              "  run.bat update  -> télécharge le réseau publié / downloads the published network\n"
+              "  run.bat train   -> entraîne le tien / trains your own\n"
+              "  --weights FILE  -> un autre fichier / another file")
+
+
+def default_weights():
+    """The network used when no --weights is given: the most recently trained run
+    (runs/<run>/weights/latest.bin), else the published network that setup downloads
+    (weights/pocket-zero.bin)."""
+    import glob
+    trained = glob.glob(os.path.join(ROOT, 'runs', '*', 'weights', 'latest.bin'))
+    return max(trained, key=os.path.getmtime) if trained else os.path.join(ROOT, 'weights', 'pocket-zero.bin')
+
+
 def run(args, threads=None, stream=True):
     cmd = [binary()] + (['--threads', str(threads)] if threads else []) + [str(a) for a in args]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=None if stream else subprocess.PIPE,

@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import engine
 from . import highlights as highlights_mod
-from .decks import KINDS, LABELS_FILE
+from .decks import LABELS_FILE
 
 PAGE = r"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>pocket-zero decks</title>
@@ -49,14 +49,17 @@ textarea{width:100%;box-sizing:border-box;height:420px;font-family:ui-monospace,
 </style></head><body>
 <header><h1>pocket-zero · decklists</h1>
 <select id="decks"></select>
-<select id="lang"><option value="fr">Images en français</option><option value="en">Images en anglais</option></select>
-<button onclick="copyText()">Copier le texte</button><button onclick="window.print()">Imprimer / PDF</button>
-<a href="/train" style="margin-left:auto;color:var(--acc)">Entraînement en direct →</a></header>
-<main><div id="left"><textarea id="txt" spellcheck="false" placeholder="Colle une decklist (format du moteur : « 2 Oricorio A3 66 »)"></textarea>
-<p style="color:var(--mut);font-size:13px">Modifie le texte : la liste se met à jour. Lignes « # » = commentaires (sources).</p></div>
+<select id="lang"><option value="fr" data-i18n="img_fr"></option><option value="en" data-i18n="img_en"></option></select>
+<button onclick="copyText()" data-i18n="copy"></button><button onclick="window.print()" data-i18n="print"></button>
+<a href="/train" style="margin-left:auto;color:var(--acc)" data-i18n="to_train"></a>
+<button id="langbtn" onclick="toggleLang()" title="Langue / Language"></button></header>
+<main><div id="left"><textarea id="txt" spellcheck="false" data-i18n-ph="paste_ph"></textarea>
+<p style="color:var(--mut);font-size:13px" data-i18n="edit_hint"></p></div>
 <div><div id="checks"></div><p id="energy"></p><div id="grid"></div></div></main>
 <div id="zoom" onclick="zoomClose()"><img alt=""></div>
 <script>
+/*I18N*/
+const TITLE_KEY='t_decks';
 let CARDS={},ZI=-1;
 const $=id=>document.getElementById(id);
 function pad(n){return String(parseInt(n)).padStart(3,'0')}
@@ -85,8 +88,10 @@ function render(){const {cards,energy}=parse($('txt').value);const g=$('grid');g
   d.append(im);d.insertAdjacentHTML('beforeend',`<span class="n">×${c.n}</span><div class="t">${c.name} · ${c.id}</div>`);g.append(d)}
  const max=Math.max(0,...Object.values(names));
  const chk=(ok,txt)=>`<span class="${ok?'ok':'ko'}">${ok?'✓':'✗'} ${txt}</span>`;
- $('checks').innerHTML=chk(total==20,`${total}/20 cartes`)+chk(max<=2,'2 exemplaires max')+chk(basic>0,'Pokémon de base')+(unknown.length?chk(false,'inconnues : '+unknown.join(', ')):'');
- $('energy').textContent=energy?'Énergie : '+energy:''}
+ $('checks').innerHTML=chk(total==20,t('cards_n',total))+chk(max<=2,t('max2'))+chk(basic>0,t('basic'))+(unknown.length?chk(false,t('unknown')+unknown.join(', ')):'');
+ $('energy').textContent=energy?t('energy')+energy:''}
+function imgPref(){try{return localStorage.getItem('pz_img')}catch(e){return null}}
+window.onLang=()=>{if(!imgPref())$('lang').value=LANG;render()};
 function big(src){return src.replace('?width=300','?width=750')}
 function zoomOpen(i){const all=$('grid').querySelectorAll('img');if(i<0||i>=all.length)return;ZI=i;
  const z=$('zoom').querySelector('img');z.onerror=()=>{z.onerror=null;z.src=all[i].currentSrc||all[i].src};z.src=big(all[i].currentSrc||all[i].src);$('zoom').style.display='flex'}
@@ -98,7 +103,9 @@ async function load(p){const r=await fetch('/deck?path='+encodeURIComponent(p));
 (async()=>{CARDS=await (await fetch('/cards')).json();const list=await (await fetch('/decks')).json();
  let grp='';for(const p of list){const g=p.split('/').slice(0,-1).join('/');if(g!=grp){grp=g;const o=document.createElement('optgroup');o.label=g;$('decks').append(o)}
   const o=document.createElement('option');o.value=p;o.textContent=p.split('/').pop().replace('.txt','');$('decks').lastChild.append(o)}
- $('decks').onchange=e=>load(e.target.value);$('txt').oninput=render;$('lang').onchange=render;
+ applyI18n();$('lang').value=imgPref()||LANG;
+ $('decks').onchange=e=>load(e.target.value);$('txt').oninput=render;
+ $('lang').onchange=()=>{try{localStorage.setItem('pz_img',$('lang').value)}catch(e){}render()};
  const want=new URLSearchParams(location.search).get('deck');
  if(want){if(!list.includes(want)){const o=document.createElement('option');o.value=want;o.textContent=want.split('/').pop().replace('.txt','');$('decks').prepend(o)}
   $('decks').value=want;load(want)}else if(list.length)load(list[0])})();
@@ -127,83 +134,148 @@ pre{white-space:pre-wrap;font:12px ui-monospace,monospace;margin:0;color:var(--m
 .leg span{margin-right:12px;font-size:13px}.leg i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:4px}
 .scroll{overflow-x:auto}
 </style></head><body>
-<header><h1>pocket-zero · entraînement</h1><select id="run"></select>
-<span class="mut" id="upd"></span><a href="/" style="margin-left:auto">← Decklists</a></header>
+<header><h1 data-i18n="h_train"></h1><select id="run"></select>
+<span class="mut" id="upd"></span><a href="/" style="margin-left:auto" data-i18n="back"></a>
+<button id="langbtn" onclick="toggleLang()" title="Langue / Language"></button></header>
 <main>
 <div class="box wide" id="status"></div>
-<div class="box"><h2>Force du réseau</h2><div id="c_force"></div>
-<div class="leg"><span><i style="background:var(--acc)"></i>contre e3 (moyenne 5)</span><span><i style="background:var(--acc2)"></i>contre e2</span><span><i style="background:var(--mut)"></i>contre e3 (brut)</span></div></div>
-<div class="box"><h2>Écart aux vrais matchups (RMSE, plus bas = mieux)</h2><div id="c_rmse"></div>
-<div class="leg"><span><i style="background:var(--acc)"></i>RMSE</span><span><i style="background:var(--warn)"></i>référence e3 (11,5)</span></div></div>
-<div class="box"><h2>Pertes sur les parties de contrôle</h2><div id="c_loss"></div>
-<div class="leg"><span><i style="background:var(--acc)"></i>politique</span><span><i style="background:var(--acc2)"></i>valeur ×5</span></div></div>
-<div class="box"><h2 id="val_t">Dernière validation</h2><div id="val"></div></div>
-<div class="box wide"><h2>Decks qui gagnent le plus</h2>
+<div class="box"><h2 data-i18n="force"></h2><div id="c_force"></div>
+<div class="leg"><span><i style="background:var(--acc)"></i><em data-i18n="leg_e3avg"></em></span><span><i style="background:var(--acc2)"></i><em data-i18n="leg_e2"></em></span><span><i style="background:var(--mut)"></i><em data-i18n="leg_e3raw"></em></span></div></div>
+<div class="box"><h2 data-i18n="rmse_t"></h2><div id="c_rmse"></div>
+<div class="leg"><span><i style="background:var(--acc)"></i>RMSE</span><span><i style="background:var(--warn)"></i><em data-i18n="leg_ref"></em></span></div></div>
+<div class="box"><h2 data-i18n="loss_t"></h2><div id="c_loss"></div>
+<div class="leg"><span><i style="background:var(--acc)"></i><em data-i18n="leg_pol"></em></span><span><i style="background:var(--acc2)"></i><em data-i18n="leg_val"></em></span></div></div>
+<div class="box"><h2 id="val_t"></h2><div id="val"></div></div>
+<div class="box wide"><h2 data-i18n="top_t"></h2>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-<select id="win"><option value="1">dernière itération</option><option value="10" selected>10 dernières itérations</option><option value="0">tout le run</option></select>
-<select id="kind"><option value="all">tous les decks</option><option value="home">maison (créés par le bot)</option><option value="real">vrais decks (méta, sources, forgés, devs)</option></select>
-<select id="min"><option value="5">≥ 5 parties</option><option value="10" selected>≥ 10 parties</option><option value="30">≥ 30 parties</option><option value="100">≥ 100 parties</option></select></div>
+<select id="win"><option value="1" data-i18n="win1"></option><option value="10" selected data-i18n="win10"></option><option value="0" data-i18n="win0"></option></select>
+<select id="kind"><option value="all" data-i18n="k_all"></option><option value="home" data-i18n="k_home"></option><option value="real" data-i18n="k_real"></option></select>
+<select id="min"><option value="5"></option><option value="10" selected></option><option value="30"></option><option value="100"></option></select></div>
 <p class="mut" id="dk_info"></p>
-<div class="scroll"><table><thead><tr><th>#</th><th data-s="label">Deck</th><th data-s="kind">Type</th><th class="n" data-s="wins">Victoires</th><th class="n" data-s="games">Parties</th><th class="n" data-s="rate">Taux</th></tr></thead><tbody id="decks"></tbody></table></div>
-<p class="mut">Résultats de l'auto-jeu contre tout le pool d'entraînement (decks faibles compris, avec un peu d'exploration) : un repérage, pas une preuve. Clique un deck pour voir ses cartes ; à confirmer avec la forge (<code>--deck</code>) ou le ranked.</p></div>
-<div class="box"><h2 id="hl_t">Moments forts</h2><div id="hl"></div></div>
-<div class="box"><h2>Journal en direct</h2><pre id="tail"></pre></div>
+<div class="scroll"><table><thead><tr><th>#</th><th data-s="label">Deck</th><th data-s="kind">Type</th><th class="n" data-s="wins" data-i18n="th_wins"></th><th class="n" data-s="games" data-i18n="th_games"></th><th class="n" data-s="rate" data-i18n="th_rate"></th></tr></thead><tbody id="decks"></tbody></table></div>
+<p class="mut" data-i18n-html="top_note"></p></div>
+<div class="box"><h2 id="hl_t"></h2><div id="hl"></div></div>
+<div class="box"><h2 data-i18n="log_t"></h2><pre id="tail"></pre></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let RUN='',STATSV=null,SORT='score',ROWS=[],DK={};
+/*I18N*/
+const TITLE_KEY='t_train';
+const $=id=>document.getElementById(id);let RUN='',STATSV=null,SORT='score',ROWS=[],DK={},LAST=null;
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const loc=()=>LANG=='fr'?'fr-BE':'en-GB';
 function dur(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h} h ${String(m).padStart(2,'0')}`:`${m} min`}
-function chart(series,{lo,hi,pct,ref}={}){const W=640,H=200,L=38,R=8,T=8,B=22;const pts=series.flatMap(s=>s.pts);if(!pts.length)return '<p class="mut">Pas encore de données.</p>';
+function chart(series,{lo,hi,pct,ref}={}){const W=640,H=200,L=38,R=8,T=8,B=22;const pts=series.flatMap(s=>s.pts);if(!pts.length)return `<p class="mut">${t('no_data')}</p>`;
  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]).concat(ref!=null?[ref]:[]);const x0=Math.min(...xs),x1=Math.max(...xs,x0+1);
  let y0=lo??Math.min(...ys),y1=hi??Math.max(...ys);if(y1-y0<1e-9){y0-=1;y1+=1}const pad=(y1-y0)*.08;if(lo==null)y0-=pad;if(hi==null)y1+=pad;
  const X=x=>L+(x-x0)/(x1-x0)*(W-L-R),Y=y=>T+(1-(y-y0)/(y1-y0))*(H-T-B);let g='';
  for(let k=0;k<=4;k++){const v=y0+(y1-y0)*k/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--grid)"/><text x="${L-4}" y="${y+4}" text-anchor="end">${pct?Math.round(v*100)+'%':v.toFixed(v<2?2:1)}</text>`}
- g+=`<text x="${L}" y="${H-6}">${x0}</text><text x="${W-R}" y="${H-6}" text-anchor="end">itération ${x1}</text>`;
+ g+=`<text x="${L}" y="${H-6}">${x0}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${t('it_axis',x1)}</text>`;
  if(ref!=null)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(ref)}" y2="${Y(ref)}" stroke="var(--warn)" stroke-dasharray="5 4"/>`;
  for(const s of series){if(!s.pts.length)continue;const d=s.pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
   g+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w||2}" opacity="${s.o||1}"/>`;
   if(s.dots)g+=s.pts.map(p=>`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="2.5" fill="${s.c}"/>`).join('')}
  return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`}
 function avg(pts,k){return pts.map((p,i)=>{const w=pts.slice(Math.max(0,i-k+1),i+1);return [p[0],w.reduce((a,q)=>a+q[1],0)/w.length]})}
-function render(st){const m=st.metrics,it=m.map(r=>r.iteration);const col=k=>m.filter(r=>r[k]!=null).map(r=>[r.iteration,r[k]]);
+// Deck labels and log tags come from the training log (in French): kinds and tags are translated.
+function kindLabel(label){return LANG=='fr'?label:label.replace(/\((méta|lignée|paire|mutant|découverte|autre source|forgé|solo)\)$/,(m,k)=>'('+t('kind_'+({'méta':'meta','lignée':'line','paire':'pair','découverte':'cover','autre source':'src','forgé':'forge'}[k]||k))+')')}
+function render(st){LAST=st;const m=st.metrics;const col=k=>m.filter(r=>r[k]!=null).map(r=>[r.iteration,r[k]]);
  const e3=col('vs_e3');
  $('c_force').innerHTML=chart([{pts:e3,c:'var(--mut)',w:1,o:.6},{pts:col('vs_e2'),c:'var(--acc2)',w:1.5},{pts:avg(e3,5),c:'var(--acc)',w:2.5}],{pct:1});
  $('c_rmse').innerHTML=chart([{pts:col('rmse_limitless'),c:'var(--acc)',dots:1}],{ref:11.5,lo:0});
  $('c_loss').innerHTML=chart([{pts:col('val_policy_loss'),c:'var(--acc)'},{pts:col('val_value_loss').map(p=>[p[0],p[1]*5]),c:'var(--acc2)'}]);
  const s=st.status;let h='';
  if(s){const best=e3.length?e3.reduce((a,b)=>b[1]>a[1]?b:a):null,last5=e3.slice(-5),m5=last5.length?last5.reduce((a,p)=>a+p[1],0)/last5.length:null;
-  const state=s.finished?'<span class="ok">terminé</span>':s.alive?'<span class="ok">● en cours</span>':`<span class="ko">● à l'arrêt</span> (dernier message il y a ${dur(s.quiet)})`;
-  const eta=s.eta!=null&&!s.finished&&s.alive?`<b>${new Date(Date.now()+s.eta*1000).toLocaleString('fr-BE',{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><span class="mut">dans ${dur(s.eta)}</span>`:'<b>-</b>';
-  h=`<div class="kpi"><div><span class="mut">Itération</span><b>${s.iteration} / ${s.total}</b>${state}</div>
-  <div><span class="mut">Étape</span><b style="font-size:16px">${esc(s.phase)}</b><span class="mut">${s.alive&&!s.finished?"depuis "+dur(s.elapsed):"(interrompu)"}</span></div>
-  <div><span class="mut">Durée d'une itération</span><b>${s.avg?dur(s.avg):'-'}</b><span class="mut">moyenne des 5 dernières</span></div>
-  <div><span class="mut">Fin estimée</span>${eta}</div>
-  <div><span class="mut">Contre e3 (moy. 5)</span><b>${m5!=null?(m5*100).toFixed(1)+' %':'-'}</b><span class="mut">record ${best?(best[1]*100).toFixed(1)+' % (it. '+best[0]+')':'-'}</span></div></div>
+  const state=s.finished?`<span class="ok">${t('st_done')}</span>`:s.alive?`<span class="ok">${t('st_run')}</span>`:`<span class="ko">${t('st_stop')}</span> ${t('st_quiet',dur(s.quiet))}`;
+  const eta=s.eta!=null&&!s.finished&&s.alive?`<b>${new Date(Date.now()+s.eta*1000).toLocaleString(loc(),{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><span class="mut">${t('in_t',dur(s.eta))}</span>`:'<b>-</b>';
+  h=`<div class="kpi"><div><span class="mut">${t('k_it')}</span><b>${s.iteration} / ${s.total}</b>${state}</div>
+  <div><span class="mut">${t('k_step')}</span><b style="font-size:16px">${t('ph_'+s.phase)}</b><span class="mut">${s.alive&&!s.finished?t('since',dur(s.elapsed)):t('interrupted')}</span></div>
+  <div><span class="mut">${t('k_dur')}</span><b>${s.avg?dur(s.avg):'-'}</b><span class="mut">${t('k_dur2')}</span></div>
+  <div><span class="mut">${t('k_eta')}</span>${eta}</div>
+  <div><span class="mut">${t('k_e3')}</span><b>${m5!=null?(m5*100).toFixed(1)+' %':'-'}</b><span class="mut">${t('k_best')} ${best?(best[1]*100).toFixed(1)+' % (it. '+best[0]+')':'-'}</span></div></div>
   <div class="bar"><i style="width:${100*Math.min(1,(s.iteration-1)/s.total)}%"></i></div>`}
- $('status').innerHTML=h||'<p class="mut">Pas de journal pour ce run.</p>';
- const v=st.validation;$('val_t').textContent=v&&v.iteration?`Validation de l'itération ${v.iteration}`:'Dernière validation';
- $('val').innerHTML=v&&v.rows.length?`<table><tr><th>Matchup</th><th class="n">Bot</th><th class="n">Réel</th><th class="n">Écart</th></tr>`+v.rows.map(r=>{const a=Math.abs(r.gap),c=a>10?'ko':a>5?'warn':'ok';
+ $('status').innerHTML=h||`<p class="mut">${t('no_log')}</p>`;
+ const v=st.validation;$('val_t').textContent=v&&v.iteration?t('val_it',v.iteration):t('val_t');
+ $('val').innerHTML=v&&v.rows.length?`<table><tr><th>Matchup</th><th class="n">Bot</th><th class="n">${t('real')}</th><th class="n">${t('gap')}</th></tr>`+v.rows.map(r=>{const a=Math.abs(r.gap),c=a>10?'ko':a>5?'warn':'ok';
   return `<tr><td>${esc(r.a)} <span class="mut">vs</span> ${esc(r.b)}</td><td class="n">${r.sim.toFixed(1)}</td><td class="n">${r.real.toFixed(1)}</td><td class="n ${c}">${r.gap>0?'+':''}${r.gap.toFixed(1)}</td></tr>`}).join('')+
-  `</table>${v.rmse!=null?`<p class="mut">RMSE ${v.rmse.toFixed(1)} points (e3 : 11-12). Écart = bot − réel, en points de % pour le premier deck.</p>`:''}`:'<p class="mut">Pas encore de validation.</p>';
- $('hl_t').textContent=st.highlights.title||'Moments forts';
- $('hl').innerHTML=st.highlights.lines.length?'<table>'+st.highlights.lines.map(l=>`<tr><td class="mut">${esc(l[0])}</td><td>${esc(l[1])}</td></tr>`).join('')+'</table>':'<p class="mut">-</p>';
+  `</table>${v.rmse!=null?`<p class="mut">${t('rmse_note',v.rmse.toFixed(1))}</p>`:''}`:`<p class="mut">${t('no_val')}</p>`;
+ const hl=st.highlights;$('hl_t').textContent=hl.iteration?t('hl_it',hl.iteration):t('hl_t');
+ $('hl').innerHTML=hl.lines.length?(LANG=='fr'?'':`<p class="mut">${t('hl_note')}</p>`)+'<table>'+hl.lines.map(l=>`<tr><td class="mut">${esc(T[LANG]['tag_'+l[0].toLowerCase()]||l[0])}</td><td>${esc(l[1])}</td></tr>`).join('')+'</table>':'<p class="mut">-</p>';
  $('tail').textContent=st.tail.join('\n');
- $('upd').textContent='mis à jour à '+new Date().toLocaleTimeString('fr-BE')+' · rafraîchi toutes les 20 s'}
+ $('upd').textContent=t('upd',new Date().toLocaleTimeString(loc()))}
 function drawDecks(){const rows=[...ROWS].sort((a,b)=>SORT=='label'||SORT=='kind'?a[SORT].localeCompare(b[SORT]):b[SORT]-a[SORT]||b.games-a.games);
- $('decks').innerHTML=rows.length?rows.map((r,i)=>`<tr><td class="mut">${i+1}</td><td>${r.path?`<a href="/?deck=${encodeURIComponent(r.path)}" target="_blank">${esc(r.label)}</a>`:esc(r.label)}</td><td class="mut">${esc(r.kind)}</td><td class="n">${r.wins}</td><td class="n">${r.games}</td><td class="n"><b>${(100*r.rate).toFixed(0)} %</b></td></tr>`).join(''):
- `<tr><td colspan="6" class="mut">${DK.iterations?`Aucun deck avec au moins ${$('min').value} parties (${DK.hidden} en dessous) : baisse le minimum ou attends quelques itérations.`:'Pas encore de résultats : ils arrivent à la fin de l\'auto-jeu de chaque itération.'}</td></tr>`}
+ $('decks').innerHTML=rows.length?rows.map((r,i)=>`<tr><td class="mut">${i+1}</td><td>${r.path?`<a href="/?deck=${encodeURIComponent(r.path)}" target="_blank">${esc(kindLabel(r.label))}</a>`:esc(kindLabel(r.label))}</td><td class="mut">${esc(T[LANG]['kind_'+r.kind]||r.kind)}</td><td class="n">${r.wins}</td><td class="n">${r.games}</td><td class="n"><b>${(100*r.rate).toFixed(0)} %</b></td></tr>`).join(''):
+ `<tr><td colspan="6" class="mut">${DK.iterations?t('dk_empty_min',$('min').value,DK.hidden):t('dk_empty')}</td></tr>`;
+ $('dk_info').textContent=DK.iterations?t('dk_info',DK.iterations,DK.first,DK.last):''}
 async function loadDecks(){const q=new URLSearchParams({run:RUN,window:$('win').value,kind:$('kind').value,min:$('min').value});
- DK=await (await fetch('/train/decks?'+q)).json();ROWS=DK.rows;
- $('dk_info').textContent=DK.iterations?`${DK.iterations} itération${DK.iterations>1?'s':''} enregistrée${DK.iterations>1?'s':''} (${DK.first} à ${DK.last}). Un deck maison joue ~8 parties par itération, une liste méta ~400 (avec ses copies). Classement par taux corrigé : 5 victoires et 5 défaites fictives en plus, pour qu'un 3 sur 3 ne passe pas devant un 60 sur 100.`:'';drawDecks()}
+ DK=await (await fetch('/train/decks?'+q)).json();ROWS=DK.rows;drawDecks()}
 async function tick(){if(!RUN)return;try{const st=await (await fetch('/train/state?run='+encodeURIComponent(RUN))).json();render(st);
- if(st.stats_version!==STATSV){STATSV=st.stats_version;loadDecks()}}catch(e){$('upd').textContent='serveur injoignable, nouvel essai dans 20 s'}}
+ if(st.stats_version!==STATSV){STATSV=st.stats_version;loadDecks()}}catch(e){$('upd').textContent=t('offline')}}
+function minLabels(){for(const o of $('min').options)o.textContent=t('min_n',o.value)}
+window.onLang=()=>{minLabels();if(LAST)render(LAST);drawDecks()};
 document.querySelectorAll('th[data-s]').forEach(th=>th.onclick=()=>{SORT=th.dataset.s;drawDecks()});
 ['win','kind','min'].forEach(id=>$(id).onchange=loadDecks);
+applyI18n();minLabels();
 (async()=>{const runs=await (await fetch('/train/runs')).json();for(const r of runs)$('run').append(new Option(r,r));
  const want=new URLSearchParams(location.search).get('run');RUN=want&&runs.includes(want)?want:runs[0]||'';$('run').value=RUN;
  $('run').onchange=e=>{RUN=e.target.value;STATSV=null;history.replaceState(null,'','?run='+encodeURIComponent(RUN));tick()};
  tick();setInterval(tick,20000)})();
 </script></body></html>"""
+
+# Both pages: French or English (browser language by default, the FR/EN button switches and
+# remembers). Texts from the training log (highlights, journal) stay in French.
+I18N = r"""const T={
+fr:{t_decks:'pocket-zero decks',t_train:'pocket-zero entraînement',img_fr:'Images en français',img_en:'Images en anglais',copy:'Copier le texte',print:'Imprimer / PDF',
+to_train:'Entraînement en direct →',paste_ph:'Colle une decklist (format du moteur : « 2 Oricorio A3 66 »)',
+edit_hint:'Modifie le texte : la liste se met à jour. Lignes « # » = commentaires (sources). Clic sur une carte : zoom (flèches, Échap).',
+cards_n:'{0}/20 cartes',max2:'2 exemplaires max',basic:'Pokémon de base',unknown:'inconnues : ',energy:'Énergie : ',
+h_train:'pocket-zero · entraînement',back:'← Decklists',force:'Force du réseau',leg_e3avg:'contre e3 (moyenne 5)',leg_e2:'contre e2',leg_e3raw:'contre e3 (brut)',
+rmse_t:'Écart aux vrais matchups (RMSE, plus bas = mieux)',leg_ref:'référence e3 (11,5)',loss_t:'Pertes sur les parties de contrôle',leg_pol:'politique',leg_val:'valeur ×5',
+val_t:'Dernière validation',val_it:"Validation de l'itération {0}",top_t:'Decks qui gagnent le plus',win1:'dernière itération',win10:'10 dernières itérations',win0:'tout le run',
+k_all:'tous les decks',k_home:'maison (créés par le bot)',k_real:'vrais decks (méta, sources, forgés, devs)',min_n:'≥ {0} parties',th_wins:'Victoires',th_games:'Parties',th_rate:'Taux',
+top_note:"Résultats de l'auto-jeu contre tout le pool d'entraînement (decks faibles compris, avec un peu d'exploration) : un repérage, pas une preuve. Clique un deck pour voir ses cartes ; à confirmer avec la forge (<code>--deck</code>) ou le ranked.",
+hl_t:'Moments forts',hl_it:"Moments forts de l'itération {0}",hl_note:'',log_t:'Journal en direct',
+k_it:'Itération',k_step:'Étape',k_dur:"Durée d'une itération",k_dur2:'moyenne des 5 dernières',k_eta:'Fin estimée',k_e3:'Contre e3 (moy. 5)',k_best:'record',
+st_done:'terminé',st_run:'● en cours',st_stop:"● à l'arrêt",st_quiet:'(dernier message il y a {0})',in_t:'dans {0}',since:'depuis {0}',interrupted:'(interrompu)',
+ph_selfplay:'Auto-jeu sur les GPU',ph_train:'Entraînement puis évaluation',ph_valid:'Validation (vrais matchups)',ph_end:"Fin de l'itération",ph_done:'Terminé',
+no_log:'Pas de journal pour ce run.',no_data:'Pas encore de données.',no_val:'Pas encore de validation.',real:'Réel',gap:'Écart',
+rmse_note:'RMSE {0} points (e3 : 11-12). Écart = bot − réel, en points de % pour le premier deck.',upd:'mis à jour à {0} · rafraîchi toutes les 20 s',
+offline:'serveur injoignable, nouvel essai dans 20 s',it_axis:'itération {0}',
+dk_info:"{0} itération(s) enregistrée(s) ({1} à {2}). Un deck maison joue ~8 parties par itération, une liste méta ~400 (avec ses copies). Classement par taux corrigé : 5 victoires et 5 défaites fictives en plus, pour qu'un 3 sur 3 ne passe pas devant un 60 sur 100.",
+dk_empty_min:'Aucun deck avec au moins {0} parties ({1} en dessous) : baisse le minimum ou attends quelques itérations.',
+dk_empty:"Pas encore de résultats : ils arrivent à la fin de l'auto-jeu de chaque itération.",
+kind_meta:'méta',kind_src:'autre source',kind_forge:'forgé',kind_line:'lignée',kind_pair:'paire',kind_mutant:'mutant',kind_cover:'découverte',kind_solo:'solo',
+tag_top:'Top',tag_meta:'Méta',tag_devs:'Devs',tag_pepites:'Pépites',tag_serie:'Série',tag_eclair:'Éclair',tag_exploit:'Exploit',tag_marathon:'Marathon',tag_depart:'Départ',tag_record:'Record'},
+en:{t_decks:'pocket-zero decks',t_train:'pocket-zero training',img_fr:'French card images',img_en:'English card images',copy:'Copy text',print:'Print / PDF',
+to_train:'Live training →',paste_ph:'Paste a decklist (engine format: "2 Oricorio A3 66")',
+edit_hint:'Edit the text: the list updates. "#" lines are comments (sources). Click a card to zoom (arrows, Esc).',
+cards_n:'{0}/20 cards',max2:'2 copies max',basic:'Basic Pokémon',unknown:'unknown: ',energy:'Energy: ',
+h_train:'pocket-zero · training',back:'← Decklists',force:'Network strength',leg_e3avg:'vs e3 (5-iteration mean)',leg_e2:'vs e2',leg_e3raw:'vs e3 (raw)',
+rmse_t:'Gap to real matchups (RMSE, lower is better)',leg_ref:'e3 reference (11.5)',loss_t:'Losses on held-out games',leg_pol:'policy',leg_val:'value ×5',
+val_t:'Latest validation',val_it:'Validation at iteration {0}',top_t:'Decks that win the most',win1:'last iteration',win10:'last 10 iterations',win0:'whole run',
+k_all:'all decks',k_home:'homemade (built by the bot)',k_real:'real decks (meta, sources, forged, devs)',min_n:'≥ {0} games',th_wins:'Wins',th_games:'Games',th_rate:'Rate',
+top_note:'Self-play results against the whole training pool (weak decks included, with a little exploration): a scouting tool, not a proof. Click a deck to see its cards; confirm with the forge (<code>--deck</code>) or the ranked simulation.',
+hl_t:'Highlights',hl_it:'Highlights of iteration {0}',hl_note:'From the training log (in French).',log_t:'Live log',
+k_it:'Iteration',k_step:'Step',k_dur:'Iteration time',k_dur2:'mean of the last 5',k_eta:'Estimated end',k_e3:'vs e3 (5-it. mean)',k_best:'best',
+st_done:'finished',st_run:'● running',st_stop:'● stopped',st_quiet:'(last message {0} ago)',in_t:'in {0}',since:'for {0}',interrupted:'(interrupted)',
+ph_selfplay:'Self-play on the GPUs',ph_train:'Training, then evaluation',ph_valid:'Validation (real matchups)',ph_end:'End of iteration',ph_done:'Finished',
+no_log:'No log for this run.',no_data:'No data yet.',no_val:'No validation yet.',real:'Real',gap:'Gap',
+rmse_note:'RMSE {0} points (e3: 11-12). Gap = bot − real, in percentage points for the first deck.',upd:'updated at {0} · refreshed every 20 s',
+offline:'server unreachable, retrying in 20 s',it_axis:'iteration {0}',
+dk_info:'{0} iteration(s) recorded ({1} to {2}). A homemade deck plays ~8 games per iteration, a meta list ~400 (with its copies). Ranked by a corrected rate: 5 wins and 5 losses added, so that a 3 out of 3 does not beat a 60 out of 100.',
+dk_empty_min:'No deck with at least {0} games ({1} below): lower the minimum or wait a few iterations.',
+dk_empty:"No results yet: they arrive at the end of each iteration's self-play.",
+kind_meta:'meta',kind_src:'other source',kind_forge:'forged',kind_line:'line',kind_pair:'pair',kind_mutant:'mutant',kind_cover:'discovery',kind_solo:'solo',
+tag_top:'Top',tag_meta:'Meta',tag_devs:'Devs',tag_pepites:'Gems',tag_serie:'Streak',tag_eclair:'Fastest',tag_exploit:'Upset',tag_marathon:'Marathon',tag_depart:'First player',tag_record:'Record'}};
+let LANG=(()=>{try{const l=localStorage.getItem('pz_lang');if(l=='fr'||l=='en')return l}catch(e){}return (navigator.language||'en').toLowerCase().startsWith('fr')?'fr':'en'})();
+function t(k,...a){let s=T[LANG][k]??T.en[k]??k;a.forEach((v,i)=>{s=s.replace('{'+i+'}',v)});return s}
+function applyI18n(){document.documentElement.lang=LANG;document.title=t(TITLE_KEY);
+ document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=t(e.dataset.i18n)});
+ document.querySelectorAll('[data-i18n-ph]').forEach(e=>{e.placeholder=t(e.dataset.i18nPh)});
+ document.querySelectorAll('[data-i18n-html]').forEach(e=>{e.innerHTML=t(e.dataset.i18nHtml)});
+ const b=document.getElementById('langbtn');if(b)b.textContent=LANG=='fr'?'🌐 English':'🌐 Français'}
+function toggleLang(){LANG=LANG=='fr'?'en':'fr';try{localStorage.setItem('pz_lang',LANG)}catch(e){}applyI18n();if(window.onLang)window.onLang()}"""
+PAGE = PAGE.replace('/*I18N*/', I18N)
+TRAIN = TRAIN.replace('/*I18N*/', I18N)
 
 HEADER = re.compile(r'^(\d\d):(\d\d):(\d\d) === itération (\d+)/(\d+)')
 VALID = re.compile(r'(\S+)\s+vs\s+(\S+)\s+sim\s+([\d.]+)\s+réel\s+([\d.]+)\s+écart\s+([+-]?[\d.]+)')
@@ -240,22 +312,22 @@ def run_state(name):
         block = lines[i0 + 1:]
         has = lambda txt: any(txt in l for l in block)
         if has('terminé. Réseau final'):
-            phase = 'Terminé'
+            phase = 'done'
         elif not has('self-play :'):
-            phase = 'Auto-jeu sur les GPU'
+            phase = 'selfplay'
         elif not has('nouveau réseau'):
-            phase = 'Entraînement puis évaluation'
+            phase = 'train'
         elif has('validation contre') and not has('écart moyen'):
-            phase = 'Validation (vrais matchups)'
+            phase = 'valid'
         else:
-            phase = "Fin de l'itération"
+            phase = 'end'
         now = time.localtime()
         elapsed = (now.tm_hour * 3600 + now.tm_min * 60 + now.tm_sec - t0) % 86400
         avg = sum(durations[-5:]) / len(durations[-5:]) if durations else None
         quiet = time.time() - os.path.getmtime(log_f)
         status = {'iteration': it, 'total': total, 'phase': phase, 'elapsed': elapsed, 'avg': avg,
                   'eta': max(0, avg * (total - it + 1) - elapsed) if avg else None, 'quiet': quiet,
-                  'alive': quiet < max(1800, 1.5 * (avg or 0)), 'finished': phase == 'Terminé',
+                  'alive': quiet < max(1800, 1.5 * (avg or 0)), 'finished': phase == 'done',
                   'selfplay_done': has('self-play :')}
     validation = {'iteration': None, 'rows': [], 'rmse': None}
     start = max((i for i, l in enumerate(lines) if 'validation contre les vrais matchups' in l), default=None)
@@ -269,10 +341,11 @@ def run_state(name):
                 m = re.search(r'RMSE\) : ([\d.]+)', l)
                 validation['rmse'] = float(m[1]) if m else None
                 break
-    highlights = {'title': '', 'lines': []}
+    highlights = {'iteration': None, 'lines': []}
     start = max((i for i, l in enumerate(lines) if '---- Moments forts' in l), default=None)
     if start is not None:
-        highlights['title'] = lines[start].split('----')[1].strip()
+        m = re.search(r"itération (\d+)", lines[start])
+        highlights['iteration'] = int(m[1]) if m else None
         for l in lines[start + 1:]:
             m = TAG.match(l)
             if not m:
@@ -360,7 +433,7 @@ def top_decks(name, window, kind, min_games):
             hidden += 1
             continue
         path = os.path.join(d, 'decks', stem + '.txt')
-        rows.append({'label': label, 'kind': KINDS.get(k, k), 'wins': w, 'games': n, 'rate': w / n,
+        rows.append({'label': label, 'kind': k, 'wins': w, 'games': n, 'rate': w / n,
                      'score': (w + 5) / (n + 10),  # a few games say little: pulled towards 50 %
                      'path': f'runs/{name}/decks/{stem}.txt' if os.path.exists(path) else None})
     rows.sort(key=lambda r: -r['score'])

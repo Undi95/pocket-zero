@@ -1,0 +1,42 @@
+name: Meta update
+
+# Twice a week, refreshes the meta decklists (Limitless tournaments, Game8 tier list, DotGG meta
+# shares) in lab/decks/sources/ and commits them: `run.bat update` brings them to every PC.
+# Lists with a card the engine does not know yet (new expansion) are skipped and listed in the
+# run summary. Also runs on demand: Actions > Meta update > Run workflow.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1,4'  # Monday and Thursday, 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meta-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch the meta
+        run: python lab/tools/meta_sources.py --summary "$GITHUB_STEP_SUMMARY"
+      - name: Commit the changes
+        run: |
+          git add lab/decks/sources
+          if git diff --cached --quiet; then
+            echo "Meta unchanged" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "pocket-zero-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -q -m "Meta: automatic update $(date -u +%Y-%m-%d)"
+          git pull -q --rebase origin "${GITHUB_REF_NAME}"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"

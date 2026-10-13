@@ -1,0 +1,22 @@
+# archetype: Mega Blaziken ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/hakitcgp/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-03
+# share: 2.4 % des joueurs (51 sur 2138, 20 tournois de 14 jours)
+# win_rate: 49.8 %
+# list: hakitcgp, 6e sur 181 (7-2-2), Dark League Pocket Tournament 100$usd
+Energy: Fire
+2 Torchic B1 33
+2 Mega Blaziken ex B1 36
+1 Heatmor B1 44
+1 Castform Sunny Form B3 24
+1 Rocky Helmet A2 148
+1 Cyrus A2 150
+2 Rare Candy A3 144
+2 Flame Patch B1 217
+2 Copycat B1 225
+1 Hiking Trail B2b 69
+1 Field Blower B3 147
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

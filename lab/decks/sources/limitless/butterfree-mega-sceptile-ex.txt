@@ -1,0 +1,23 @@
+# archetype: Butterfree Mega Sceptile ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6a8744cd78baaa6d1c2247fe/player/liquidhunter/decklist
+# retrieved: 2026-10-13
+# published: 2026-10-02
+# share: 5.3 % des joueurs (114 sur 2138, 20 tournois de 14 jours)
+# win_rate: 47.5 %
+# list: liquidhunter, 18e sur 207 (7-1-1), Umbreon99's Aura Sphere #7: $50 USD + Oak
+Energy: Grass
+1 Treecko B3 5
+1 Grovyle B3 6
+1 Mega Sceptile ex B3 8
+2 Caterpie B3b 1
+2 Metapod B3b 2
+2 Butterfree B3b 3
+1 Erika A1 219
+1 Sabrina A1 225
+1 Cyrus A2 150
+1 Leaf Cape A3 147
+1 Copycat B1 225
+2 Quick-Grow Extract B1a 67
+2 Fragrant Forest B3 153
+2 Professor's Research P-A 7

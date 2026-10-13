@@ -1,6 +1,6 @@
 """Deck search over the WHOLE card pool, played by the trained network.
 
-    python -m zero.search --name recherche1 [--weights runs\\principal\\weights\\latest.bin]
+    python -m zero.search --name recherche1 [--weights runs\\<run>\\weights\\latest.bin]
                           [--screen z0] [--search z8] [--final z32] [--gens 25] [--lock "B1a 42,B1a 62"]
 
 Runs lab/search/pipeline.py (screening of every attacker line, pairs, genetic search with any
@@ -12,13 +12,14 @@ import os
 import subprocess
 import sys
 
+from . import engine
 from .engine import ROOT
 
 
 def main():
     ap = argparse.ArgumentParser(description='Recherche de decks avec le bot pocket-zero')
     ap.add_argument('--name', default='recherche')
-    ap.add_argument('--weights', default=os.path.join(ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
+    ap.add_argument('--weights', default=engine.default_weights())
     # Network of iteration 81 against e3 (400 games): z0 43.8 %, z8 54.8 %, z32 56.6 %.
     ap.add_argument('--screen', default='z0', help='joueur du criblage (z0 = politique du réseau, rapide)')
     ap.add_argument('--search', default='z8',
@@ -34,7 +35,7 @@ def main():
     a = ap.parse_args()
 
     if not os.path.exists(a.weights):
-        sys.exit(f"Réseau introuvable : {a.weights}\nEntraîne d'abord le bot (run.bat train) ou passe --weights.")
+        sys.exit(engine.NO_NETWORK.format(a.weights))
     env = dict(os.environ)
     env.update({
         'POCKET_ZERO_WEIGHTS': os.path.abspath(a.weights),

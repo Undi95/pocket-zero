@@ -96,7 +96,7 @@ def matrix(decks, player, games, threads, cache_f, weights=None):
 def main():
     ap = argparse.ArgumentParser(description='Saison de ranked simulée (règles officielles)')
     ap.add_argument('--player', default='z64', help='bot des deux côtés (z64 : 64 simulations, sur GPU si disponible)')
-    ap.add_argument('--weights', default=os.path.join(engine.ROOT, 'runs', 'principal', 'weights', 'latest.bin'))
+    ap.add_argument('--weights', default=engine.default_weights())
     ap.add_argument('--games', type=int, default=20, help='parties par paire de decks pour la matrice')
     ap.add_argument('--players', type=int, default=5000)
     ap.add_argument('--matches', type=int, default=120, help='parties classées par joueur et par saison')

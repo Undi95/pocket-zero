@@ -1,5 +1,7 @@
 # Pocket Deck Lab
 
+*Notes d'audit du moteur, en français / engine audit notes, in French. Utilisation : [docs/GUIDE.fr.md](../docs/GUIDE.fr.md) · usage: [docs/GUIDE.en.md](../docs/GUIDE.en.md).*
+
 Fork de [deckgym-core](https://github.com/bcollazo/deckgym-core) (moteur Rust de Pokémon TCG Pocket, AGPL-3.0).
 Objectif : un simulateur assez fidèle pour construire des decks automatiquement — decks 100 % IA contre le méta,
 contre des decks aléatoires, ou construits autour d'une ou plusieurs cartes imposées.
@@ -23,14 +25,17 @@ Le goulot d'étranglement est la qualité du bot, pas les règles.
 
 ```
 lab/
-  decks/meta/      listes réelles de tournoi (Limitless) : butterfree, lucario, altaria, dedenne, hoopa
+  decks/meta/      17 listes réelles de tournoi (Limitless), fixes : validation, évaluation, pool d'entraînement
+  decks/sources/   listes méta mises à jour automatiquement (Limitless, Game8, DotGG) : voir decks/sources/README.md
+  decks/solo/      les 466 decks du mode solo
   decks/           decks expérimentaux
   tools/validate.py       compare le simulateur aux vrais matchups : python3 lab/tools/validate.py e3 100
   tools/wire_reprints.py  rebranche les réimpressions de dresseurs non implémentées
   tools/audit_effects.py  audit statique texte des cartes <-> code (montants, qualificatifs) : à relancer à chaque extension
   tools/audit_reprints.py logique qui cite des cartes par numéro mais oublie des impressions de la même carte
   tools/fuzz.py           decks aléatoires de tout le pool les uns contre les autres, détecte les crashs
-  search/pipeline.py      recherche de decks (voir l'en-tête du fichier), lancée par le workflow « Deck search »
+  search/pipeline.py      recherche de decks (voir l'en-tête du fichier), lancée par run.bat search
+  tools/meta_sources.py   récupère la méta (run.bat meta, workflow « Meta update » deux fois par semaine)
 ```
 
 ## Audit du moteur (9 octobre 2026)

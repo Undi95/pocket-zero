@@ -1,24 +1,34 @@
-# Decks méta hors Limitless
+# Meta decklists / Listes méta
 
-Plusieurs sources valent mieux qu'une : chaque source a son dossier, chaque fichier garde en
-tête (`#`, ignoré par le moteur) le site, l'URL, la date de récupération et de publication, le
-tier ou la part de méta. Les listes Limitless restent dans `lab/decks/meta/` pour comparer.
+Updated automatically twice a week by the **Meta update** GitHub workflow
+(`.github/workflows/meta-update.yml`), or right now with `run.bat meta`. Every file starts with
+`#` lines (ignored by the engine): site, source URL, retrieval and publication dates, tier or
+share.
 
-| Source | Ce qu'elle donne | Fichiers |
+*Mises à jour automatiquement deux fois par semaine par le workflow GitHub **Meta update**, ou
+tout de suite avec `run.bat meta`. Chaque fichier commence par des lignes `#` (ignorées par le
+moteur) : site, URL de la source, dates de récupération et de publication, tier ou part.*
+
+| Source | What it gives / Ce qu'elle donne | Files / Fichiers |
 |---|---|---|
-| Game8, « Best Decks Tier List » | 8 listes complètes (tiers S et A+), format Deluxe Pack Mega (B4b), mise à jour du 30/09/2026 | `game8/*.txt` |
-| ptcgpocket.gg (DotGG), API publique de la tier list | part de méta de chaque archétype (decks enregistrés, période la plus récente, ex. `b4a-day10`) ; pas de listes (réservées aux abonnés) | `dotgg/shares.json` |
+| [Limitless](https://play.limitlesstcg.com/) public API | standard tournaments of the last 14 days (≥ 32 players): for each archetype ≥ 1 % of the players, the list of its best finisher, its share and win rate / tournois standard des 14 derniers jours : pour chaque archétype ≥ 1 %, la liste de son meilleur joueur, sa part et son taux de victoire | `limitless/*.txt`, `limitless/shares.json` |
+| [Game8](https://game8.co/games/Pokemon-TCG-Pocket/archives/477754) "Best Decks Tier List" | complete lists of the S and A tiers / listes complètes des tiers S et A | `game8/*.txt` |
+| [ptcgpocket.gg (DotGG)](https://ptcgpocket.gg/) public tier-list API | meta share of each archetype (no lists: premium) / part de méta de chaque archétype (pas de listes : réservées aux abonnés) | `dotgg/shares.json` |
 
-`meta_share.json` répartit la part de chaque archétype DotGG sur les fichiers de decks (Limitless
-et autres sources) qui contiennent tous les Pokémon de son nom : c'est la population du ranked
-simulé (`run.bat ranked`). Les archétypes sans liste connue sont dans `unmatched`.
+`meta_share.json` spreads each DotGG archetype's share over the deck files (Limitless reference
+lists in `lab/decks/meta/` and the lists here) that contain every Pokémon of its name: it is the
+population of the simulated ranked and the meta of the forge. Archetypes with no known list are
+in `unmatched`. / *répartit la part de chaque archétype DotGG sur les listes qui contiennent tous
+les Pokémon de son nom : la population du ranked simulé et la méta de la forge.*
 
-## Mettre à jour (à chaque extension ou changement de méta)
+Rules of the update / Règles de la mise à jour:
 
-```
-.venv\Scripts\python lab\tools\meta_sources.py
-```
+- a file is rewritten only when its cards change / un fichier n'est réécrit que si ses cartes changent;
+- a deck that leaves a source's list is removed / un deck qui sort de la liste d'une source est supprimé;
+- a list with a card the engine does not know yet (new expansion) is skipped and reported /
+  une liste avec une carte inconnue du moteur (nouvelle extension) est ignorée et signalée;
+- a source whose page layout changed fails without touching its files / une source dont la page
+  a changé échoue sans toucher à ses fichiers.
 
-Re-télécharge toutes les sources, réécrit les listes et `meta_share.json`. Une source dont la
-page a changé de forme affiche « échec » et ses anciens fichiers restent en place. Pour ajouter
-une source : une fonction dans `lab/tools/meta_sources.py`, déclarée dans `SOURCES`.
+Adding a source / Ajouter une source: a function in `lab/tools/meta_sources.py` that writes its
+decks with `write_deck(...)`, declared in `SOURCES`.

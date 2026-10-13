@@ -1,0 +1,1250 @@
+{
+ "site": "Limitless (play.limitlesstcg.com)",
+ "source": "https://play.limitlesstcg.com/api/tournaments?game=POCKET",
+ "retrieved": "2026-10-13",
+ "days": 14,
+ "tournaments": 20,
+ "players": 2138,
+ "shares": {
+  "Mega Altaria ex Espeon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Suicune ex Baxcalibur": {
+   "share": 0.08,
+   "players": 171,
+   "win_rate": 0.504
+  },
+  "Mega Lucario ex Lucario": {
+   "share": 0.065,
+   "players": 139,
+   "win_rate": 0.475
+  },
+  "Butterfree Mega Sceptile ex": {
+   "share": 0.0533,
+   "players": 114,
+   "win_rate": 0.475
+  },
+  "Dragonair Mega Rayquaza ex": {
+   "share": 0.051,
+   "players": 109,
+   "win_rate": 0.529
+  },
+  "Hoopa ex Mega Absol ex": {
+   "share": 0.0468,
+   "players": 100,
+   "win_rate": 0.528
+  },
+  "Magnezone Miraidon ex": {
+   "share": 0.0449,
+   "players": 96,
+   "win_rate": 0.541
+  },
+  "Dedenne ex Indeedee ex": {
+   "share": 0.0398,
+   "players": 85,
+   "win_rate": 0.519
+  },
+  "Vespiquen ex Shuckle ex": {
+   "share": 0.0295,
+   "players": 63,
+   "win_rate": 0.48
+  },
+  "Hydreigon Mega Absol ex": {
+   "share": 0.0267,
+   "players": 57,
+   "win_rate": 0.488
+  },
+  "Mega Altaria ex Greninja": {
+   "share": 0.0262,
+   "players": 56,
+   "win_rate": 0.495
+  },
+  "Mega Gardevoir ex Mega Diancie ex": {
+   "share": 0.0262,
+   "players": 56,
+   "win_rate": 0.458
+  },
+  "Mega Charizard Y ex Entei ex": {
+   "share": 0.0243,
+   "players": 52,
+   "win_rate": 0.486
+  },
+  "Mega Blaziken ex": {
+   "share": 0.0239,
+   "players": 51,
+   "win_rate": 0.498
+  },
+  "Mega Blaziken ex Greninja": {
+   "share": 0.0187,
+   "players": 40,
+   "win_rate": 0.492
+  },
+  "Mega Sceptile ex Greninja": {
+   "share": 0.0145,
+   "players": 31,
+   "win_rate": 0.514
+  },
+  "Mega Manectric ex Heliolisk": {
+   "share": 0.0145,
+   "players": 31,
+   "win_rate": 0.405
+  },
+  "Zoroark ex Mega Absol ex": {
+   "share": 0.0126,
+   "players": 27,
+   "win_rate": 0.457
+  },
+  "Mega Lucario ex Teal Mask Ogerpon ex": {
+   "share": 0.0108,
+   "players": 23,
+   "win_rate": 0.412
+  },
+  "Mega Diancie ex Carbink": {
+   "share": 0.0103,
+   "players": 22,
+   "win_rate": 0.508
+  },
+  "Meowscarada ex Meowscarada": {
+   "share": 0.0089,
+   "players": 19,
+   "win_rate": 0.427
+  },
+  "Mega Sharpedo ex Gyarados": {
+   "share": 0.0089,
+   "players": 19,
+   "win_rate": 0.485
+  },
+  "Greninja Mega Absol ex": {
+   "share": 0.008,
+   "players": 17,
+   "win_rate": 0.583
+  },
+  "Charizard ex Mega Charizard Y ex": {
+   "share": 0.0065,
+   "players": 14,
+   "win_rate": 0.333
+  },
+  "Miraidon ex Magnezone": {
+   "share": 0.0065,
+   "players": 14,
+   "win_rate": 0.48
+  },
+  "Magnezone ex Magnezone": {
+   "share": 0.0065,
+   "players": 14,
+   "win_rate": 0.5
+  },
+  "Flygon ex": {
+   "share": 0.0065,
+   "players": 14,
+   "win_rate": 0.529
+  },
+  "Mega Lucario ex Greninja": {
+   "share": 0.0061,
+   "players": 13,
+   "win_rate": 0.5
+  },
+  "Team Rocket's Slowking ex Meloetta": {
+   "share": 0.0061,
+   "players": 13,
+   "win_rate": 0.266
+  },
+  "Dedenne ex Pichu": {
+   "share": 0.0056,
+   "players": 12,
+   "win_rate": 0.482
+  },
+  "Beautifly Dustox": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.471
+  },
+  "Milotic ex Eevee ex": {
+   "share": 0.0051,
+   "players": 11,
+   "win_rate": 0.486
+  },
+  "Mega Blaziken ex Teal Mask Ogerpon ex": {
+   "share": 0.0051,
+   "players": 11,
+   "win_rate": 0.42
+  },
+  "Mega Sharpedo ex Chien-Pao ex": {
+   "share": 0.0047,
+   "players": 10,
+   "win_rate": 0.581
+  },
+  "Mega Charizard X ex Mega Charizard Y ex": {
+   "share": 0.0042,
+   "players": 9,
+   "win_rate": 0.404
+  },
+  "Team Rocket's Weezing ex Hoopa ex": {
+   "share": 0.0042,
+   "players": 9,
+   "win_rate": 0.558
+  },
+  "Rotom ex Oricorio": {
+   "share": 0.0042,
+   "players": 9,
+   "win_rate": 0.509
+  },
+  "Mega Altaria ex": {
+   "share": 0.0037,
+   "players": 8,
+   "win_rate": 0.396
+  },
+  "Mega Diancie ex Flutter Mane ex": {
+   "share": 0.0037,
+   "players": 8,
+   "win_rate": 0.595
+  },
+  "Mega Charizard Y ex Charizard ex": {
+   "share": 0.0037,
+   "players": 8,
+   "win_rate": 0.378
+  },
+  "Mega Scizor ex Revavroom": {
+   "share": 0.0033,
+   "players": 7,
+   "win_rate": 0.288
+  },
+  "Mega Altaria ex Happiny": {
+   "share": 0.0033,
+   "players": 7,
+   "win_rate": 0.523
+  },
+  "Mega Sceptile ex Sceptile": {
+   "share": 0.0033,
+   "players": 7,
+   "win_rate": 0.364
+  },
+  "Mega Venusaur ex": {
+   "share": 0.0033,
+   "players": 7,
+   "win_rate": 0.449
+  },
+  "Mega Altaria ex Igglybuff": {
+   "share": 0.0028,
+   "players": 6,
+   "win_rate": 0.422
+  },
+  "Dustox Mega Absol ex": {
+   "share": 0.0028,
+   "players": 6,
+   "win_rate": 0.529
+  },
+  "Espeon ex Giratina ex": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.409
+  },
+  "Mega Diancie ex Mimikyu ex": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.636
+  },
+  "Mega Altaria ex Chingling": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.364
+  },
+  "Suicune ex Greninja ex": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.283
+  },
+  "Mega Blastoise ex Eiscue": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.419
+  },
+  "Ho-Oh ex Charmeleon": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.357
+  },
+  "Team Rocket's Raticate ex Alolan Ninetales ex": {
+   "share": 0.0023,
+   "players": 5,
+   "win_rate": 0.5
+  },
+  "Mega Mawile ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.395
+  },
+  "Mega Absol ex Darkrai ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.472
+  },
+  "Hoopa ex Mega Sableye ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.56
+  },
+  "Mega Steelix ex Indeedee ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.237
+  },
+  "Mega Lucario ex Hitmonchan ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.214
+  },
+  "Indeedee ex Dedenne ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.629
+  },
+  "Entei ex": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.404
+  },
+  "Mega Blaziken ex Castform Sunny Form": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.273
+  },
+  "Hisuian Goodra": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.522
+  },
+  "Garchomp ex Rampardos": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.558
+  },
+  "Hoopa ex Greninja": {
+   "share": 0.0019,
+   "players": 4,
+   "win_rate": 0.536
+  },
+  "Melmetal ex Melmetal": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.5
+  },
+  "Mega Charizard X ex Moltres ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.25
+  },
+  "Chandelure Oricorio": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.3
+  },
+  "Hisuian Zoroark ex Team Rocket's Electrode": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.433
+  },
+  "Growlithe Lillipup": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.214
+  },
+  "Mega Swampert ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.417
+  },
+  "Greninja Walking Wake": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.4
+  },
+  "Hydreigon Mega Sableye ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.441
+  },
+  "Rotom ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.531
+  },
+  "Hoopa ex Mega Gengar ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.393
+  },
+  "Serperior Mega Heracross ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.286
+  },
+  "Milotic ex Suicune ex": {
+   "share": 0.0014,
+   "players": 3,
+   "win_rate": 0.333
+  },
+  "Mega Lopunny ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.5
+  },
+  "Mega Lucario ex Rampardos": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.567
+  },
+  "Flygon ex Sylveon ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.143
+  },
+  "Poliwrath ex Milotic ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.286
+  },
+  "Indeedee ex Giratina ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.375
+  },
+  "Team Rocket's Weezing ex Zoroark ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.467
+  },
+  "Mega Gengar ex Greninja": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.417
+  },
+  "Milotic ex Swanna ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.25
+  },
+  "Mega Sableye ex Darkrai ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.567
+  },
+  "Mega Blaziken ex Blaziken": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.364
+  },
+  "Mega Lucario ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.4
+  },
+  "Buzzwole ex Pheromosa": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.125
+  },
+  "Charizard ex Entei ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.286
+  },
+  "Ho-Oh ex Lugia ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.333
+  },
+  "Garchomp Mantyke": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.25
+  },
+  "Hisuian Goodra Mantyke": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.333
+  },
+  "Rampardos Snorlax": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.375
+  },
+  "Jumpluff ex Team Rocket's Electrode": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.455
+  },
+  "Indeedee ex Oricorio": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.3
+  },
+  "Giratina ex Darkrai ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.5
+  },
+  "Ursaluna": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.536
+  },
+  "Greninja Dragonite ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.375
+  },
+  "Mega Sceptile ex Butterfree": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.5
+  },
+  "Milotic ex Vaporeon ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.3
+  },
+  "Greninja ex Samurott": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.286
+  },
+  "Mega Gengar ex Hoopa ex": {
+   "share": 0.0009,
+   "players": 2,
+   "win_rate": 0.25
+  },
+  "Crobat Mega Sableye ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Samurott Smeargle": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Absol ex Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Mega Scizor ex Greninja": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Milotic ex Hisuian Zoroark ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Mega Lucario ex Hitmonlee": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.6
+  },
+  "Pikachu ex Tauros ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Mega Lopunny ex Greninja": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Jumpluff ex Galarian Cursola": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Solgaleo ex Vaporeon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Manectric ex Zeraora": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.611
+  },
+  "Iron Valiant Iron Boulder": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.625
+  },
+  "Alolan Ninetales ex Team Rocket's Articuno ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Hoopa ex Arceus ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Mega Altaria ex Oricorio": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Articuno ex Mewtwo ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Hydreigon Absol": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Lunala ex Mega Diancie ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Greninja Decidueye ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Blaziken ex Mega Camerupt ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Greninja ex Greninja": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Dragonite ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Mega Manectric ex Jolteon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Kangaskhan ex Snorlax": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Kangaskhan ex Pichu": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Jolteon ex Mega Manectric ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Decidueye ex Hydreigon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Staraptor Snorlax": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Jolteon ex Eevee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Sceptile ex Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Team Rocket's Weezing ex Mega Lopunny ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Altaria ex Indeedee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Team Rocket's Raticate ex Mega Lucario ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Slowbro ex Eiscue": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Koraidon ex Great Tusk": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Mega Sableye ex Mega Absol ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.682
+  },
+  "Gardevoir Mega Diancie ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.125
+  },
+  "Magneton Miraidon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.125
+  },
+  "Mega Altaria ex Polteageist": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Umbreon ex Hoopa ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Lucario ex Tyrogue": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Team Rocket's Raticate ex Mega Kangaskhan ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Jolteon ex Leafeon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Zoroark ex Team Rocket's Weezing ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Aegislash Skarmory": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Sharpedo ex Mega Gyarados ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Magnezone ex Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Camerupt ex Charmeleon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Sylveon Mega Diancie ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Garchomp ex Mega Gallade ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Magnezone Hisuian Zoroark ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Ursaluna Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.75
+  },
+  "Magnezone Hisuian Goodra": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.714
+  },
+  "Team Rocket's Electrode Pawmot": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Mega Gallade ex Hitmonchan ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Sharpedo ex Hisuian Zoroark ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.2
+  },
+  "Mega Swampert ex Dusknoir": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Houndoom ex Hearthflame Mask Ogerpon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Indeedee ex Mega Diancie ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Dragonite ex Dragonite": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Gengar ex Dusknoir": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Snorlax ex Indeedee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Jolteon ex Jolteon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Pikachu ex Tapu Koko ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.688
+  },
+  "Luxray Sylveon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.667
+  },
+  "Giratina ex Mega Diancie ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Mega Absol ex Greninja": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Mega Kangaskhan ex Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Mega Charizard X ex Team Rocket's Moltres ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Haxorus Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.143
+  },
+  "Mega Venusaur ex Arboliva": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Sableye ex Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Medicham ex Giratina ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Team Rocket's Articuno ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Lugia ex Ho-Oh ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Greninja ex Suicune ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Rotom ex Mime Jr.": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Magnezone Teal Mask Ogerpon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.714
+  },
+  "Team Rocket's Houndoom Nihilego": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Indeedee ex Stoutland": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Leafeon ex Mega Sceptile ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Mega Charizard X ex Hearthflame Mask Ogerpon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Dragonair Altaria": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Butterfree Meowscarada ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Charizard ex Moltres ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Kangaskhan ex Happiny": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.688
+  },
+  "Mega Sceptile ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Decidueye ex Decidueye": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Raticate Cradily": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Lucario Rampardos": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Aegislash Smoochum": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.167
+  },
+  "Mega Blaziken ex Entei ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Mega Gengar ex Igglybuff": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Darkrai ex Hoopa ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Indeedee ex Dragonite": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.286
+  },
+  "Mega Altaria ex Team Rocket's Mr. Mime": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Celebi ex Serperior": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Manectric ex Igglybuff": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Iron Valiant Iron Crown": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Lucario ex Koraidon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Gholdengo ex Skarmory": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.286
+  },
+  "Team Rocket's Weezing ex Mega Absol ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Raikou ex Luxray": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Koraidon ex Furfrou": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Vespiquen ex Butterfree": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Kangaskhan ex Darkrai ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Lucario ex Igglybuff": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Palossand Koraidon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Guzzlord ex Hydreigon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Hoopa ex Team Rocket's Weezing ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Ceruledge ex Indeedee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Meowscarada ex Mega Sceptile ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Altaria ex Gourgeist": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.6
+  },
+  "Beedrill ex Team Rocket's Raticate ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.2
+  },
+  "Rampardos Tyrantrum": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Garchomp": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Altaria ex Kirlia": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Flareon ex Flareon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Rayquaza ex Dragonair": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.2
+  },
+  "Mega Blastoise ex Dhelmise": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Espeon ex Mega Altaria ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Meloetta Iron Valiant": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Kangaskhan ex Mantyke": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.667
+  },
+  "Mega Kangaskhan ex Indeedee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Magnezone Heliolisk": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.4
+  },
+  "Mega Gengar ex Munchlax": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Leafeon ex Espeon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Mega Sceptile ex Dustox": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Swampert ex Greninja": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.2
+  },
+  "Team Rocket's Slowking ex Sylveon ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.429
+  },
+  "Furfrou": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.167
+  },
+  "Hoopa ex Hydreigon": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.167
+  },
+  "Hisuian Zoroark ex Butterfree": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Garchomp Meowth": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Mega Gyarados ex Mantyke": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  },
+  "Dragonair Magby": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Glimmora Mega Absol ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Hoopa ex Weezing": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Metagross ex Skarmory": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.0
+  },
+  "Team Rocket's Slowking ex Indeedee ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Mega Gengar ex Chingling": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.583
+  },
+  "Mega Gallade ex": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Decidueye ex Lurantis": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.571
+  },
+  "Mega Gengar ex Morpeko": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.5
+  },
+  "Giratina ex Banette": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.333
+  },
+  "Indeedee ex Team Rocket's Hypno": {
+   "share": 0.0005,
+   "players": 1,
+   "win_rate": 0.25
+  }
+ }
+}

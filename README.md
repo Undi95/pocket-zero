@@ -1,111 +1,99 @@
 # pocket-zero
 
-Bot AlphaZero et recherche de decks pour Pokémon TCG Pocket, construits sur le moteur
-[deckgym-core](https://github.com/bcollazo/deckgym-core) (AGPL-3.0), avec les règles et les cartes
-auditées dans Pocket Deck Lab (voir `lab/README.md`).
+**An AlphaZero bot and deck-building tools for Pokémon TCG Pocket.**
+*[Version française : README.fr.md](README.fr.md)*
 
-**Guide complet : [`docs/GUIDE.md`](docs/GUIDE.md)** (entraînement, recherche de decks, ranked simulé,
-interface avec les images officielles, mise à jour de la méta, dépannage).
+pocket-zero teaches a neural network to play Pokémon TCG Pocket by playing millions of games
+against itself, then uses that network to find, test and improve decks: meta lists, your own
+lists, or 100 % homemade decks built from every card in the game.
 
-## Installation (Windows)
+It is built on **[deckgym-core](https://github.com/bcollazo/deckgym-core)** by
+[bcollazo](https://github.com/bcollazo), a fast Pokémon TCG Pocket simulator written in Rust
+(AGPL-3.0). pocket-zero is a fork of it: the engine, the card database and most of the card
+implementations come from deckgym; this project adds the rule and card audit, the AlphaZero bot,
+the GPU training, the deck tools and the web interface (see [Credits](#credits)).
 
-1. Clone le dépôt, puis double-clique sur **`setup.bat`**.
-   Tout s'installe *dans le dossier* : environnement Python `.venv` (PyTorch CUDA 12.8 pour les
-   RTX 50xx), binaires du moteur `bin\` (compilés par GitHub Actions, workflow « Windows build »),
-   module Python du moteur. Rien n'est installé dans le système.
-2. Prérequis : Git, Python 3.10+ (avec le lanceur `py`), un pilote NVIDIA récent.
+## What it does
 
-## Entraîner le bot
+| | |
+|---|---|
+| **Plays like a player** | The bot only sees what a player sees on screen: its hand, the board, tools, statuses, effects, discard piles, the *size* of the opponent's hand and deck, never their content or order. It searches with hidden information (determinization) and chance (coin flips). |
+| **Learns by itself** | AlphaZero-style training: self-play on every GPU, a network trained on the results, evaluated against hand-written bots and against real tournament matchups from Limitless. |
+| **Improves decks with proof** | The *forge* tries one change at a time (a trainer, a copy, an evolution line, an energy) against the real meta, on the *same* games as the current list, and keeps it only if it wins clearly. Homemade mode builds new archetypes from the whole card pool. |
+| **Tests in real conditions** | A simulated ranked season with the official ladder rules (Beginner to Master Ball) and the real meta shares. |
+| **Stays up to date** | The meta decklists (Limitless tournaments, Game8, DotGG shares) refresh automatically twice a week. |
+| **Shows everything** | A web interface in French and English: decklists with the official card images (click to zoom), and a live page that follows the training and the decks that win the most. |
 
-```
-run.bat train
-```
+## Quick start (Windows)
 
-Chaque itération : self-play (recherche en Rust sur tous les cœurs, réseau évalué par lots sur
-**chaque GPU**, un processus par carte), entraînement sur `cuda:0`, puis évaluation contre
-l'ancien réseau et contre les bots `e2` et `e3`. Toutes les 5 itérations, validation contre les
-vrais matchups Limitless (écart moyen, RMSE ; le bot `e3` est à ~10-12 points).
-Tout se trouve dans `runs\principal\` : `log.txt`, `metrics.csv`, `weights\latest.bin`.
-L'entraînement reprend où il s'est arrêté : relance simplement la même commande.
-
-Après chaque autojeu, un petit résumé des moments forts : deck de l'itération, classement de la
-méta contre tout le pool, pépites hors méta, plus longue série, victoire éclair, exploit,
-marathon ; après l'évaluation, les records contre `e3`.
-
-Lire les résultats : « contre le précédent » reste vers 50 % (chaque itération n'est qu'un petit
-pas, et 400 parties mesurent à ±5 %). La progression se lit sur `vs_e3` dans la durée : le log
-affiche la moyenne des 5 dernières itérations à côté des 5 précédentes.
-
-Options utiles : `--iterations 60`, `--games 3000`, `--sims 200`, `--concurrency 2048`,
-`--selfplay-devices cuda:0,cuda:1`, `--run autre_nom` (nouveau run depuis zéro).
-`run.bat help` les liste toutes.
-
-## Chercher des decks (toutes les cartes)
+Requirements: Windows 10/11, [Git](https://git-scm.com/), [Python 3.10+](https://www.python.org/)
+(tick "py launcher"), an NVIDIA GPU with a recent driver for training (RTX 20xx to 50xx; the
+deck tools also run on the CPU, slower).
 
 ```
-run.bat search --name recherche1
+git clone https://github.com/Undi95/pocket-zero
+cd pocket-zero
+setup.bat
 ```
 
-Recherche sur **tout le pool de cartes**, jouée par le réseau entraîné : criblage de chaque
-lignée d'attaquant, paires, algorithme génétique avec n'importe quelle carte (lignées
-incomplètes, Rare Candy, 1 à 3 énergies), score = 50 % méta réel + 50 % terrain d'archétypes
-hors méta. Résultat : `results\recherche1\RESULTATS_D.md`. Options : `--lock "B1a 42"` (construire
-autour d'une carte), `--gens 40`. Joueurs par défaut : criblage `z0` (réseau seul), algorithme
-génétique `z8` (8 simulations, déjà plus fort que `e3`), validation finale `z32` ; `--search z32`
-pour un joueur encore plus fort mais plus lent. Lance-la entraînement arrêté : les deux se
-partagent le processeur.
+`setup.bat` installs everything **inside the folder** (Python environment, PyTorch CUDA, engine
+binaries built by GitHub Actions, the published network if there is one). Nothing is installed
+system-wide, no Rust or Visual Studio needed.
 
-Toutes les cartes ont un deck dans le pool d'entraînement (`cover-*.txt`, ajoutés au démarrage
-d'un run) : le bot a vu jouer chaque Pokémon et chaque dresseur que la recherche peut choisir.
-
-## Les decks du mode solo
-
-`lab/decks/solo/` contient les decks des développeurs des combats progressifs du mode solo
-(466 decks, de `pokeball` à `masterball`, d'après les listes de Serebii), retirés du jeu fin
-octobre 2026. Ils font partie du pool d'entraînement (`solo-*.txt`), et :
+Then:
 
 ```
-run.bat solo
+run.bat ui                                  decklists + live training page (http://localhost:8765)
+run.bat forge --name test --deck my.txt     improve your deck against the meta
+run.bat forge --name homemade --new 12      12 homemade archetypes from the whole card pool
+run.bat ranked --deck my.txt                simulated ranked season
+run.bat train --run mine --net big          train your own network
+run.bat update                              latest code, binaries, network and meta lists
+run.bat help                                every command and option
 ```
 
-les fait s'affronter avec le bot entraîné : un classement par rang, puis un grand tournoi des
-meilleurs de chaque rang contre les 17 listes de la méta (`results\solo\CLASSEMENT.md`, une
-dizaine de minutes, entraînement arrêté).
+## Documentation
 
-## Ranked simulé, interface, méta
+- **[Full guide (English)](docs/GUIDE.en.md)**: every tool explained in detail: installation,
+  training and how to read it, the forge, homemade decks, deck search, ranked simulation, the
+  web interface, the automatic meta updates, troubleshooting, publishing a network.
+- **[Guide complet (français)](docs/GUIDE.fr.md)**
+- [`lab/README.md`](lab/README.md): engine audit notes (rules, cards, accuracy), in French.
+- [`lab/decks/sources/README.md`](lab/decks/sources/README.md): where the meta lists come from.
 
-- `run.bat ranked [--deck mon_deck.txt]` : saison de ranked simulée (règles officielles de
-  Débutant à Master Ball, méta pondérée par les vraies parts), `results\ranked\CLASSEMENT.md`.
-- `run.bat ui` : decklists avec les images officielles du jeu, dans le navigateur.
-- `run.bat meta` : met à jour les decks méta des autres sources (`lab\decks\sources\`).
+## How it works, in short
 
-## Utiliser le bot ailleurs
+- `src/` — the deckgym engine (rules, 4,300+ cards, move generation), audited and fixed here.
+- `src/zero/` — what a player sees encoded as tensors (`encode.rs`), the network (`net.rs`),
+  the search with hidden information and paired comparisons (`mcts.rs`, `batch.rs`), self-play
+  and the `pocket-zero` command line.
+- `zero/` — Python: the PyTorch twin of the network, the AlphaZero loop, the GPU self-play and
+  evaluation, the forge, deck search, ranked simulation and web interface.
+- `lab/` — the meta decklists, the solo mode decks, the audit and meta tools.
 
-Le joueur `z<simulations>` marche partout où le moteur prend un joueur (`z0` = politique du
-réseau seule, rapide) :
+The [guide](docs/GUIDE.en.md#how-it-works) goes into the details.
 
-```
-set POCKET_ZERO_WEIGHTS=runs\principal\weights\latest.bin
-bin\deckgym.exe simulate deck1.txt deck2.txt --num 100 --players z64,e3
-```
+## Credits
 
-## Comment ça marche
+- **[deckgym-core](https://github.com/bcollazo/deckgym-core)** by **bcollazo** and its
+  contributors: the Rust simulator this project is built on (engine, card database, card
+  implementations, Python bindings). License AGPL-3.0.
+- Meta data: [Limitless](https://play.limitlesstcg.com/) (tournament results and decklists),
+  [Game8](https://game8.co/games/Pokemon-TCG-Pocket) (tier list),
+  [ptcgpocket.gg / DotGG](https://ptcgpocket.gg/) (meta shares),
+  [Serebii](https://www.serebii.net/) (solo mode decks and ranked rules). Every list keeps its
+  source URL and date at the top of its file.
+- Card images, loaded by your browser when you view a deck (none are stored in this repository):
+  [Poképédia](https://www.pokepedia.fr/) (French), [TCGdex](https://tcgdex.dev/) and
+  [Limitless](https://pocket.limitlesstcg.com/) (English).
+- pocket-zero by [Undi95](https://github.com/Undi95).
 
-- `src/zero/encode.rs` : ce qu'un joueur voit (taille de la main adverse mais pas son contenu,
-  composition de son propre deck mais pas son ordre), encodé en tenseurs.
-- `src/zero/mcts.rs`, `src/zero/batch.rs` : recherche avec déterminisation (information cachée)
-  et hasard en boucle ouverte ; version par lots pour le GPU. Racine « Gumbel » : halving
-  séquentiel sur les coups les plus prometteurs, chaque candidat joué sur *les mêmes* cartes
-  cachées et les mêmes pile ou face (comparaisons appariées : la chance s'annule au lieu de
-  noyer la différence entre deux coups), et cible de politique = politique améliorée par les
-  valeurs Q (bien plus nette que les nombres de visites, qui restaient presque plats).
-  `zp<sims>` garde l'ancienne racine PUCT pour comparer.
-- Cible de valeur TD(λ) (`--td-lambda 0.9`) : chaque position s'appuie sur les évaluations des
-  positions suivantes de la même partie, au lieu du seul résultat final (très bruité dans un jeu
-  de pile ou face). Valeur calibrée à chaque itération sur des parties jamais vues (le réseau
-  avait tendance à être trop sûr de lui).
-- `pocket-zero valuecheck` : compare, sur des parties jouées, l'évaluation du réseau, celle écrite
-  à la main et le vrai résultat.
-- `zero/` : modèle PyTorch (jumeau exact du réseau Rust, vérifié par `python -m zero.parity`),
-  entraînement, boucle AlphaZero, pool de decks, recherche.
+## License
 
+[AGPL-3.0](LICENSE.txt), like deckgym-core. You can use, modify and share this project; if you
+distribute a modified version or run it as a network service, you must publish its source under
+the same license.
+
+*Pokémon, Pokémon TCG Pocket and the card names and images are trademarks of Nintendo,
+Creatures, GAME FREAK and The Pokémon Company. This is a fan project, not affiliated with or
+endorsed by them or by DeNA.*
