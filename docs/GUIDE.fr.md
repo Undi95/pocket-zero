@@ -72,7 +72,8 @@ setup.bat
 4. télécharge les binaires du moteur (`bin\pocket-zero.exe`, `bin\deckgym.exe`) et le module
    Python du moteur, compilés par GitHub Actions (branche `windows-bin`) : ni Rust ni Visual
    Studio ne sont nécessaires ;
-5. télécharge le réseau pré-entraîné publié (`weights\pocket-zero.bin`), s'il y en a un ;
+5. télécharge le réseau pré-entraîné publié (`weights\pocket-zero.bin`, branche `weights` du dépôt ;
+   son fichier `VERSION` dit lequel c'est), s'il y en a un ;
 6. vérifie que tout se charge et affiche les GPU trouvés.
 
 **Autres systèmes (Linux, macOS)** : pas de script d'installation, mais tout se compile :
@@ -101,7 +102,8 @@ a changé).
 Tous les outils ont besoin d'un réseau entraîné. Sans option `--weights`, ils prennent :
 
 1. le dernier run que tu as entraîné (`runs\<run>\weights\latest.bin`, le plus récent) ;
-2. sinon, le réseau publié téléchargé par l'installation (`weights\pocket-zero.bin`).
+2. sinon, le réseau publié téléchargé par l'installation (`weights\pocket-zero.bin`). En ce
+   moment : l'itération 103 sur 150 du gros réseau, un aperçu en attendant le réseau final.
 
 Pour forcer un réseau : `--weights weights\pocket-zero.bin` (ou n'importe quel fichier `.bin`).
 
@@ -434,12 +436,15 @@ et `lab/search/pipeline.py` (recherche génétique), `ranked.py`, `solo.py`, `ui
 
 **Publier un réseau** (pour que tout le monde l'ait avec `run.bat update`) :
 
-1. sur GitHub : *Releases* → *Draft a new release* ;
-2. un tag, par exemple `net-2026-10-15`, et un titre ;
-3. joins le fichier du réseau renommé **`pocket-zero.bin`** (par exemple
-   `runs\grand\weights\latest.bin`) ;
-4. *Publish release*. L'installation prend le réseau de la dernière release de ton dépôt, sinon
-   celui du dépôt d'origine.
+```
+run.bat publish runs\grand\weights\latest.bin "grand, iteration 150/150"
+```
+
+Le réseau part sur la branche `weights` du dépôt, seul, avec une ligne `VERSION` (ta note, la
+date, une somme de contrôle). La branche est écrasée à chaque publication : seul le dernier réseau
+y reste, l'historique du dépôt ne grossit pas. L'installation prend le réseau de ton dépôt, sinon
+celui du dépôt d'origine. Il faut les droits d'écriture sur le dépôt (Git demande de se connecter
+à GitHub la première fois).
 
 **Binaires Windows** : le workflow « Windows build » compile à chaque changement du moteur sur
 `main` et publie sur la branche `windows-bin`, que `setup.ps1` télécharge. Sur un fork, active

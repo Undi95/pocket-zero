@@ -9,7 +9,6 @@ param([switch]$SkipTorch)  # -SkipTorch : test automatique (CI), sans GPU ni ré
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'  # downloads are much faster without the progress bar
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12  # GitHub API (Windows PowerShell 5.1)
 Set-Location $PSScriptRoot
 
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
@@ -57,30 +56,27 @@ Copy-Item "$tmp\bin\*" bin\ -Force
 Write-Host "Version : $(Get-Content $tmp\VERSION)"
 & $vpy -m pip install --quiet --force-reinstall (Get-ChildItem "$tmp\wheels\*.whl").FullName
 
-# 5. Réseau pré-entraîné publié (GitHub Releases, fichier pocket-zero.bin), s'il y en a un.
-#    Published pretrained network (GitHub Releases, asset pocket-zero.bin), if there is one:
-#    this repository's releases first, then the original repository's.
+# 5. Réseau pré-entraîné publié (branche weights : pocket-zero.bin + VERSION), s'il y en a un :
+#    celui de ce dépôt, sinon celui du dépôt d'origine (run.bat publish le met à jour).
+#    Published pretrained network (weights branch: pocket-zero.bin + VERSION), if there is one:
+#    this repository's, otherwise the original repository's (run.bat publish updates it).
 if (-not $SkipTorch) {
     Step 'Réseau pré-entraîné / pretrained network'
-    $repos = @()
-    try { $origin = git remote get-url origin } catch { $origin = '' }
-    if ($origin -match 'github\.com[:/](.+?)(\.git)?$') { $repos += $Matches[1] }
-    if ($repos -notcontains 'Undi95/pocket-zero') { $repos += 'Undi95/pocket-zero' }
     $got = $false
-    foreach ($r in $repos) {
-        try { $rel = Invoke-RestMethod "https://api.github.com/repos/$r/releases/latest" -Headers @{ 'User-Agent' = 'pocket-zero-setup' } }
-        catch { continue }
-        $asset = $rel.assets | Where-Object { $_.name -eq 'pocket-zero.bin' } | Select-Object -First 1
-        if (-not $asset) { continue }
+    foreach ($src in @('origin', 'https://github.com/Undi95/pocket-zero')) {
+        $ErrorActionPreference = 'Continue'  # a missing branch is not an error here
+        git fetch -q $src weights --depth 1 2>$null
+        $ok = $LASTEXITCODE -eq 0
+        $ErrorActionPreference = 'Stop'
+        if (-not $ok) { continue }
+        $wzip = Join-Path $env:TEMP 'pocket-zero-weights.zip'
+        git archive --format=zip -o $wzip FETCH_HEAD
+        $wtmp = Join-Path $env:TEMP 'pocket-zero-weights'
+        if (Test-Path $wtmp) { Remove-Item -Recurse -Force $wtmp }
+        Expand-Archive $wzip $wtmp
         New-Item -ItemType Directory -Force -Path weights | Out-Null
-        $want = "$r $($rel.tag_name)"
-        $have = if (Test-Path weights\VERSION) { (Get-Content weights\VERSION) } else { '' }
-        if ($have -ne $want -or -not (Test-Path weights\pocket-zero.bin)) {
-            Write-Host "Téléchargement / downloading $want ..."
-            Invoke-WebRequest $asset.browser_download_url -OutFile weights\pocket-zero.bin -UseBasicParsing
-            Set-Content weights\VERSION $want
-        }
-        Write-Host "Réseau / network: $want -> weights\pocket-zero.bin"
+        Copy-Item "$wtmp\pocket-zero.bin", "$wtmp\VERSION" weights\ -Force
+        Write-Host "Réseau / network: $(Get-Content weights\VERSION) -> weights\pocket-zero.bin"
         $got = $true
         break
     }

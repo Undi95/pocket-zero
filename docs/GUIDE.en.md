@@ -73,7 +73,8 @@ setup.bat
 3. installs PyTorch with CUDA 12.8 (works from RTX 20xx to RTX 50xx) and numpy;
 4. downloads the engine binaries (`bin\pocket-zero.exe`, `bin\deckgym.exe`) and the engine
    Python module, built by GitHub Actions (`windows-bin` branch): no Rust or Visual Studio needed;
-5. downloads the published pretrained network (`weights\pocket-zero.bin`), if there is one;
+5. downloads the published pretrained network (`weights\pocket-zero.bin`, from the repository's
+   `weights` branch; its `VERSION` file says which one it is), if there is one;
 6. checks that everything loads and lists the GPUs it found.
 
 **Other systems (Linux, macOS)**: no setup script, but everything builds:
@@ -102,6 +103,7 @@ Every tool needs a trained network. Without a `--weights` option, they use:
 
 1. the last run you trained (`runs\<run>\weights\latest.bin`, the most recent one);
 2. otherwise, the published network downloaded by the setup (`weights\pocket-zero.bin`).
+   Currently: iteration 103 of 150 of the big network, a preview until the final network.
 
 To force a network: `--weights weights\pocket-zero.bin` (or any `.bin` file).
 
@@ -427,12 +429,15 @@ coin-flip game), calibrated at every iteration on held-out games.
 
 **Publishing a network** (so everyone gets it with `run.bat update`):
 
-1. on GitHub: *Releases* → *Draft a new release*;
-2. a tag, for example `net-2026-10-15`, and a title;
-3. attach the network file renamed **`pocket-zero.bin`** (for example
-   `runs\big1\weights\latest.bin`);
-4. *Publish release*. The setup takes the network of your repository's latest release, otherwise
-   the original repository's.
+```
+run.bat publish runs\big1\weights\latest.bin "big1, iteration 150/150"
+```
+
+The network goes to the repository's `weights` branch, alone, with a `VERSION` line (your note,
+the date, a checksum). The branch is overwritten at every publication: only the latest network
+stays there, the repository's history does not grow. The setup takes your repository's network,
+otherwise the original repository's. You need write access to the repository (Git asks you to
+sign in to GitHub the first time).
 
 **Windows binaries**: the "Windows build" workflow compiles on every engine change on `main` and
 publishes to the `windows-bin` branch, which `setup.ps1` downloads. On a fork, enable GitHub
