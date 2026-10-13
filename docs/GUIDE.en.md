@@ -105,7 +105,8 @@ Every tool needs a trained network. Without a `--weights` option, they use:
 2. otherwise, the published network downloaded by the setup (`weights\pocket-zero.bin`).
    Currently: iteration 103 of 150 of the big network, a preview until the final network.
 
-To force a network: `--weights weights\pocket-zero.bin` (or any `.bin` file).
+To force a network: `--weights weights\pocket-zero.bin` (or any `.bin` file). Short version for
+users who only want the published network: [NETWORK.md](NETWORK.md).
 
 ### Training
 
