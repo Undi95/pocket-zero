@@ -429,6 +429,10 @@ def watch_runs():
         time.sleep(60)
 
 
+class Server(ThreadingHTTPServer):
+    allow_reuse_address = os.name != 'nt'  # on Windows it would let two servers share the port
+
+
 CARDS = {}
 
 
@@ -439,10 +443,17 @@ def main():
     ap.add_argument('--host', default='127.0.0.1',
                     help='0.0.0.0 pour ouvrir la page depuis un autre appareil (téléphone sur le même réseau ou VPN)')
     ap.add_argument('--train', action='store_true', help="ouvre directement la page de l'entraînement")
+    ap.add_argument('--run', default='', help='run affiché par la page de l\'entraînement')
     a = ap.parse_args()
+    url = f'http://localhost:{a.port}' + ('/train' if a.train or a.run else '') + (f'?run={a.run}' if a.run else '')
+    try:
+        srv = Server((a.host, a.port), Handler)
+    except OSError:  # already open (another run.bat ui, or a training run that opened it)
+        print(f'Interface déjà ouverte : {url}', flush=True)
+        if not a.no_browser:
+            webbrowser.open(url)
+        return
     CARDS.update(cards())
-    srv = ThreadingHTTPServer((a.host, a.port), Handler)
-    url = f'http://localhost:{a.port}' + ('/train' if a.train else '')
     print(f'Interface : {url}  (entraînement en direct : http://localhost:{a.port}/train ; Ctrl+C pour arrêter)', flush=True)
     if a.host != '127.0.0.1':
         import socket

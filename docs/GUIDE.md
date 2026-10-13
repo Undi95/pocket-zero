@@ -26,6 +26,8 @@ run.bat train --iterations 140
   le réseau précédent, `e2` et `e3`, résumé des moments forts. Toutes les 5 itérations,
   validation contre les vrais matchups Limitless (RMSE, `e3` fait 11-12 points).
 - Fichiers : `log.txt`, `metrics.csv`, `weights\latest.bin` (le bot), `checkpoint.pt`.
+- La page de suivi en direct (section 5) s'ouvre toute seule dans le navigateur ; `--no-ui` pour
+  ne pas l'ouvrir. Si elle est déjà ouverte, elle est réutilisée.
 - Lire la progression : `vs_e3` en moyenne sur 5 itérations (le log l'affiche). « contre le
   précédent » reste vers 50 %, c'est normal.
 - Changement d'entrées du réseau (couche 2 : outils, cartes sous chaque Pokémon, effets,

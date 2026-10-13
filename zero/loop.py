@@ -12,6 +12,8 @@ import json
 import math
 import os
 import shutil
+import subprocess
+import sys
 import time
 
 import torch
@@ -116,6 +118,7 @@ def main():
     ap.add_argument('--focus', type=float, default=0.5,
                     help='part des parties impliquant un vrai deck (méta, autres sources, forgés) ; 0 = pool uniforme')
     ap.add_argument('--add-decks', default='', help='dossier de decks à ajouter au pool (ex. results\\forge\\<nom>\\decks)')
+    ap.add_argument('--no-ui', action='store_true', help="n'ouvre pas la page de suivi (run.bat ui --train) dans le navigateur")
     ap.add_argument('--games', type=int, default=10000, help='parties de self-play par itération')
     ap.add_argument('--sims', type=int, default=200, help='simulations MCTS par décision en self-play')
     ap.add_argument('--temperature-moves', type=int, default=8,
@@ -215,6 +218,11 @@ def main():
     latest = os.path.join(run_dir, 'weights', 'latest.bin')
     log(f'run {a.run} : reprise à l\'itération {state["iteration"]}, appareil {a.device}, '
         f'{torch.cuda.device_count()} GPU')
+    if not a.no_ui:  # the live page; a page already open is reused
+        try:
+            subprocess.Popen([sys.executable, '-m', 'zero.ui', '--train', '--run', a.run], cwd=engine.ROOT)
+        except OSError:
+            pass
 
     metrics_f = os.path.join(run_dir, 'metrics.csv')
     header = ['iteration', 'samples', 'policy_loss', 'value_loss', 'val_policy_loss', 'val_value_loss',
