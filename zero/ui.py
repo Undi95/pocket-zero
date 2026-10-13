@@ -42,7 +42,10 @@ textarea{width:100%;box-sizing:border-box;height:420px;font-family:ui-monospace,
 .c .t{padding:4px 6px;font-size:12px;color:var(--mut)}.c .n{position:absolute;top:6px;right:6px;background:#000c;color:#fff;border-radius:12px;padding:1px 8px;font-weight:600}
 .c .ph{aspect-ratio:367/512;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:13px}
 #checks span{margin-right:14px}.ok{color:var(--ok)}.ko{color:var(--ko)}#energy{color:var(--acc);font-weight:600}
-@media print{header,#left{display:none}main{display:block}}
+.c img{cursor:zoom-in}
+#zoom{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out}
+#zoom img{max-width:94vw;max-height:94vh;border-radius:14px;box-shadow:0 8px 40px #000}
+@media print{header,#left,#zoom{display:none}main{display:block}}
 </style></head><body>
 <header><h1>pocket-zero · decklists</h1>
 <select id="decks"></select>
@@ -52,8 +55,9 @@ textarea{width:100%;box-sizing:border-box;height:420px;font-family:ui-monospace,
 <main><div id="left"><textarea id="txt" spellcheck="false" placeholder="Colle une decklist (format du moteur : « 2 Oricorio A3 66 »)"></textarea>
 <p style="color:var(--mut);font-size:13px">Modifie le texte : la liste se met à jour. Lignes « # » = commentaires (sources).</p></div>
 <div><div id="checks"></div><p id="energy"></p><div id="grid"></div></div></main>
+<div id="zoom" onclick="zoomClose()"><img alt=""></div>
 <script>
-let CARDS={};
+let CARDS={},ZI=-1;
 const $=id=>document.getElementById(id);
 function pad(n){return String(parseInt(n)).padStart(3,'0')}
 // French names of the sets, as Poképédia names its card images ("Carte <extension> <numéro>.png").
@@ -77,11 +81,18 @@ function render(){const {cards,energy}=parse($('txt').value);const g=$('grid');g
   if(info&&info.basic)basic+=c.n;const k=(info?info.name:c.name).toLowerCase();names[k]=(names[k]||0)+c.n;
   const d=document.createElement('div');d.className='c';const srcs=imgs(c.set,c.num);const im=new Image();let i=0;
   im.alt=c.name;im.loading='lazy';im.src=srcs[0];im.onerror=()=>{i++;if(i<srcs.length)im.src=srcs[i];else{im.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:c.name}))}};
+  im.onclick=()=>zoomOpen([...$('grid').querySelectorAll('img')].indexOf(im));
   d.append(im);d.insertAdjacentHTML('beforeend',`<span class="n">×${c.n}</span><div class="t">${c.name} · ${c.id}</div>`);g.append(d)}
  const max=Math.max(0,...Object.values(names));
  const chk=(ok,txt)=>`<span class="${ok?'ok':'ko'}">${ok?'✓':'✗'} ${txt}</span>`;
  $('checks').innerHTML=chk(total==20,`${total}/20 cartes`)+chk(max<=2,'2 exemplaires max')+chk(basic>0,'Pokémon de base')+(unknown.length?chk(false,'inconnues : '+unknown.join(', ')):'');
  $('energy').textContent=energy?'Énergie : '+energy:''}
+function big(src){return src.replace('?width=300','?width=750')}
+function zoomOpen(i){const all=$('grid').querySelectorAll('img');if(i<0||i>=all.length)return;ZI=i;
+ const z=$('zoom').querySelector('img');z.onerror=()=>{z.onerror=null;z.src=all[i].currentSrc||all[i].src};z.src=big(all[i].currentSrc||all[i].src);$('zoom').style.display='flex'}
+function zoomClose(){$('zoom').style.display='none';ZI=-1}
+document.addEventListener('keydown',e=>{if(ZI<0)return;if(e.key=='Escape')zoomClose();
+ else if(e.key=='ArrowRight')zoomOpen(ZI+1);else if(e.key=='ArrowLeft')zoomOpen(ZI-1)});
 function copyText(){navigator.clipboard.writeText($('txt').value)}
 async function load(p){const r=await fetch('/deck?path='+encodeURIComponent(p));$('txt').value=await r.text();render()}
 (async()=>{CARDS=await (await fetch('/cards')).json();const list=await (await fetch('/decks')).json();
@@ -131,14 +142,15 @@ pre{white-space:pre-wrap;font:12px ui-monospace,monospace;margin:0;color:var(--m
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
 <select id="win"><option value="1">dernière itération</option><option value="10" selected>10 dernières itérations</option><option value="0">tout le run</option></select>
 <select id="kind"><option value="all">tous les decks</option><option value="home">maison (créés par le bot)</option><option value="real">vrais decks (méta, sources, forgés, devs)</option></select>
-<select id="min"><option value="10">≥ 10 parties</option><option value="30" selected>≥ 30 parties</option><option value="100">≥ 100 parties</option></select></div>
+<select id="min"><option value="5">≥ 5 parties</option><option value="10" selected>≥ 10 parties</option><option value="30">≥ 30 parties</option><option value="100">≥ 100 parties</option></select></div>
+<p class="mut" id="dk_info"></p>
 <div class="scroll"><table><thead><tr><th>#</th><th data-s="label">Deck</th><th data-s="kind">Type</th><th class="n" data-s="wins">Victoires</th><th class="n" data-s="games">Parties</th><th class="n" data-s="rate">Taux</th></tr></thead><tbody id="decks"></tbody></table></div>
 <p class="mut">Résultats de l'auto-jeu contre tout le pool d'entraînement (decks faibles compris, avec un peu d'exploration) : un repérage, pas une preuve. Clique un deck pour voir ses cartes ; à confirmer avec la forge (<code>--deck</code>) ou le ranked.</p></div>
 <div class="box"><h2 id="hl_t">Moments forts</h2><div id="hl"></div></div>
 <div class="box"><h2>Journal en direct</h2><pre id="tail"></pre></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let RUN='',STATSV=null,SORT='rate',ROWS=[];
+const $=id=>document.getElementById(id);let RUN='',STATSV=null,SORT='score',ROWS=[],DK={};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function dur(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h} h ${String(m).padStart(2,'0')}`:`${m} min`}
 function chart(series,{lo,hi,pct,ref}={}){const W=640,H=200,L=38,R=8,T=8,B=22;const pts=series.flatMap(s=>s.pts);if(!pts.length)return '<p class="mut">Pas encore de données.</p>';
@@ -179,9 +191,10 @@ function render(st){const m=st.metrics,it=m.map(r=>r.iteration);const col=k=>m.f
  $('upd').textContent='mis à jour à '+new Date().toLocaleTimeString('fr-BE')+' · rafraîchi toutes les 20 s'}
 function drawDecks(){const rows=[...ROWS].sort((a,b)=>SORT=='label'||SORT=='kind'?a[SORT].localeCompare(b[SORT]):b[SORT]-a[SORT]||b.games-a.games);
  $('decks').innerHTML=rows.length?rows.map((r,i)=>`<tr><td class="mut">${i+1}</td><td>${r.path?`<a href="/?deck=${encodeURIComponent(r.path)}" target="_blank">${esc(r.label)}</a>`:esc(r.label)}</td><td class="mut">${esc(r.kind)}</td><td class="n">${r.wins}</td><td class="n">${r.games}</td><td class="n"><b>${(100*r.rate).toFixed(0)} %</b></td></tr>`).join(''):
- '<tr><td colspan="6" class="mut">Pas encore de résultats : ils arrivent à la fin de l\'auto-jeu de chaque itération.</td></tr>'}
+ `<tr><td colspan="6" class="mut">${DK.iterations?`Aucun deck avec au moins ${$('min').value} parties (${DK.hidden} en dessous) : baisse le minimum ou attends quelques itérations.`:'Pas encore de résultats : ils arrivent à la fin de l\'auto-jeu de chaque itération.'}</td></tr>`}
 async function loadDecks(){const q=new URLSearchParams({run:RUN,window:$('win').value,kind:$('kind').value,min:$('min').value});
- ROWS=await (await fetch('/train/decks?'+q)).json();drawDecks()}
+ DK=await (await fetch('/train/decks?'+q)).json();ROWS=DK.rows;
+ $('dk_info').textContent=DK.iterations?`${DK.iterations} itération${DK.iterations>1?'s':''} enregistrée${DK.iterations>1?'s':''} (${DK.first} à ${DK.last}). Un deck maison joue ~8 parties par itération, une liste méta ~400 (avec ses copies). Classement par taux corrigé : 5 victoires et 5 défaites fictives en plus, pour qu'un 3 sur 3 ne passe pas devant un 60 sur 100.`:'';drawDecks()}
 async function tick(){if(!RUN)return;try{const st=await (await fetch('/train/state?run='+encodeURIComponent(RUN))).json();render(st);
  if(st.stats_version!==STATSV){STATSV=st.stats_version;loadDecks()}}catch(e){$('upd').textContent='serveur injoignable, nouvel essai dans 20 s'}}
 document.querySelectorAll('th[data-s]').forEach(th=>th.onclick=()=>{SORT=th.dataset.s;drawDecks()});
@@ -323,7 +336,7 @@ def top_decks(name, window, kind, min_games):
     d = os.path.join(engine.ROOT, 'runs', name)
     stats_f = os.path.join(d, highlights_mod.STATS_FILE)
     if not os.path.exists(stats_f):
-        return []
+        return {'rows': [], 'iterations': 0, 'hidden': 0}
     stats = cached(('stats', stats_f), stats_f, lambda p: json.load(open(p, encoding='utf-8')))
     labels_f = os.path.join(d, 'decks', LABELS_FILE)
     labels = cached(('labels', labels_f), labels_f, lambda p: json.load(open(p, encoding='utf-8'))) \
@@ -337,19 +350,23 @@ def top_decks(name, window, kind, min_games):
             g[0] += w
             g[1] += n
             g[2].add(stem)
-    rows = []
+    rows, hidden = [], 0
     for w, n, stems in groups.values():
-        if n < min_games:
-            continue
         stem = min(stems, key=lambda s: (s.startswith('focus-'), s))  # the original, not a focus copy
         label, _, k = labels.get(stem) or [stem, stem, stem.split('-', 1)[0]]
         if (kind == 'real' and k not in REAL_KINDS) or (kind == 'home' and k in REAL_KINDS):
             continue
+        if n < min_games:
+            hidden += 1
+            continue
         path = os.path.join(d, 'decks', stem + '.txt')
         rows.append({'label': label, 'kind': KINDS.get(k, k), 'wins': w, 'games': n, 'rate': w / n,
+                     'score': (w + 5) / (n + 10),  # a few games say little: pulled towards 50 %
                      'path': f'runs/{name}/decks/{stem}.txt' if os.path.exists(path) else None})
-    rows.sort(key=lambda r: (-r['rate'], -r['games']))
-    return rows[:150]
+    rows.sort(key=lambda r: -r['score'])
+    used = its[-window:] if window else its
+    return {'rows': rows[:150], 'hidden': hidden, 'iterations': len(used),
+            'first': int(used[0]) if used else None, 'last': int(used[-1]) if used else None}
 
 
 
@@ -429,6 +446,19 @@ def watch_runs():
         time.sleep(60)
 
 
+def lan_ip():
+    """This PC's address on the local network (no packet is sent)."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        return s.getsockname()[0]
+    except OSError:
+        return socket.gethostbyname(socket.gethostname())
+    finally:
+        s.close()
+
+
 class Server(ThreadingHTTPServer):
     allow_reuse_address = os.name != 'nt'  # on Windows it would let two servers share the port
 
@@ -440,8 +470,8 @@ def main():
     ap = argparse.ArgumentParser(description='Decklists avec les images officielles')
     ap.add_argument('--port', type=int, default=8765)
     ap.add_argument('--no-browser', action='store_true')
-    ap.add_argument('--host', default='127.0.0.1',
-                    help='0.0.0.0 pour ouvrir la page depuis un autre appareil (téléphone sur le même réseau ou VPN)')
+    ap.add_argument('--host', default='0.0.0.0',
+                    help='0.0.0.0 (défaut) : ouverte aux autres appareils du réseau local ; 127.0.0.1 : ce PC seulement')
     ap.add_argument('--train', action='store_true', help="ouvre directement la page de l'entraînement")
     ap.add_argument('--run', default='', help='run affiché par la page de l\'entraînement')
     a = ap.parse_args()
@@ -456,8 +486,7 @@ def main():
     CARDS.update(cards())
     print(f'Interface : {url}  (entraînement en direct : http://localhost:{a.port}/train ; Ctrl+C pour arrêter)', flush=True)
     if a.host != '127.0.0.1':
-        import socket
-        print(f'Depuis un autre appareil : http://{socket.gethostbyname(socket.gethostname())}:{a.port}/train', flush=True)
+        print(f'Depuis un autre PC ou un téléphone du réseau local : http://{lan_ip()}:{a.port}/train', flush=True)
     threading.Thread(target=watch_runs, daemon=True).start()
     if not a.no_browser:
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()

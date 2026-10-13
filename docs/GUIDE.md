@@ -98,13 +98,18 @@ atteignent Master Ball, parties nécessaires. Options : `--player z32`, `--games
 ```
 run.bat ui                  # decklists
 run.bat ui --train          # directement la page de l'entraînement
-run.bat ui --host 0.0.0.0   # accessible depuis le téléphone (même réseau ou VPN)
+run.bat ui --host 127.0.0.1 # visible de ce PC seulement
 ```
 
 `http://localhost:8765` : tous les decks du projet (méta, autres sources, mode solo, résultats
 de recherche) ou une liste collée, affichés en cartes (images en français depuis Poképédia, ou
 en anglais), avec les vérifications du jeu (20 cartes, 2 exemplaires, un Pokémon de base).
+Un clic sur une carte l'agrandit (flèches pour passer à la suivante, Échap pour fermer).
 « Copier le texte » pour le moteur, « Imprimer / PDF » pour la garder.
+
+Depuis un autre PC ou un téléphone du réseau local : l'adresse s'affiche au lancement
+(`http://192.168.x.x:8765/train`). Au premier lancement, Windows demande l'accès réseau pour
+Python : coche « Réseaux privés ».
 
 `http://localhost:8765/train` : le run en cours, rafraîchi toutes les 20 s (choix du run en
 haut). Itération, étape, fin estimée, courbes (contre e3/e2, RMSE, pertes), dernière
@@ -160,6 +165,7 @@ Diagnostic d'un matchup : `bin\pocket-zero.exe match --deck-a A.txt --deck-b B.t
 | Disque plein | les anciennes parties sont supprimées automatiquement ; `--keep-shards` les garde |
 | Avertissement NumPy « not writable » | sans effet, déjà masqué dans les versions récentes |
 | « Le format des entrées a changé » | un changement incompatible : nouveau `--run` |
+| La page ne s'ouvre pas depuis un autre PC | réseau Windows en « Public », ou accès refusé au premier lancement : passer le réseau en « Privé », ou dans un terminal administrateur `netsh advfirewall firewall add rule name="pocket-zero ui" dir=in action=allow protocol=TCP localport=8765` |
 
 ## 11. Ce que le bot voit
 
