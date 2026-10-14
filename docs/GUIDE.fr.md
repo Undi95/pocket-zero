@@ -285,8 +285,8 @@ run.bat ranked --deck results\forge\forge1\decks\mon_deck.txt
    cache dans `results\ranked\matrix.json` : relancer est instantané).
 3. **Saison** : 5 000 joueurs, 120 parties chacun, contre des adversaires de leur rang. Règles
    officielles : +10 par victoire ; défaite 0 (Débutant), −5 (Poké Ball, Super Ball), −7 (Hyper
-   Ball), −10 (Master Ball) ; bonus de série +3/+6/+9/+12 jusqu'à Super Ball ; pas de descente
-   sous le début du rang.
+   Ball), −10 (Master Ball) ; bonus de série +3/+6/+9/+12 jusqu'à Super Ball ; une égalité ne
+   change pas les points et casse la série ; pas de descente sous le début du rang.
 
 Résultat `results\ranked\CLASSEMENT.md` : victoires par deck et par rang, part des joueurs qui
 atteignent Master Ball, parties nécessaires. Options : `--player z32`, `--games 40`, `--players`,

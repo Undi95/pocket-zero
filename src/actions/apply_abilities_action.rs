@@ -229,7 +229,25 @@ fn forecast_ability_by_mechanic(
         AbilityMechanic::SwitchOutOpponentActiveToBench { .. } => {
             switch_out_opponent_active_to_bench()
         }
-        AbilityMechanic::LookAtCardsNoop => Outcomes::single_fn(|_, _, _| {}),
+        AbilityMechanic::LookAtTopOfOwnDeck => Outcomes::single_fn(|_, state, action| {
+            state.see_top_of_deck(action.actor, action.actor, 1);
+        }),
+        AbilityMechanic::LookAtTopOfEitherDeck => Outcomes::single_fn(|_, state, action| {
+            let choices = (0..2)
+                .filter(|&player| !state.decks[player].cards.is_empty())
+                .map(|player| SimpleAction::LookAtTopOfDeck { player })
+                .collect();
+            state.move_generation_stack.push((action.actor, choices));
+        }),
+        AbilityMechanic::LookAtRandomOpponentHandCard => {
+            Outcomes::single_fn(|rng, state, action| {
+                let hand = &state.hands[(action.actor + 1) % 2];
+                if !hand.is_empty() {
+                    let card = hand[rng.gen_range(0..hand.len())].clone();
+                    state.see_opponent_card(action.actor, &card);
+                }
+            })
+        }
         AbilityMechanic::UseRandomOpponentSupporterEffect => {
             use_random_opponent_supporter_effect(action.actor, state)
         }
@@ -830,6 +848,7 @@ fn opponent_shuffle_hand_and_draw_per_remaining_point() -> Outcomes {
     Outcomes::single_fn(|rng, state, action| {
         let opponent = (action.actor + 1) % 2;
         let hand: Vec<Card> = std::mem::take(&mut state.hands[opponent]);
+        state.note_hand_shuffled_away(opponent);
         state.decks[opponent].cards.extend(hand);
         state.decks[opponent].shuffle(false, rng);
         let remaining_points = POINTS_TO_WIN.saturating_sub(state.points[opponent]);
@@ -865,9 +884,14 @@ fn use_random_opponent_supporter_effect(actor: usize, state: &State) -> Outcomes
     for supporter in candidates {
         let (branch_probabilities, branch_mutations) =
             forecast_trainer_action(actor, state, &supporter).into_branches();
+        let seen = Card::Trainer(supporter);
         for (probability, mutation) in branch_probabilities.into_iter().zip(branch_mutations) {
             probabilities.push(probability * pick_probability);
-            mutations.push(mutation);
+            let seen = seen.clone();
+            mutations.push(Box::new(move |rng, state, action| {
+                state.see_opponent_card(actor, &seen); // it stays in their hand
+                mutation(rng, state, action);
+            }));
         }
     }
     Outcomes::from_parts(probabilities, mutations)

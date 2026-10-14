@@ -39,9 +39,27 @@ pub enum SimpleAction {
     Attack(Attack),
     // usize is in_play_pokemon index to retreat to. Can't Retreat(0)
     Retreat(usize),
+    /// Second step of a paid Retreat when the Active's Energy can pay the cost in several ways:
+    /// the player chooses which Energy to discard, as in the game, then switches to `bench_idx`.
+    RetreatPaying {
+        bench_idx: usize,
+        energies: Vec<EnergyType>,
+    },
     EndTurn,
 
     // Atomic actions as part of different effects.
+    /// Hiker / Morty: put `card` at `position_idx` (0 = drawn next) among the top `count` cards
+    /// of `player`'s deck, which the actor is putting back in the order of their choice.
+    ArrangeTopOfDeck {
+        player: usize,
+        position_idx: usize,
+        count: usize,
+        card: Card,
+    },
+    /// Unown's CHECK: look at the top card of `player`'s deck.
+    LookAtTopOfDeck {
+        player: usize,
+    },
     Attach {
         attachments: Vec<(u32, EnergyType, usize)>, // (amount, energy_type, in_play_idx)
         is_turn_energy: bool, // true if this is the energy from the zone that can be once per turn
@@ -309,6 +327,20 @@ impl fmt::Display for SimpleAction {
             SimpleAction::UseAbility { in_play_idx } => write!(f, "UseAbility({in_play_idx})"),
             SimpleAction::Attack(attack) => write!(f, "Attack({})", attack.title),
             SimpleAction::Retreat(index) => write!(f, "Retreat({index})"),
+            SimpleAction::RetreatPaying {
+                bench_idx,
+                energies,
+            } => write!(f, "Retreat({bench_idx}, discarding {energies:?})"),
+            SimpleAction::ArrangeTopOfDeck {
+                player,
+                position_idx,
+                count,
+                card,
+            } => write!(
+                f,
+                "ArrangeTopOfDeck(player {player}, {card} at {position_idx} of {count})"
+            ),
+            SimpleAction::LookAtTopOfDeck { player } => write!(f, "LookAtTopOfDeck({player})"),
             SimpleAction::EndTurn => write!(f, "EndTurn"),
             SimpleAction::Attach {
                 attachments,

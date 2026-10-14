@@ -348,7 +348,7 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<
         );
     map.insert(
             "Once during your turn, you may choose either player. Look at the top card of that player's deck.",
-            AbilityMechanic::LookAtCardsNoop,
+            AbilityMechanic::LookAtTopOfEitherDeck,
         );
     map.insert(
         "Once during your turn, you may discard the top card of your opponent's deck.",
@@ -394,7 +394,7 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<
     );
     map.insert(
         "Once during your turn, you may look at the top card of your deck.",
-        AbilityMechanic::LookAtCardsNoop,
+        AbilityMechanic::LookAtTopOfOwnDeck,
     );
     map.insert(
         "Once during your turn, you may make your opponent's Active Pokémon Burned.",
@@ -776,7 +776,7 @@ pub static EFFECT_ABILITY_MECHANIC_MAP: LazyLock<
         );
     map.insert(
         "Once during your turn, you may look at a random card from your opponent's hand.",
-        AbilityMechanic::LookAtCardsNoop,
+        AbilityMechanic::LookAtRandomOpponentHandCard,
     );
     map.insert(
             "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, do 70 damage to the Attacking Pokémon.",

@@ -328,10 +328,8 @@ pub fn trainer_move_generation_implementation(
         CardId::B4a071TeamRocketsBoss | CardId::B4a087TeamRocketsBoss => {
             can_play_trainer(state, trainer_card)
         }
-        // Information-only cards. Looking at cards without moving them between zones has no
-        // observable effect in this engine (the bots already forecast over the full deck
-        // distribution), so these are playable and resolve as no-ops. See the matching arms in
-        // `forecast_trainer_action` for the per-card reasoning.
+        // Cards that show or arrange hidden cards. See the matching arms in
+        // `forecast_trainer_action`.
         CardId::PA003HandScope
         | CardId::PA004PokedEx
         | CardId::PA008PokedEx

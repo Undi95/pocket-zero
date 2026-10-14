@@ -55,8 +55,10 @@ lab/
   - Koga : marche sur toutes les impressions de Muk / Weezing (avant : 3 numéros seulement) ;
   - Dragalge ex (Poison Point) et Iris (Haxorus) : réimpressions oubliées ;
   - « énergie au hasard » (Piers, Psychic, Crawdaunt) : vraiment au hasard (avant : toujours la dernière).
-  Simplifications connues, sans effet sur la recherche : les cartes « regarde / remets dans l'ordre »
-  (Pokédex, Hiker, Morty, Hand Scope, Looker) ne font rien.
+  Depuis le 14 octobre 2026, plus de simplification : Hiker et Morty remettent le dessus du deck dans
+  l'ordre choisi, et ce qu'un joueur voit (Pokédex, Rotom Dex, Hand Scope, Looker, Misdreavus, talents
+  de Porygon, Unown et Kecleon de la Team Rocket) est retenu par le bot quand il réfléchit
+  (`src/state/knowledge.rs`). À la retraite, le joueur choisit les énergies défaussées.
 - Le bot expectiminimax cherche désormais sur un état « déterminisé » (il ne voit plus le haut de son deck ni la
   main adverse). Fidélité inchangée (RMSE 11,2 → 12,0, dans le bruit).
 

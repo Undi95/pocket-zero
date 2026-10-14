@@ -293,23 +293,26 @@ pub fn forecast_trainer_action(
         CardId::B4a071TeamRocketsBoss | CardId::B4a087TeamRocketsBoss => {
             Outcomes::single_fn(team_rockets_boss_effect)
         }
-        // Information-only cards: "look at" / "reveal" moves no card between zones, so there is
-        // nothing to simulate. Bots in this engine forecast over the full deck distribution rather
-        // than a concrete deck order, so revealing information to a player is unobservable.
-        //   - Hand Scope / Looker: reveal the opponent's hand / Supporters in their deck.
-        //   - Pokédex: look at the top 3 cards of your deck.
-        //   - Hiker / Morty: look at N cards from the top of a deck "and put them back in any
-        //     order" — the identity ordering is always a legal choice and the engine's bots have
-        //     no way to value a deck ordering, so reordering is a no-op here too.
-        CardId::PA003HandScope
-        | CardId::PA004PokedEx
-        | CardId::PA008PokedEx
-        | CardId::A3a068Looker
-        | CardId::A3a082Looker
-        | CardId::A4161Hiker
-        | CardId::A4201Hiker
-        | CardId::A4a071Morty
-        | CardId::A4a085Morty => Outcomes::single_fn(|_, _, _| {}),
+        // Cards that show hidden cards: what the player sees goes into `state.knowledge`, which
+        // the search players respect when they resample the hidden cards (`determinize`).
+        CardId::PA003HandScope => Outcomes::single_fn(|_, state, action| {
+            state.see_opponent_hand(action.actor, |_| true);
+        }),
+        CardId::PA004PokedEx | CardId::PA008PokedEx => Outcomes::single_fn(|_, state, action| {
+            state.see_top_of_deck(action.actor, action.actor, 3);
+        }),
+        CardId::A3a068Looker | CardId::A3a082Looker => Outcomes::single_fn(|_, state, action| {
+            // Every Supporter of their deck revealed: the other Supporters are in their hand.
+            state.see_opponent_hand(action.actor, |card| card.is_support());
+            state.knowledge[action.actor].opponent_supporters_known = true;
+        }),
+        CardId::A4161Hiker | CardId::A4201Hiker => Outcomes::single_fn(|_, state, action| {
+            arrange_top_of_deck(state, action.actor, action.actor, EnergyType::Fighting);
+        }),
+        CardId::A4a071Morty | CardId::A4a085Morty => Outcomes::single_fn(|_, state, action| {
+            let opponent = (action.actor + 1) % 2;
+            arrange_top_of_deck(state, action.actor, opponent, EnergyType::Psychic);
+        }),
         CardId::A3145RotomDEx => Outcomes::single_fn(rotom_dex_effect),
         CardId::A1a067Blue | CardId::A1a081Blue => Outcomes::single_fn(blue_effect),
         CardId::A1226LtSurge | CardId::A1273LtSurge => Outcomes::single_fn(lt_surge_effect),
@@ -414,6 +417,7 @@ fn penny_effect(rng: &mut StdRng, state: &mut State, action: &Action) {
 /// Rotom Dex: "Look at the top card of your deck. Then, you may shuffle your deck." The look is
 /// unobservable here (see the information-only cards above); the optional shuffle is a real choice.
 fn rotom_dex_effect(_: &mut StdRng, state: &mut State, action: &Action) {
+    state.see_top_of_deck(action.actor, action.actor, 1);
     state.move_generation_stack.push((
         action.actor,
         vec![SimpleAction::Noop, SimpleAction::ShuffleOwnDeck],
@@ -645,6 +649,7 @@ fn prank_spinner_effect(rng: &mut StdRng, state: &mut State, _: &Action) {
         (1, pick - state.hands[0].len())
     };
     let card = state.hands[owner].remove(idx);
+    state.note_left_hand(owner, &card);
     debug!("Prank Spinner: Shuffling {card} from player {owner}'s hand into their deck");
     state.decks[owner].cards.push(card);
     state.decks[owner].shuffle(false, rng);
@@ -2127,6 +2132,54 @@ fn team_rockets_goozooka_effect(_: &mut StdRng, state: &mut State, action: &Acti
 
 /// Team Rocket's Boss: look at your opponent's hand and put any number of Basic Pokémon you find
 /// there onto your opponent's Bench.
+/// Hiker / Morty: "For each of your [type] Pokémon in play, look at that many cards from the top
+/// of [a] deck and put them back in any order."
+fn arrange_top_of_deck(state: &mut State, player: usize, owner: usize, energy_type: EnergyType) {
+    let count = state
+        .enumerate_in_play_pokemon(player)
+        .filter(|(_, pokemon)| pokemon.is_type(energy_type))
+        .count()
+        .min(state.decks[owner].cards.len());
+    state.see_top_of_deck(player, owner, count);
+    offer_top_of_deck_arrangement(state, player, owner, 0, count);
+}
+
+/// Offers `player` the choice of the card to put at `position` among the top `count` cards of
+/// `owner`'s deck, the ones above it being placed already. One card at a time keeps the choices
+/// few (at most 4, against 24 orders of 4 cards); nothing is left to choose once the remaining
+/// cards are all the same.
+pub(crate) fn offer_top_of_deck_arrangement(
+    state: &mut State,
+    player: usize,
+    owner: usize,
+    position: usize,
+    count: usize,
+) {
+    let mut cards: Vec<Card> = vec![];
+    for card in state.decks[owner]
+        .cards
+        .get(position..count)
+        .unwrap_or_default()
+    {
+        if !cards.contains(card) {
+            cards.push(card.clone());
+        }
+    }
+    if cards.len() < 2 {
+        return;
+    }
+    let choices = cards
+        .into_iter()
+        .map(|card| SimpleAction::ArrangeTopOfDeck {
+            player: owner,
+            position_idx: position,
+            count,
+            card,
+        })
+        .collect();
+    state.move_generation_stack.push((player, choices));
+}
+
 fn team_rockets_boss_effect(_: &mut StdRng, state: &mut State, action: &Action) {
     let player = action.actor;
     let opponent = (player + 1) % 2;

@@ -282,8 +282,8 @@ run.bat ranked --deck results\forge\forge1\decks\my_deck.txt
    `results\ranked\matrix.json`: running again is instant).
 3. **Season**: 5,000 players, 120 games each, against opponents of their rank. Official rules:
    +10 per win; loss 0 (Beginner), −5 (Poké Ball, Great Ball), −7 (Ultra Ball), −10 (Master
-   Ball); win-streak bonus +3/+6/+9/+12 up to Great Ball; no demotion below the start of the
-   current tier.
+   Ball); win-streak bonus +3/+6/+9/+12 up to Great Ball; a tie changes no points and ends the
+   streak; no demotion below the start of the current tier.
 
 Result `results\ranked\CLASSEMENT.md`: wins per deck and per rank, share of players reaching
 Master Ball, games needed. Options: `--player z32`, `--games 40`, `--players`, `--matches`,

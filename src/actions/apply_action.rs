@@ -33,7 +33,7 @@ use super::{
     },
     apply_attack_action::forecast_attack,
     apply_stadium_action::{self, forecast_use_stadium},
-    apply_trainer_action::forecast_trainer_action,
+    apply_trainer_action::{forecast_trainer_action, offer_top_of_deck_arrangement},
     outcomes::Outcomes,
     Action, SimpleAction,
 };
@@ -225,6 +225,9 @@ fn forecast_action_unwatched(state: &State, action: &Action) -> Outcomes {
         | SimpleAction::Evolve { .. }
         | SimpleAction::Activate { .. }
         | SimpleAction::Retreat(_)
+        | SimpleAction::RetreatPaying { .. }
+        | SimpleAction::ArrangeTopOfDeck { .. }
+        | SimpleAction::LookAtTopOfDeck { .. }
         | SimpleAction::ScheduleDelayedSpotDamage { .. }
         | SimpleAction::ScheduleDelayedSpotKnockOut { .. }
         | SimpleAction::Heal { .. }
@@ -492,6 +495,27 @@ fn apply_deterministic_action(rng: &mut StdRng, state: &mut State, action: &Acti
             in_play_idx,
         } => apply_retreat(*player, state, *in_play_idx, true),
         SimpleAction::Retreat(position) => apply_retreat(action.actor, state, *position, false),
+        SimpleAction::RetreatPaying {
+            bench_idx,
+            energies,
+        } => pay_retreat_and_switch(action.actor, state, *bench_idx, energies),
+        SimpleAction::ArrangeTopOfDeck {
+            player,
+            position_idx,
+            count,
+            card,
+        } => {
+            let deck = &mut state.decks[*player].cards;
+            let at = deck[*position_idx..*count]
+                .iter()
+                .position(|c| c == card)
+                .expect("The card should be among the cards being arranged");
+            let card = deck.remove(position_idx + at);
+            deck.insert(*position_idx, card);
+            state.see_top_of_deck(action.actor, *player, *count);
+            offer_top_of_deck_arrangement(state, action.actor, *player, position_idx + 1, *count);
+        }
+        SimpleAction::LookAtTopOfDeck { player } => state.see_top_of_deck(action.actor, *player, 1),
         SimpleAction::ScheduleDelayedSpotDamage {
             target_player,
             target_in_play_idx,
@@ -648,6 +672,7 @@ fn apply_deterministic_action(rng: &mut StdRng, state: &mut State, action: &Acti
             if !state.hands[action.actor].is_empty() {
                 let idx = rng.gen_range(0..state.hands[action.actor].len());
                 let card = state.hands[action.actor].remove(idx);
+                state.note_hand_shuffled_away(action.actor); // which card left is not shown
                 debug!("Shuffling {card} from hand into deck");
                 state.decks[action.actor].cards.push(card);
                 state.decks[action.actor].shuffle(false, rng);
@@ -841,7 +866,8 @@ pub(crate) fn apply_place_card(
             .as_ref()
             .and_then(|pokemon| pokemon.ability_mechanic());
         if placed_in_bench && in_play_ability == Some(&AbilityMechanic::InfiltratingInspection) {
-            debug!("Misdreavus's Infiltrating Inspection: Opponent's hand is revealed (no-op in AI context)");
+            debug!("Misdreavus's Infiltrating Inspection: Opponent's hand is revealed");
+            state.see_opponent_hand(actor, |_| true);
         }
         if placed_in_bench {
             on_bench_from_hand(actor, state, index);
@@ -1157,62 +1183,114 @@ fn apply_move_all_damage(actor: usize, state: &mut State, from: usize, to: usize
 /// is_free is analogous to "via retreat". If false, its because this comes from an Activate.
 /// Note: This might be called when a K.O. happens, so can't assume there is an active...
 fn apply_retreat(player: usize, state: &mut State, bench_idx: usize, is_free: bool) {
-    if !is_free {
-        let active = state.in_play_pokemon[player][0]
-            .as_ref()
-            .expect("Active Pokemon should be there if paid retreating");
-        let double_grass = active.has_double_grass(state, player);
-        let retreat_cost = get_retreat_cost(state, active).len();
-        let attached_energy: &mut Vec<_> = state.in_play_pokemon[player][0]
-            .as_mut()
-            .expect("Active Pokemon should be there if paid retreating")
-            .attached_energy
-            .as_mut();
-
-        // TODO: Maybe give option to user to select which energy to discard
-
-        // Some energies are worth more than others... For now decide the ordering
-        // that keeps as much Grass energy as possible (since possibly worth more).
-
-        // Re-order energies so that Grass are at the beginning
-        attached_energy.sort_by(|a, b| {
-            if *a == EnergyType::Grass && *b != EnergyType::Grass {
-                std::cmp::Ordering::Less
-            } else if *a != EnergyType::Grass && *b == EnergyType::Grass {
-                std::cmp::Ordering::Greater
-            } else {
-                std::cmp::Ordering::Equal
-            }
-        });
-
-        // Start walking from the back in the attached, removing energies until retreat cost is paid
-        let mut remaining_cost = retreat_cost;
-        let mut discarded: Vec<EnergyType> = vec![];
-        while remaining_cost > 0 && !attached_energy.is_empty() {
-            let energy = attached_energy.pop().unwrap();
-            discarded.push(energy);
-            if energy == EnergyType::Grass && double_grass {
-                remaining_cost = remaining_cost.saturating_sub(2);
-            } else {
-                remaining_cost = remaining_cost.saturating_sub(1);
-            }
-        }
-        if remaining_cost > 0 {
-            panic!("Not enough energy to pay retreat cost");
-        }
-
-        if !discarded.is_empty() {
-            state.discard_energies[player].extend(discarded);
-        }
-
-        state.has_retreated = true;
+    if is_free {
+        apply_activate(player, state, bench_idx);
+        return;
     }
+    let active = state.in_play_pokemon[player][0]
+        .as_ref()
+        .expect("Active Pokemon should be there if paid retreating");
+    let payments = retreat_payments(
+        &active.attached_energy,
+        get_retreat_cost(state, active).len(),
+        active.has_double_grass(state, player),
+    );
+    match payments.len() {
+        0 => panic!("Not enough energy to pay retreat cost"),
+        1 => pay_retreat_and_switch(player, state, bench_idx, &payments[0]),
+        _ => {
+            // As in the game, the player picks the Energy to discard when there is a choice.
+            let choices = payments
+                .into_iter()
+                .map(|energies| SimpleAction::RetreatPaying {
+                    bench_idx,
+                    energies,
+                })
+                .collect();
+            state.move_generation_stack.push((player, choices));
+        }
+    }
+}
+
+/// The distinct ways to pay a Retreat Cost of `cost` with the attached Energy: the sets of Energy
+/// that pay it with none to spare, i.e. leaving any one of them out would no longer pay it. With
+/// Jungle Totem a Grass Energy pays 2.
+fn retreat_payments(
+    attached: &[EnergyType],
+    cost: usize,
+    double_grass: bool,
+) -> Vec<Vec<EnergyType>> {
+    let mut counts: Vec<(EnergyType, usize)> = vec![];
+    for energy in attached {
+        match counts.iter_mut().find(|(e, _)| e == energy) {
+            Some((_, n)) => *n += 1,
+            None => counts.push((*energy, 1)),
+        }
+    }
+    let worth = |e: EnergyType| {
+        if double_grass && e == EnergyType::Grass {
+            2
+        } else {
+            1
+        }
+    };
+    let mut payments = vec![];
+    let mut taken = vec![0usize; counts.len()];
+    loop {
+        let paid: usize = taken
+            .iter()
+            .zip(&counts)
+            .map(|(k, (e, _))| k * worth(*e))
+            .sum();
+        let none_to_spare = taken
+            .iter()
+            .zip(&counts)
+            .all(|(k, (e, _))| *k == 0 || paid - worth(*e) < cost);
+        if paid >= cost && none_to_spare {
+            payments.push(
+                counts
+                    .iter()
+                    .zip(&taken)
+                    .flat_map(|((e, _), k)| std::iter::repeat_n(*e, *k))
+                    .collect(),
+            );
+        }
+        // Next combination (odometer over how many of each type are discarded)
+        let mut i = 0;
+        while i < taken.len() && taken[i] == counts[i].1 {
+            taken[i] = 0;
+            i += 1;
+        }
+        if i == taken.len() {
+            return payments;
+        }
+        taken[i] += 1;
+    }
+}
+
+/// Discards the chosen Energy from the Active Pokemon, then switches it with `bench_idx`.
+fn pay_retreat_and_switch(
+    player: usize,
+    state: &mut State,
+    bench_idx: usize,
+    energies: &[EnergyType],
+) {
+    let attached = &mut state.in_play_pokemon[player][0]
+        .as_mut()
+        .expect("Active Pokemon should be there if paid retreating")
+        .attached_energy;
+    for energy in energies {
+        let at = attached
+            .iter()
+            .position(|e| e == energy)
+            .expect("Retreat Cost is paid with attached Energy");
+        attached.remove(at);
+    }
+    state.discard_energies[player].extend(energies.iter().copied());
+    state.has_retreated = true;
 
     apply_activate(player, state, bench_idx);
-
-    if !is_free {
-        apply_snapping_trap_on_retreat(state, player);
-    }
+    apply_snapping_trap_on_retreat(state, player);
 }
 
 /// Galarian Stunfisk's Snapping Trap: if the player who just retreated faces an Active Pokemon

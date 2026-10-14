@@ -453,9 +453,10 @@ fn main() {
                 })
                 .collect();
             let score = results.iter().sum::<f64>() / games.max(1) as f64;
+            let ties = results.iter().filter(|&&r| r == 0.5).count() as f64 / games.max(1) as f64;
             println!(
                 "{}",
-                json!({"deck_a": deck_a, "deck_b": deck_b, "games": games, "score_a": score})
+                json!({"deck_a": deck_a, "deck_b": deck_b, "games": games, "score_a": score, "ties": ties})
             );
         }
         Cmd::League {

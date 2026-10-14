@@ -1,4 +1,5 @@
 mod energy;
+mod knowledge;
 pub mod observation;
 mod played_card;
 
@@ -20,6 +21,7 @@ use crate::{
     tools::has_tool,
 };
 
+pub use knowledge::Knowledge;
 pub use played_card::{has_serperior_jungle_totem, PlayedCard};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
@@ -70,6 +72,9 @@ pub struct State {
     pub current_player: usize,
     pub(crate) end_turn_pending: bool,
     pub move_generation_stack: Vec<(usize, Vec<SimpleAction>)>,
+    /// What each player has seen of hidden cards besides their own hand.
+    #[serde(default)]
+    pub knowledge: [Knowledge; 2],
     /// Actions applied so far this turn (any actor, including pending choices). See
     /// `MAX_ACTIONS_PER_TURN`.
     #[serde(default)]
@@ -150,6 +155,7 @@ impl State {
             current_player: 0,
             end_turn_pending: false,
             move_generation_stack: Vec::new(),
+            knowledge: Default::default(),
             actions_this_turn: 0,
             energy_zone: [EnergyZone::default(), EnergyZone::default()],
             hands: [Vec::new(), Vec::new()],
@@ -330,6 +336,7 @@ impl State {
             .position(|x| x == card)
             .expect("Player hand should contain card to remove");
         self.hands[current_player].swap_remove(index);
+        self.note_left_hand(current_player, card);
     }
 
     pub(crate) fn remove_card_from_deck(&mut self, player: usize, card: &Card) {
@@ -359,6 +366,7 @@ impl State {
             );
             return;
         }
+        self.note_draw(player);
         if let Some(card) = self.decks[player].draw() {
             self.hands[player].push(card.clone());
             debug!(
@@ -391,6 +399,7 @@ impl State {
             .position(|c| c == card)
             .expect("Card must exist in hand to transfer to deck");
         self.hands[player].remove(pos);
+        self.note_left_hand(player, card);
         self.decks[player].cards.push(card.clone());
     }
 

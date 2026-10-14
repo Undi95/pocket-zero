@@ -147,22 +147,54 @@ impl ExpectiMiniMaxPlayer {
 }
 
 /// Copy of `state` with the hidden information resampled from `myself`'s point of view:
-/// both decks are reshuffled (nobody knows the order) and the opponent's hand is redealt from
-/// their hand + deck (only its size is known). Mid-effect choices (non-empty stack) can name
-/// specific cards from a hand or the top of a deck, so those are searched on the real state.
+/// both decks are reshuffled and the opponent's hand is redealt from their hand + deck (only its
+/// size is known), except for what `myself` has seen (`state.knowledge`): the known top cards of
+/// a deck stay in place and the cards seen in the opponent's hand stay there. Mid-effect choices
+/// (non-empty stack) can name specific cards from a hand or the top of a deck, so those are
+/// searched on the real state.
 pub(crate) fn determinize(state: &State, myself: usize, rng: &mut StdRng) -> State {
     let mut s = state.clone();
     if !s.move_generation_stack.is_empty() || s.turn_count == 0 {
         return s;
     }
     let opponent = (myself + 1) % 2;
-    s.decks[myself].cards.shuffle(rng);
-    let hand_size = s.hands[opponent].len();
-    let mut unknown = std::mem::take(&mut s.hands[opponent]);
-    unknown.append(&mut s.decks[opponent].cards);
+    let known_tops =
+        [0, 1].map(|knower| [0, 1].map(|owner| state.known_top_of_deck(knower, owner).len()));
+
+    let mine = known_tops[myself][myself];
+    s.decks[myself].cards[mine..].shuffle(rng);
+
+    let theirs = known_tops[myself][opponent];
+    let mut hand = state.known_opponent_hand(myself);
+    let mut unknown = state.hands[opponent].clone();
+    for card in &hand {
+        let at = unknown
+            .iter()
+            .position(|c| c == card)
+            .expect("known cards are in the hand");
+        unknown.swap_remove(at);
+    }
+    unknown.extend_from_slice(&state.decks[opponent].cards[theirs..]);
     unknown.shuffle(rng);
-    s.decks[opponent].cards = unknown.split_off(hand_size);
-    s.hands[opponent] = unknown;
+    if s.knowledge[myself].opponent_supporters_known {
+        unknown.sort_by_key(|card| card.is_support()); // stable: the hand gets no other Supporter
+    }
+    let rest = unknown.split_off(state.hands[opponent].len() - hand.len());
+    hand.append(&mut unknown);
+    let mut deck = state.decks[opponent].cards[..theirs].to_vec();
+    let start = deck.len();
+    deck.extend(rest);
+    deck[start..].shuffle(rng);
+    s.hands[opponent] = hand;
+    s.decks[opponent].cards = deck;
+
+    // The knowledge now refers to the resampled cards.
+    for (knower, known) in known_tops.iter().enumerate() {
+        for (owner, &count) in known.iter().enumerate() {
+            s.knowledge[knower].top_of_deck[owner] =
+                (count > 0).then(|| (s.decks[owner].cards.clone(), count));
+        }
+    }
     s
 }
 
@@ -389,7 +421,14 @@ mod tests {
     use rand::SeedableRng;
 
     use super::*;
-    use crate::test_support::get_initialized_game;
+    use crate::{
+        card_ids::CardId,
+        database::get_card_by_enum,
+        models::{Card, PlayedCard},
+        test_support::{
+            get_initialized_game, get_test_game_with_board, play_trainer, trainer_from_id,
+        },
+    };
 
     fn sorted_ids(cards: &[crate::models::Card]) -> Vec<String> {
         let mut ids: Vec<String> = cards.iter().map(|c| c.get_id()).collect();
@@ -427,5 +466,150 @@ mod tests {
                 s.hands[opp] != state.hands[opp] || s.decks[me].cards != state.decks[me].cards;
         }
         assert!(changed_view, "hidden information should be resampled");
+    }
+
+    fn cards(ids: &[CardId]) -> Vec<Card> {
+        ids.iter().map(|id| get_card_by_enum(*id)).collect()
+    }
+
+    fn id(card: CardId) -> String {
+        get_card_by_enum(card).get_id()
+    }
+
+    /// Player 0 (a Gastly in play) plays `trainer`, with known hands and decks.
+    fn after_playing(trainer: CardId, opponent_hand: &[CardId], opponent_deck: &[CardId]) -> State {
+        let mut game = get_test_game_with_board(
+            vec![PlayedCard::from_id(CardId::A1120Gastly)],
+            vec![PlayedCard::from_id(CardId::A1033Charmander)],
+        );
+        let mut state = game.get_state_clone();
+        state.hands[0] = vec![get_card_by_enum(trainer)];
+        state.decks[0].cards = cards(&[
+            CardId::A1001Bulbasaur,
+            CardId::A1033Charmander,
+            CardId::A1053Squirtle,
+            CardId::PA001Potion,
+            CardId::PA005PokeBall,
+        ]);
+        state.hands[1] = cards(opponent_hand);
+        state.decks[1].cards = cards(opponent_deck);
+        game.set_state(state);
+        play_trainer(&mut game, 0, trainer_from_id(trainer));
+        game.get_state_clone()
+    }
+
+    #[test]
+    fn test_determinize_keeps_the_top_cards_seen_with_pokedex() {
+        let mut state = after_playing(
+            CardId::PA004PokedEx,
+            &[CardId::PA001Potion],
+            &[CardId::PA005PokeBall],
+        );
+        let top = state.decks[0].cards[..3].to_vec();
+        let mut rng = StdRng::seed_from_u64(1);
+        for _ in 0..20 {
+            assert_eq!(
+                determinize(&state, 0, &mut rng).decks[0].cards[..3],
+                top[..]
+            );
+        }
+        // Drawing the first one leaves the other two known; any other change forgets them.
+        state.maybe_draw_card(0);
+        for _ in 0..20 {
+            assert_eq!(
+                determinize(&state, 0, &mut rng).decks[0].cards[..2],
+                top[1..]
+            );
+        }
+        state.decks[0].cards.rotate_left(1);
+        assert!(state.known_top_of_deck(0, 0).is_empty());
+    }
+
+    #[test]
+    fn test_determinize_keeps_the_opponent_hand_seen_with_hand_scope() {
+        let state = after_playing(
+            CardId::PA003HandScope,
+            &[
+                CardId::PA001Potion,
+                CardId::A1225Sabrina,
+                CardId::A1001Bulbasaur,
+            ],
+            &[
+                CardId::PA005PokeBall,
+                CardId::PA007ProfessorsResearch,
+                CardId::A1053Squirtle,
+            ],
+        );
+        let mut rng = StdRng::seed_from_u64(2);
+        for _ in 0..20 {
+            let s = determinize(&state, 0, &mut rng);
+            assert_eq!(sorted_ids(&s.hands[1]), sorted_ids(&state.hands[1]));
+        }
+        // From the opponent's point of view nothing was revealed: their view is resampled.
+        assert!(state.knowledge[1].opponent_hand.is_empty());
+    }
+
+    #[test]
+    fn test_determinize_after_looker_deals_the_opponent_no_other_supporter() {
+        // Sabrina is in their hand; Professor's Research, in their deck, is revealed by Looker.
+        let mut state = after_playing(
+            CardId::A3a068Looker,
+            &[CardId::A1225Sabrina, CardId::PA001Potion],
+            &[
+                CardId::PA007ProfessorsResearch,
+                CardId::PA005PokeBall,
+                CardId::A1053Squirtle,
+            ],
+        );
+        let mut rng = StdRng::seed_from_u64(3);
+        for _ in 0..20 {
+            let s = determinize(&state, 0, &mut rng);
+            let supporters: Vec<String> = s.hands[1]
+                .iter()
+                .filter(|c| c.is_support())
+                .map(|c| c.get_id())
+                .collect();
+            assert_eq!(supporters, vec![id(CardId::A1225Sabrina)]);
+        }
+        // Once they draw, only Sabrina stays certain.
+        state.maybe_draw_card(1);
+        assert!(!state.knowledge[0].opponent_supporters_known);
+        let s = determinize(&state, 0, &mut rng);
+        assert!(s.hands[1]
+            .iter()
+            .any(|c| c.get_id() == id(CardId::A1225Sabrina)));
+    }
+
+    #[test]
+    fn test_card_seen_on_top_of_the_opponent_deck_is_known_once_drawn() {
+        // Morty with a single [P] Pokémon: look at their top card, nothing to arrange.
+        let mut state = after_playing(
+            CardId::A4a071Morty,
+            &[CardId::PA001Potion],
+            &[
+                CardId::A1225Sabrina,
+                CardId::PA005PokeBall,
+                CardId::A1053Squirtle,
+            ],
+        );
+        assert!(state.move_generation_stack.is_empty());
+        let mut rng = StdRng::seed_from_u64(4);
+        for _ in 0..20 {
+            assert_eq!(
+                determinize(&state, 0, &mut rng).decks[1].cards[0].get_id(),
+                id(CardId::A1225Sabrina)
+            );
+        }
+        state.maybe_draw_card(1);
+        for _ in 0..20 {
+            let s = determinize(&state, 0, &mut rng);
+            assert!(s.hands[1]
+                .iter()
+                .any(|c| c.get_id() == id(CardId::A1225Sabrina)));
+        }
+        // Once they play it, it is gone from what player 0 knows.
+        let sabrina = get_card_by_enum(CardId::A1225Sabrina);
+        state.discard_card_from_hand(1, &sabrina);
+        assert!(state.known_opponent_hand(0).is_empty());
     }
 }

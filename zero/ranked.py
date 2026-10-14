@@ -10,7 +10,8 @@
    against opponents of their rank; results are drawn from the matrix. Rules (Serebii,
    ptcgpocket.gg, season B4a): win +10; loss 0 in Beginner, -5 in Poke/Great Ball, -7 in Ultra
    Ball, -10 in Master Ball; win-streak bonus +3/+6/+9/+12 (2nd to 5th win in a row) up to
-   Great Ball; no demotion below the start of the current tier.
+   Great Ball; no demotion below the start of the current tier; a tie changes no points and
+   ends the win streak (Pokémon Zone's ranked guide).
 Result: results/ranked/CLASSEMENT.md, win rate per deck and per rank, share of players
 reaching Master Ball, games needed.
 """
@@ -38,9 +39,12 @@ def rank_name(points):
     return f'{TIERS[k // 4][0]} {k % 4 + 1}'
 
 
-def play(points, streak, won):
+def play(points, streak, result):
+    """Points and win streak after a game: result 1 (win), 0.5 (tie) or 0 (loss)."""
     t = tier(points)
-    if won:
+    if result == 0.5:
+        return points, 0
+    if result == 1:
         streak += 1
         bonus = [0, 0, 3, 6, 9, 12][min(streak, 5)] if t <= 2 else 0
         return points + 10 + bonus, streak
@@ -64,8 +68,8 @@ def population(extra):
 def matrix(decks, player, games, threads, cache_f, weights=None, live=Off()):
     cache = json.load(open(cache_f)) if os.path.exists(cache_f) else {}
     paths = sorted(decks)
-    pairs = [(a, b) for a, b in itertools.combinations(paths, 2)
-             if f'{player}|{games}|{a}|{b}' not in cache]
+    key = lambda a, b: f'v2|{player}|{games}|{a}|{b}'  # v2: [score, share of ties]
+    pairs = [(a, b) for a, b in itertools.combinations(paths, 2) if key(a, b) not in cache]
     from . import gpu_eval
     if pairs and player.startswith('z') and weights and gpu_eval.available():
         # Every matchup in one batched job on the GPUs.
@@ -80,22 +84,24 @@ def matrix(decks, player, games, threads, cache_f, weights=None, live=Off()):
             live.set(True, progress=(len(res), len(games_list)), current={'games': f'{len(res)}/{len(games_list)}'})
         judge.close()
         for n, (a, b) in enumerate(pairs):
-            cache[f'{player}|{games}|{a}|{b}'] = sum(res[n * games:(n + 1) * games]) / games
+            r = res[n * games:(n + 1) * games]
+            cache[key(a, b)] = [sum(r) / games, sum(x == 0.5 for x in r) / games]
         json.dump(cache, open(cache_f, 'w'))
         pairs = []
     for n, (a, b) in enumerate(pairs, 1):
         r = engine.match(a, b, player, games, threads)
-        cache[f'{player}|{games}|{a}|{b}'] = r['score_a']
+        cache[key(a, b)] = [r['score_a'], r.get('ties', 0.0)]
         live.set(progress=(n, len(pairs)), current={'pairs': f'{n}/{len(pairs)}'})
         if n % 20 == 0 or n == len(pairs):
             print(f'  matchups : {n}/{len(pairs)}', flush=True)
             json.dump(cache, open(cache_f, 'w'))
 
     def score(a, b):
+        """(score of a against b, share of ties)."""
         if a == b:
-            return 0.5
-        k = f'{player}|{games}|{min(a, b)}|{max(a, b)}'
-        return cache[k] if a < b else 1 - cache[k]
+            return 0.5, 0.0
+        s, ties = cache[key(min(a, b), max(a, b))]
+        return (s if a < b else 1 - s), ties
     return score
 
 
@@ -141,8 +147,10 @@ def season(a, live):
         order = sorted(range(len(pl)), key=lambda i: pl[i]['pts'] + rng.random() * 30)
         for i, j in zip(order[::2], order[1::2]):  # neighbours on the ladder meet
             p, q = pl[i], pl[j]
-            won = rng.random() < score(p['deck'], q['deck'])
-            for x, w in ((p, won), (q, not won)):
+            s, ties = score(p['deck'], q['deck'])
+            u = rng.random()
+            result = 1 if u < s - ties / 2 else 0.5 if u < s + ties / 2 else 0
+            for x, w in ((p, result), (q, 1 - result)):
                 t = tier(x['pts'])
                 x['by_tier'][t][0] += w
                 x['by_tier'][t][1] += 1

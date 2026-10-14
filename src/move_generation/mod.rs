@@ -112,7 +112,7 @@ fn generate_possible_actions_unwatched(state: &State) -> (usize, Vec<Action>) {
     // Maybe discard fossils (fossils can be discarded at any time during your turn)
     generate_discard_fossil_actions(state, &mut actions);
 
-    // Maybe attack (only starting on turn 2)
+    // Maybe attack (the player going first may attack on turn 1 if they have the Energy)
     let attack_actions = generate_attack_actions(state);
     actions.extend(attack_actions);
 

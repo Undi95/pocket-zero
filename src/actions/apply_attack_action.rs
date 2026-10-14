@@ -1742,6 +1742,7 @@ fn shuffle_random_opponent_hand_card_into_deck(damage: u32, shuffle_self: bool) 
             if !state.hands[opponent].is_empty() {
                 let idx = rng.gen_range(0..state.hands[opponent].len());
                 let card = state.hands[opponent].remove(idx);
+                state.note_left_hand(opponent, &card);
                 state.decks[opponent].cards.push(card);
                 state.decks[opponent].shuffle(false, rng);
             }
@@ -1851,6 +1852,7 @@ fn discard_random_opponent_hand_card(
         }
         let hand_idx = candidates[rng.gen_range(0..candidates.len())];
         let card = state.hands[opponent].remove(hand_idx);
+        state.note_left_hand(opponent, &card);
         state.discard_piles[opponent].push(card);
     })
 }
@@ -5327,6 +5329,7 @@ fn coin_flip_shuffle_random_opponent_hand_card_into_deck() -> AttackOutcomes {
             }
             let idx = rng.gen_range(0..state.hands[opponent].len());
             let card = state.hands[opponent].remove(idx);
+            state.note_left_hand(opponent, &card);
             state.decks[opponent].cards.push(card);
             state.decks[opponent].shuffle(false, rng);
         }),
@@ -5345,6 +5348,7 @@ fn coin_flip_discard_random_opponent_hand_card(damage: u32) -> AttackOutcomes {
             }
             let idx = rng.gen_range(0..state.hands[opponent].len());
             let card = state.hands[opponent].remove(idx);
+            state.note_left_hand(opponent, &card);
             state.discard_piles[opponent].push(card);
         }),
         // Tails: do nothing
@@ -5362,6 +5366,7 @@ fn coin_flips_shuffle_opponent_hand_cards(damage: u32, num_coins: usize) -> Atta
                 }
                 let idx = rng.gen_range(0..state.hands[opponent].len());
                 let card = state.hands[opponent].remove(idx);
+                state.note_left_hand(opponent, &card);
                 state.decks[opponent].cards.push(card);
             }
             state.decks[opponent].shuffle(false, rng);
@@ -5906,6 +5911,7 @@ fn shuffle_hand_and_draw_per_opponent_hand_card(damage: u32) -> AttackOutcomes {
         let opponent = (action.actor + 1) % 2;
         let to_draw = state.hands[opponent].len();
         let hand = std::mem::take(&mut state.hands[action.actor]);
+        state.note_hand_shuffled_away(action.actor);
         state.decks[action.actor].cards.extend(hand);
         state.decks[action.actor].shuffle(false, rng);
         for _ in 0..to_draw {

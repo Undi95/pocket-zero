@@ -229,13 +229,30 @@ fn test_catching_tail_not_offered_without_a_tool_in_deck() {
     assert!(!offers_ability(&game, 0));
 }
 
-/// Porygon's Data Scan (and the other look-at-hidden-cards abilities) are information-only, so
-/// they are never offered as actions.
+/// Porygon's Data Scan: "Once during your turn, you may look at the top card of your deck." It is
+/// offered once per turn, and what the player saw is remembered.
 #[test]
-fn test_look_at_cards_abilities_are_not_offered() {
-    let game = get_test_game_with_board(
+fn test_porygon_data_scan_looks_at_the_top_card_once_per_turn() {
+    let mut game = get_test_game_with_board(
         vec![PlayedCard::from_id(CardId::A1209Porygon)],
         vec![PlayedCard::from_id(CardId::A1001Bulbasaur)],
+    );
+    assert!(offers_ability(&game, 0));
+
+    game.apply_action(&Action {
+        actor: 0,
+        action: SimpleAction::UseAbility { in_play_idx: 0 },
+        is_stack: false,
+    });
+
+    let state = game.get_state_clone();
+    assert_eq!(
+        state.knowledge[0].top_of_deck[0].as_ref().map(|k| k.1),
+        Some(1)
+    );
+    assert!(
+        state.knowledge[1].top_of_deck[0].is_none(),
+        "the opponent saw nothing"
     );
     assert!(!offers_ability(&game, 0));
 }

@@ -223,11 +223,14 @@ pub enum AbilityMechanic {
         require_active: bool,
         require_target_basic: bool,
     },
-    /// Abilities whose entire effect is looking at hidden cards — Porygon's Data Scan, Unown's
-    /// CHECK, Team Rocket's Kecleon's Spy Ops. deckgym does not model per-player hidden
-    /// information, so using them changes nothing observable; they are implemented as no-ops and
-    /// never offered by move generation (offering them would only pad the search tree).
-    LookAtCardsNoop,
+    /// Porygon's Data Scan: "Once during your turn, you may look at the top card of your deck."
+    LookAtTopOfOwnDeck,
+    /// Unown's CHECK: "Once during your turn, you may choose either player. Look at the top card
+    /// of that player's deck."
+    LookAtTopOfEitherDeck,
+    /// Team Rocket's Kecleon's Spy Ops: "Once during your turn, you may look at a random card
+    /// from your opponent's hand."
+    LookAtRandomOpponentHandCard,
     /// Grafaiai's Poison Coating: "Once during your turn, you may flip a coin. If heads, your
     /// opponent's Active Pokémon is now Poisoned."
     CoinFlipPoisonOpponentActive,

@@ -175,8 +175,15 @@ fn can_use_ability_by_mechanic(
                         .is_some_and(|active| active.card.is_basic()))
                 && state.enumerate_bench_pokemon(opponent).next().is_some()
         }
-        // Information-only; never offered (see `AbilityMechanic::LookAtCardsNoop`).
-        AbilityMechanic::LookAtCardsNoop => false,
+        AbilityMechanic::LookAtTopOfOwnDeck => {
+            !card.ability_used && !state.decks[state.current_player].cards.is_empty()
+        }
+        AbilityMechanic::LookAtTopOfEitherDeck => {
+            !card.ability_used && state.decks.iter().any(|deck| !deck.cards.is_empty())
+        }
+        AbilityMechanic::LookAtRandomOpponentHandCard => {
+            !card.ability_used && !state.hands[(state.current_player + 1) % 2].is_empty()
+        }
         AbilityMechanic::UseRandomOpponentSupporterEffect => {
             is_active && !card.ability_used && has_copyable_opponent_supporter(state)
         }
