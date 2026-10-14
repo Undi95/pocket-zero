@@ -57,9 +57,9 @@ run.bat help                                every command and option
 `setup.bat` and `run.bat update` download the published network into `weights\pocket-zero.bin`,
 so the deck tools work right away, without training: **[how to get it and use it in every tool](docs/NETWORK.md)**.
 
-**Currently published: iteration 103 of 150 of the big network (preview, not the final
-network)**, about 68 % against the hand-written `e3` bot. The final network (iteration 150) will
-replace it; `run.bat update` brings it. The `VERSION` file in `weights\` says which one you have.
+**Currently published: iteration 150 of the big network**, about 73 % against the hand-written
+`e3` bot and 81 % against `e2`. Ten more iterations with the latest engine fixes will replace it
+(iteration 160); `run.bat update` brings it. The `VERSION` file in `weights\` says which one you have.
 
 ## Documentation
 

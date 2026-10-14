@@ -3,9 +3,9 @@
 This page explains how to get the published pocket-zero network and use it in every tool:
 no training needed. The [full guide](GUIDE.en.md) explains each tool in more detail.
 
-> **Current network: iteration 103 of 150 of the big network, a preview.** It already beats the
-> hand-written `e3` bot about 68 % of the time. The final network (iteration 150) will replace
-> it; `run.bat update` brings it.
+> **Current network: iteration 150 of the big network.** It beats the hand-written `e3` bot about
+> 73 % of the time and `e2` about 81 %. Ten more iterations with the latest engine fixes will
+> replace it (iteration 160); `run.bat update` brings it.
 
 ## 1. Get it
 
