@@ -59,9 +59,9 @@ run.bat help                                toutes les commandes et options
 `setup.bat` et `run.bat update` téléchargent le réseau publié dans `weights\pocket-zero.bin` : les
 outils de decks marchent tout de suite, sans entraînement.
 
-**Publié en ce moment : itération 150 du gros réseau**, environ 73 % contre le bot `e3` écrit à
-la main et 81 % contre `e2`. Dix itérations de plus avec les dernières corrections du moteur le
-remplaceront (itération 160) ; `run.bat update` le récupère. Le fichier `VERSION` dans `weights\` dit lequel tu as.
+**Publié en ce moment : itération 160 du gros réseau (final)**, environ 72 % contre le bot `e3`
+écrit à la main et 80 % contre `e2` ; il reproduit les vrais matchups à 7,3 points près (le
+hasard seul : 4,7 ; `e3` : 13,9). `run.bat update` le récupère. Le fichier `VERSION` dans `weights\` dit lequel tu as.
 
 ## Documentation
 
