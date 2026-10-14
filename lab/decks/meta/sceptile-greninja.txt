@@ -1,15 +1,20 @@
-Energy: Grass, Water
-2 Treecko B3 5
-1 Grovyle B3 6
-2 Mega Sceptile ex B3 8
+# archetype: Mega Sceptile ex Greninja
+# limitless: mega-sceptile-ex-b3-greninja-a1
+# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/shinra67/decklist
+# list: la plus représentative de 51 listes (96 % à 2 cartes près), shinra67, Umbreon99's Aura Sphere #8: $5 USD + Oak, 2026-10-09
+# energy: Grass pour 40 des 40 joueurs qui la déclarent
+Energy: Grass
 1 Froakie A1 87
 1 Greninja A1 89
 1 Pheromosa A3a 7
-1 Furfrou B3b 61
-2 Professor's Research P-A 007
-2 Copycat B1 225
+2 Treecko B3 5
+1 Grovyle B3 6
+2 Mega Sceptile ex B3 8
+1 Furfrou B4a 64
 1 Cyrus A2 150
-2 Poké Ball P-A 005
 2 Rare Candy A3 144
-1 X Speed P-A 002
+2 Copycat B1 225
 1 Hiking Trail B2b 69
+1 Small Balloon B3b 64
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

@@ -1,15 +1,20 @@
+# archetype: Butterfree Mega Sceptile ex
+# limitless: butterfree-b3b-mega-sceptile-ex-b3
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/frogger/decklist
+# list: la plus représentative de 172 listes (99 % à 2 cartes près), frogger, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Grass pour 124 des 124 joueurs qui la déclarent
 Energy: Grass
-2 Caterpie B3b 1
-2 Metapod B3b 2
-2 Butterfree B3b 3
 1 Treecko B3 5
 1 Grovyle B3 6
 1 Mega Sceptile ex B3 8
-2 Professor's Research P-A 007
+2 Caterpie B3b 1
+2 Metapod B3b 2
+2 Butterfree B3b 3
 1 Erika A1 219
-1 Copycat B1 225
 1 Sabrina A1 225
 1 Cyrus A2 150
-2 Quick-Grow Extract B1a 67
 1 Leaf Cape A3 147
+1 Copycat B1 225
+2 Quick-Grow Extract B1a 67
 2 Fragrant Forest B3 153
+2 Professor's Research P-A 7

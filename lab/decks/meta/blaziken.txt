@@ -1,14 +1,19 @@
+# archetype: Mega Blaziken ex
+# limitless: mega-blaziken-ex-b1
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/soap728/decklist
+# list: la plus représentative de 90 listes (96 % à 2 cartes près), soap728, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Fire pour 53 des 53 joueurs qui la déclarent
 Energy: Fire
 2 Torchic B1 33
 2 Mega Blaziken ex B1 36
 1 Heatmor B1 44
 1 Castform Sunny Form B3 24
-2 Professor's Research P-A 007
-2 Copycat B1 225
-1 Cyrus A2 150
-2 Flame Patch B1 217
-2 Rare Candy A3 144
-2 Poké Ball P-A 005
-1 Field Blower B3 147
 1 Rocky Helmet A2 148
+1 Cyrus A2 150
+2 Rare Candy A3 144
+2 Flame Patch B1 217
+2 Copycat B1 225
 1 Hiking Trail B2b 69
+1 Field Blower B3 147
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

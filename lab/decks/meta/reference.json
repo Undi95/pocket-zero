@@ -1,0 +1,1203 @@
+{
+ "retrieved": "2026-10-14",
+ "period": "B4a Standard",
+ "source": "https://play.limitlesstcg.com/decks?game=POCKET",
+ "bo3_share": 0.317,
+ "tournaments": 39,
+ "lists": 3531,
+ "archetypes": {
+  "altaria-greninja": {
+   "id": "mega-altaria-ex-b1-greninja-a1",
+   "name": "Mega Altaria ex Greninja",
+   "players": 110,
+   "share": 0.0312
+  },
+  "altaria": {
+   "id": "mega-altaria-ex-b1-espeon-b3a",
+   "name": "Mega Altaria ex Espeon",
+   "players": 311,
+   "share": 0.0881
+  },
+  "blaziken": {
+   "id": "mega-blaziken-ex-b1",
+   "name": "Mega Blaziken ex",
+   "players": 90,
+   "share": 0.0255
+  },
+  "butterfree": {
+   "id": "butterfree-b3b-mega-sceptile-ex-b3",
+   "name": "Butterfree Mega Sceptile ex",
+   "players": 172,
+   "share": 0.0487
+  },
+  "charizard": {
+   "id": "mega-charizard-y-ex-b1a-entei-ex-a4a",
+   "name": "Mega Charizard Y ex Entei ex",
+   "players": 99,
+   "share": 0.028
+  },
+  "dedenne": {
+   "id": "dedenne-ex-b3b-indeedee-ex-b1",
+   "name": "Dedenne ex Indeedee ex",
+   "players": 118,
+   "share": 0.0334
+  },
+  "flygon": {
+   "id": "flygon-ex-b3",
+   "name": "Flygon ex",
+   "players": 21,
+   "share": 0.0059
+  },
+  "hoopa": {
+   "id": "hoopa-ex-b4-mega-absol-ex-b1",
+   "name": "Hoopa ex Mega Absol ex",
+   "players": 172,
+   "share": 0.0487
+  },
+  "hydreigon": {
+   "id": "hydreigon-mega-absol-ex-b1",
+   "name": "Hydreigon Mega Absol ex",
+   "players": 94,
+   "share": 0.0266
+  },
+  "lucario": {
+   "id": "mega-lucario-ex-b3-lucario-a2",
+   "name": "Mega Lucario ex Lucario",
+   "players": 233,
+   "share": 0.066
+  },
+  "magnezone": {
+   "id": "magnezone-b1a-miraidon-ex-b3a",
+   "name": "Magnezone Miraidon ex",
+   "players": 142,
+   "share": 0.0402
+  },
+  "manectric": {
+   "id": "mega-manectric-ex-b2b-heliolisk-b4",
+   "name": "Mega Manectric ex Heliolisk",
+   "players": 63,
+   "share": 0.0178
+  },
+  "rayquaza": {
+   "id": "dragonair-mega-rayquaza-ex-b4",
+   "name": "Dragonair Mega Rayquaza ex",
+   "players": 176,
+   "share": 0.0498
+  },
+  "sceptile-greninja": {
+   "id": "mega-sceptile-ex-b3-greninja-a1",
+   "name": "Mega Sceptile ex Greninja",
+   "players": 51,
+   "share": 0.0144
+  },
+  "suicune": {
+   "id": "suicune-ex-a4a-baxcalibur-b2a",
+   "name": "Suicune ex Baxcalibur",
+   "players": 246,
+   "share": 0.0697
+  },
+  "vespiquen": {
+   "id": "vespiquen-ex-b4-shuckle-ex-a4",
+   "name": "Vespiquen ex Shuckle ex",
+   "players": 108,
+   "share": 0.0306
+  },
+  "weezing": {
+   "id": "team-rockets-weezing-ex-b4a-hoopa-ex-b4",
+   "name": "Team Rocket's Weezing ex Hoopa ex",
+   "players": 19,
+   "share": 0.0054
+  }
+ },
+ "matchups": [
+  {
+   "a": "altaria",
+   "b": "lucario",
+   "real": 68.1,
+   "raw": 70.6,
+   "matches": 436,
+   "se": 2.2
+  },
+  {
+   "a": "altaria",
+   "b": "butterfree",
+   "real": 49.7,
+   "raw": 49.7,
+   "matches": 308,
+   "se": 2.8
+  },
+  {
+   "a": "butterfree",
+   "b": "lucario",
+   "real": 61.5,
+   "raw": 63.2,
+   "matches": 292,
+   "se": 2.8
+  },
+  {
+   "a": "altaria",
+   "b": "suicune",
+   "real": 50.2,
+   "raw": 50.2,
+   "matches": 282,
+   "se": 3.0
+  },
+  {
+   "a": "altaria",
+   "b": "vespiquen",
+   "real": 40.2,
+   "raw": 38.7,
+   "matches": 261,
+   "se": 3.0
+  },
+  {
+   "a": "altaria",
+   "b": "rayquaza",
+   "real": 51.2,
+   "raw": 51.4,
+   "matches": 255,
+   "se": 3.1
+  },
+  {
+   "a": "lucario",
+   "b": "suicune",
+   "real": 58.1,
+   "raw": 59.4,
+   "matches": 245,
+   "se": 3.2
+  },
+  {
+   "a": "lucario",
+   "b": "vespiquen",
+   "real": 67.1,
+   "raw": 69.5,
+   "matches": 236,
+   "se": 3.1
+  },
+  {
+   "a": "altaria",
+   "b": "hoopa",
+   "real": 32.4,
+   "raw": 30.0,
+   "matches": 230,
+   "se": 3.1
+  },
+  {
+   "a": "hydreigon",
+   "b": "lucario",
+   "real": 53.9,
+   "raw": 54.5,
+   "matches": 188,
+   "se": 3.6
+  },
+  {
+   "a": "altaria",
+   "b": "hydreigon",
+   "real": 54.9,
+   "raw": 55.6,
+   "matches": 186,
+   "se": 3.6
+  },
+  {
+   "a": "lucario",
+   "b": "magnezone",
+   "real": 56.3,
+   "raw": 57.3,
+   "matches": 184,
+   "se": 3.7
+  },
+  {
+   "a": "butterfree",
+   "b": "suicune",
+   "real": 41.5,
+   "raw": 40.2,
+   "matches": 179,
+   "se": 3.7
+  },
+  {
+   "a": "lucario",
+   "b": "rayquaza",
+   "real": 36.8,
+   "raw": 34.8,
+   "matches": 178,
+   "se": 3.6
+  },
+  {
+   "a": "blaziken",
+   "b": "lucario",
+   "real": 49.0,
+   "raw": 48.9,
+   "matches": 177,
+   "se": 3.8
+  },
+  {
+   "a": "altaria",
+   "b": "altaria-greninja",
+   "real": 55.4,
+   "raw": 56.3,
+   "matches": 175,
+   "se": 3.8
+  },
+  {
+   "a": "altaria",
+   "b": "magnezone",
+   "real": 55.7,
+   "raw": 56.6,
+   "matches": 175,
+   "se": 3.8
+  },
+  {
+   "a": "altaria",
+   "b": "dedenne",
+   "real": 51.7,
+   "raw": 52.0,
+   "matches": 175,
+   "se": 3.8
+  },
+  {
+   "a": "suicune",
+   "b": "vespiquen",
+   "real": 31.0,
+   "raw": 28.4,
+   "matches": 169,
+   "se": 3.6
+  },
+  {
+   "a": "butterfree",
+   "b": "vespiquen",
+   "real": 34.5,
+   "raw": 32.3,
+   "matches": 158,
+   "se": 3.8
+  },
+  {
+   "a": "hoopa",
+   "b": "lucario",
+   "real": 41.1,
+   "raw": 39.7,
+   "matches": 155,
+   "se": 4.0
+  },
+  {
+   "a": "altaria",
+   "b": "blaziken",
+   "real": 68.9,
+   "raw": 71.5,
+   "matches": 149,
+   "se": 3.8
+  },
+  {
+   "a": "altaria",
+   "b": "charizard",
+   "real": 52.0,
+   "raw": 52.3,
+   "matches": 149,
+   "se": 4.1
+  },
+  {
+   "a": "lucario",
+   "b": "weezing",
+   "real": 55.7,
+   "raw": 56.6,
+   "matches": 145,
+   "se": 4.1
+  },
+  {
+   "a": "rayquaza",
+   "b": "suicune",
+   "real": 37.1,
+   "raw": 35.2,
+   "matches": 145,
+   "se": 4.0
+  },
+  {
+   "a": "charizard",
+   "b": "lucario",
+   "real": 65.5,
+   "raw": 67.7,
+   "matches": 141,
+   "se": 4.0
+  },
+  {
+   "a": "butterfree",
+   "b": "hoopa",
+   "real": 60.5,
+   "raw": 62.0,
+   "matches": 137,
+   "se": 4.2
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "lucario",
+   "real": 61.2,
+   "raw": 62.9,
+   "matches": 136,
+   "se": 4.2
+  },
+  {
+   "a": "dedenne",
+   "b": "lucario",
+   "real": 39.0,
+   "raw": 37.3,
+   "matches": 134,
+   "se": 4.2
+  },
+  {
+   "a": "butterfree",
+   "b": "rayquaza",
+   "real": 52.3,
+   "raw": 52.6,
+   "matches": 133,
+   "se": 4.3
+  },
+  {
+   "a": "altaria",
+   "b": "manectric",
+   "real": 49.3,
+   "raw": 49.2,
+   "matches": 131,
+   "se": 4.4
+  },
+  {
+   "a": "hoopa",
+   "b": "suicune",
+   "real": 49.0,
+   "raw": 48.8,
+   "matches": 126,
+   "se": 4.5
+  },
+  {
+   "a": "altaria",
+   "b": "weezing",
+   "real": 36.0,
+   "raw": 33.9,
+   "matches": 118,
+   "se": 4.4
+  },
+  {
+   "a": "magnezone",
+   "b": "suicune",
+   "real": 56.0,
+   "raw": 56.9,
+   "matches": 116,
+   "se": 4.6
+  },
+  {
+   "a": "butterfree",
+   "b": "magnezone",
+   "real": 58.7,
+   "raw": 60.0,
+   "matches": 115,
+   "se": 4.6
+  },
+  {
+   "a": "lucario",
+   "b": "sceptile-greninja",
+   "real": 50.0,
+   "raw": 50.0,
+   "matches": 114,
+   "se": 4.7
+  },
+  {
+   "a": "lucario",
+   "b": "manectric",
+   "real": 62.5,
+   "raw": 64.4,
+   "matches": 108,
+   "se": 4.7
+  },
+  {
+   "a": "altaria",
+   "b": "sceptile-greninja",
+   "real": 56.5,
+   "raw": 57.5,
+   "matches": 106,
+   "se": 4.8
+  },
+  {
+   "a": "magnezone",
+   "b": "vespiquen",
+   "real": 72.2,
+   "raw": 75.0,
+   "matches": 106,
+   "se": 4.4
+  },
+  {
+   "a": "hydreigon",
+   "b": "vespiquen",
+   "real": 40.9,
+   "raw": 39.5,
+   "matches": 105,
+   "se": 4.8
+  },
+  {
+   "a": "butterfree",
+   "b": "hydreigon",
+   "real": 59.2,
+   "raw": 60.6,
+   "matches": 104,
+   "se": 4.8
+  },
+  {
+   "a": "butterfree",
+   "b": "dedenne",
+   "real": 55.5,
+   "raw": 56.3,
+   "matches": 103,
+   "se": 4.9
+  },
+  {
+   "a": "magnezone",
+   "b": "rayquaza",
+   "real": 35.6,
+   "raw": 33.5,
+   "matches": 103,
+   "se": 4.7
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "rayquaza",
+   "real": 50.4,
+   "raw": 50.5,
+   "matches": 101,
+   "se": 5.0
+  },
+  {
+   "a": "blaziken",
+   "b": "butterfree",
+   "real": 76.5,
+   "raw": 79.5,
+   "matches": 100,
+   "se": 4.2
+  },
+  {
+   "a": "blaziken",
+   "b": "suicune",
+   "real": 61.4,
+   "raw": 63.1,
+   "matches": 99,
+   "se": 4.9
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "butterfree",
+   "real": 45.5,
+   "raw": 44.8,
+   "matches": 97,
+   "se": 5.1
+  },
+  {
+   "a": "charizard",
+   "b": "suicune",
+   "real": 28.3,
+   "raw": 25.5,
+   "matches": 96,
+   "se": 4.6
+  },
+  {
+   "a": "dedenne",
+   "b": "suicune",
+   "real": 59.0,
+   "raw": 60.4,
+   "matches": 96,
+   "se": 5.0
+  },
+  {
+   "a": "hoopa",
+   "b": "rayquaza",
+   "real": 64.6,
+   "raw": 66.7,
+   "matches": 96,
+   "se": 4.9
+  },
+  {
+   "a": "blaziken",
+   "b": "vespiquen",
+   "real": 73.2,
+   "raw": 76.1,
+   "matches": 94,
+   "se": 4.6
+  },
+  {
+   "a": "hydreigon",
+   "b": "suicune",
+   "real": 37.4,
+   "raw": 35.5,
+   "matches": 93,
+   "se": 5.0
+  },
+  {
+   "a": "butterfree",
+   "b": "charizard",
+   "real": 31.4,
+   "raw": 28.8,
+   "matches": 92,
+   "se": 4.8
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "suicune",
+   "real": 47.2,
+   "raw": 46.7,
+   "matches": 91,
+   "se": 5.2
+  },
+  {
+   "a": "rayquaza",
+   "b": "vespiquen",
+   "real": 54.3,
+   "raw": 55.0,
+   "matches": 90,
+   "se": 5.3
+  },
+  {
+   "a": "suicune",
+   "b": "weezing",
+   "real": 61.6,
+   "raw": 63.3,
+   "matches": 90,
+   "se": 5.1
+  },
+  {
+   "a": "butterfree",
+   "b": "manectric",
+   "real": 58.3,
+   "raw": 59.6,
+   "matches": 89,
+   "se": 5.2
+  },
+  {
+   "a": "vespiquen",
+   "b": "weezing",
+   "real": 80.1,
+   "raw": 83.1,
+   "matches": 89,
+   "se": 4.2
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "hoopa",
+   "real": 40.7,
+   "raw": 39.3,
+   "matches": 84,
+   "se": 5.4
+  },
+  {
+   "a": "manectric",
+   "b": "vespiquen",
+   "real": 51.5,
+   "raw": 51.8,
+   "matches": 84,
+   "se": 5.5
+  },
+  {
+   "a": "butterfree",
+   "b": "weezing",
+   "real": 63.1,
+   "raw": 65.1,
+   "matches": 83,
+   "se": 5.3
+  },
+  {
+   "a": "dedenne",
+   "b": "rayquaza",
+   "real": 36.2,
+   "raw": 34.1,
+   "matches": 82,
+   "se": 5.3
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "vespiquen",
+   "real": 48.9,
+   "raw": 48.8,
+   "matches": 81,
+   "se": 5.6
+  },
+  {
+   "a": "hydreigon",
+   "b": "magnezone",
+   "real": 55.9,
+   "raw": 56.9,
+   "matches": 80,
+   "se": 5.6
+  },
+  {
+   "a": "sceptile-greninja",
+   "b": "suicune",
+   "real": 46.7,
+   "raw": 46.2,
+   "matches": 78,
+   "se": 5.6
+  },
+  {
+   "a": "hoopa",
+   "b": "vespiquen",
+   "real": 28.1,
+   "raw": 25.3,
+   "matches": 77,
+   "se": 5.1
+  },
+  {
+   "a": "hydreigon",
+   "b": "rayquaza",
+   "real": 56.3,
+   "raw": 57.3,
+   "matches": 75,
+   "se": 5.7
+  },
+  {
+   "a": "sceptile-greninja",
+   "b": "vespiquen",
+   "real": 54.6,
+   "raw": 55.3,
+   "matches": 75,
+   "se": 5.7
+  },
+  {
+   "a": "butterfree",
+   "b": "sceptile-greninja",
+   "real": 49.4,
+   "raw": 49.3,
+   "matches": 73,
+   "se": 5.9
+  },
+  {
+   "a": "blaziken",
+   "b": "hydreigon",
+   "real": 58.7,
+   "raw": 60.0,
+   "matches": 70,
+   "se": 5.9
+  },
+  {
+   "a": "charizard",
+   "b": "vespiquen",
+   "real": 59.9,
+   "raw": 61.4,
+   "matches": 70,
+   "se": 5.9
+  },
+  {
+   "a": "hoopa",
+   "b": "hydreigon",
+   "real": 58.7,
+   "raw": 60.0,
+   "matches": 70,
+   "se": 5.9
+  },
+  {
+   "a": "manectric",
+   "b": "rayquaza",
+   "real": 46.9,
+   "raw": 46.4,
+   "matches": 70,
+   "se": 6.0
+  },
+  {
+   "a": "dedenne",
+   "b": "hoopa",
+   "real": 68.5,
+   "raw": 71.0,
+   "matches": 69,
+   "se": 5.6
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "magnezone",
+   "real": 50.0,
+   "raw": 50.0,
+   "matches": 68,
+   "se": 6.1
+  },
+  {
+   "a": "dedenne",
+   "b": "vespiquen",
+   "real": 67.7,
+   "raw": 70.1,
+   "matches": 67,
+   "se": 5.7
+  },
+  {
+   "a": "hoopa",
+   "b": "magnezone",
+   "real": 37.7,
+   "raw": 35.8,
+   "matches": 67,
+   "se": 5.9
+  },
+  {
+   "a": "manectric",
+   "b": "suicune",
+   "real": 59.1,
+   "raw": 60.5,
+   "matches": 62,
+   "se": 6.2
+  },
+  {
+   "a": "charizard",
+   "b": "rayquaza",
+   "real": 51.5,
+   "raw": 51.7,
+   "matches": 59,
+   "se": 6.5
+  },
+  {
+   "a": "dedenne",
+   "b": "hydreigon",
+   "real": 36.7,
+   "raw": 34.7,
+   "matches": 59,
+   "se": 6.3
+  },
+  {
+   "a": "blaziken",
+   "b": "hoopa",
+   "real": 43.3,
+   "raw": 42.2,
+   "matches": 58,
+   "se": 6.5
+  },
+  {
+   "a": "charizard",
+   "b": "hydreigon",
+   "real": 46.3,
+   "raw": 45.7,
+   "matches": 58,
+   "se": 6.5
+  },
+  {
+   "a": "hydreigon",
+   "b": "manectric",
+   "real": 53.8,
+   "raw": 54.4,
+   "matches": 57,
+   "se": 6.6
+  },
+  {
+   "a": "magnezone",
+   "b": "manectric",
+   "real": 39.9,
+   "raw": 38.4,
+   "matches": 56,
+   "se": 6.5
+  },
+  {
+   "a": "sceptile-greninja",
+   "b": "weezing",
+   "real": 60.9,
+   "raw": 62.5,
+   "matches": 56,
+   "se": 6.5
+  },
+  {
+   "a": "charizard",
+   "b": "magnezone",
+   "real": 32.4,
+   "raw": 30.0,
+   "matches": 55,
+   "se": 6.3
+  },
+  {
+   "a": "dedenne",
+   "b": "magnezone",
+   "real": 27.4,
+   "raw": 24.5,
+   "matches": 55,
+   "se": 6.0
+  },
+  {
+   "a": "hydreigon",
+   "b": "weezing",
+   "real": 45.3,
+   "raw": 44.5,
+   "matches": 55,
+   "se": 6.7
+  },
+  {
+   "a": "magnezone",
+   "b": "sceptile-greninja",
+   "real": 44.4,
+   "raw": 43.5,
+   "matches": 54,
+   "se": 6.8
+  },
+  {
+   "a": "blaziken",
+   "b": "weezing",
+   "real": 50.0,
+   "raw": 50.0,
+   "matches": 51,
+   "se": 7.0
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "hydreigon",
+   "real": 55.2,
+   "raw": 56.0,
+   "matches": 50,
+   "se": 7.0
+  },
+  {
+   "a": "blaziken",
+   "b": "manectric",
+   "real": 37.6,
+   "raw": 35.7,
+   "matches": 49,
+   "se": 6.9
+  },
+  {
+   "a": "blaziken",
+   "b": "charizard",
+   "real": 64.6,
+   "raw": 66.7,
+   "matches": 48,
+   "se": 6.9
+  },
+  {
+   "a": "blaziken",
+   "b": "magnezone",
+   "real": 38.2,
+   "raw": 36.5,
+   "matches": 48,
+   "se": 7.0
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "dedenne",
+   "real": 50.9,
+   "raw": 51.1,
+   "matches": 47,
+   "se": 7.3
+  },
+  {
+   "a": "blaziken",
+   "b": "sceptile-greninja",
+   "real": 69.7,
+   "raw": 72.3,
+   "matches": 47,
+   "se": 6.7
+  },
+  {
+   "a": "charizard",
+   "b": "manectric",
+   "real": 62.3,
+   "raw": 64.1,
+   "matches": 46,
+   "se": 7.1
+  },
+  {
+   "a": "blaziken",
+   "b": "rayquaza",
+   "real": 52.9,
+   "raw": 53.3,
+   "matches": 45,
+   "se": 7.4
+  },
+  {
+   "a": "blaziken",
+   "b": "dedenne",
+   "real": 34.1,
+   "raw": 31.8,
+   "matches": 44,
+   "se": 7.1
+  },
+  {
+   "a": "charizard",
+   "b": "hoopa",
+   "real": 49.0,
+   "raw": 48.8,
+   "matches": 43,
+   "se": 7.6
+  },
+  {
+   "a": "rayquaza",
+   "b": "sceptile-greninja",
+   "real": 47.0,
+   "raw": 46.5,
+   "matches": 43,
+   "se": 7.6
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "charizard",
+   "real": 67.8,
+   "raw": 70.2,
+   "matches": 42,
+   "se": 7.2
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "manectric",
+   "real": 28.9,
+   "raw": 26.2,
+   "matches": 42,
+   "se": 7.0
+  },
+  {
+   "a": "hydreigon",
+   "b": "sceptile-greninja",
+   "real": 40.7,
+   "raw": 39.3,
+   "matches": 42,
+   "se": 7.6
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "blaziken",
+   "real": 64.2,
+   "raw": 66.2,
+   "matches": 40,
+   "se": 7.6
+  },
+  {
+   "a": "dedenne",
+   "b": "manectric",
+   "real": 53.2,
+   "raw": 53.8,
+   "matches": 40,
+   "se": 7.9
+  },
+  {
+   "a": "charizard",
+   "b": "dedenne",
+   "real": 33.1,
+   "raw": 30.8,
+   "matches": 39,
+   "se": 7.5
+  },
+  {
+   "a": "magnezone",
+   "b": "weezing",
+   "real": 63.8,
+   "raw": 65.8,
+   "matches": 38,
+   "se": 7.8
+  },
+  {
+   "a": "hoopa",
+   "b": "sceptile-greninja",
+   "real": 34.6,
+   "raw": 32.4,
+   "matches": 37,
+   "se": 7.8
+  },
+  {
+   "a": "hoopa",
+   "b": "weezing",
+   "real": 40.4,
+   "raw": 38.9,
+   "matches": 36,
+   "se": 8.2
+  },
+  {
+   "a": "rayquaza",
+   "b": "weezing",
+   "real": 37.9,
+   "raw": 36.1,
+   "matches": 36,
+   "se": 8.1
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "sceptile-greninja",
+   "real": 43.8,
+   "raw": 42.9,
+   "matches": 35,
+   "se": 8.4
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "weezing",
+   "real": 50.0,
+   "raw": 50.0,
+   "matches": 34,
+   "se": 8.6
+  },
+  {
+   "a": "hoopa",
+   "b": "manectric",
+   "real": 53.9,
+   "raw": 54.5,
+   "matches": 33,
+   "se": 8.7
+  },
+  {
+   "a": "altaria",
+   "b": "flygon",
+   "real": 55.6,
+   "raw": 56.5,
+   "matches": 31,
+   "se": 8.9
+  },
+  {
+   "a": "charizard",
+   "b": "weezing",
+   "real": 54.3,
+   "raw": 55.0,
+   "matches": 30,
+   "se": 9.1
+  },
+  {
+   "a": "dedenne",
+   "b": "weezing",
+   "real": 66.0,
+   "raw": 68.3,
+   "matches": 30,
+   "se": 8.6
+  },
+  {
+   "a": "dedenne",
+   "b": "sceptile-greninja",
+   "real": 36.0,
+   "raw": 34.0,
+   "matches": 25,
+   "se": 9.6
+  },
+  {
+   "a": "flygon",
+   "b": "suicune",
+   "real": 67.6,
+   "raw": 70.0,
+   "matches": 25,
+   "se": 9.4
+  },
+  {
+   "a": "flygon",
+   "b": "lucario",
+   "real": 24.7,
+   "raw": 21.7,
+   "matches": 23,
+   "se": 9.0
+  },
+  {
+   "a": "manectric",
+   "b": "sceptile-greninja",
+   "real": 61.9,
+   "raw": 63.6,
+   "matches": 22,
+   "se": 10.4
+  },
+  {
+   "a": "manectric",
+   "b": "weezing",
+   "real": 35.4,
+   "raw": 33.3,
+   "matches": 21,
+   "se": 10.4
+  },
+  {
+   "a": "charizard",
+   "b": "sceptile-greninja",
+   "real": 67.6,
+   "raw": 70.0,
+   "matches": 20,
+   "se": 10.5
+  },
+  {
+   "a": "butterfree",
+   "b": "flygon",
+   "real": 72.2,
+   "raw": 75.0,
+   "matches": 16,
+   "se": 11.2
+  },
+  {
+   "a": "flygon",
+   "b": "rayquaza",
+   "real": 62.4,
+   "raw": 64.3,
+   "matches": 14,
+   "se": 12.9
+  },
+  {
+   "a": "flygon",
+   "b": "hoopa",
+   "real": 59.3,
+   "raw": 60.7,
+   "matches": 14,
+   "se": 13.1
+  },
+  {
+   "a": "altaria-greninja",
+   "b": "flygon",
+   "real": 38.1,
+   "raw": 36.4,
+   "matches": 11,
+   "se": 14.6
+  },
+  {
+   "a": "flygon",
+   "b": "hydreigon",
+   "real": 50.0,
+   "raw": 50.0,
+   "matches": 11,
+   "se": 15.1
+  },
+  {
+   "a": "dedenne",
+   "b": "flygon",
+   "real": 45.7,
+   "raw": 45.0,
+   "matches": 10,
+   "se": 15.8
+  },
+  {
+   "a": "flygon",
+   "b": "magnezone",
+   "real": 54.8,
+   "raw": 55.6,
+   "matches": 9,
+   "se": 16.6
+  },
+  {
+   "a": "charizard",
+   "b": "flygon",
+   "real": 84.6,
+   "raw": 87.5,
+   "matches": 8,
+   "se": 12.7
+  },
+  {
+   "a": "flygon",
+   "b": "vespiquen",
+   "real": 39.1,
+   "raw": 37.5,
+   "matches": 8,
+   "se": 17.3
+  },
+  {
+   "a": "flygon",
+   "b": "manectric",
+   "real": 35.4,
+   "raw": 33.3,
+   "matches": 6,
+   "se": 19.5
+  },
+  {
+   "a": "blaziken",
+   "b": "flygon",
+   "real": 41.3,
+   "raw": 40.0,
+   "matches": 5,
+   "se": 22.0
+  },
+  {
+   "a": "flygon",
+   "b": "sceptile-greninja",
+   "real": 0.0,
+   "raw": 0.0,
+   "matches": 3,
+   "se": 0.0
+  },
+  {
+   "a": "flygon",
+   "b": "weezing",
+   "real": 0.0,
+   "raw": 0.0,
+   "matches": 1,
+   "se": 0.0
+  }
+ ],
+ "e3_rmse": 13.9
+}

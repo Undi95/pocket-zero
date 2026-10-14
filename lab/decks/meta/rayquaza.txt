@@ -1,14 +1,19 @@
+# archetype: Dragonair Mega Rayquaza ex
+# limitless: dragonair-mega-rayquaza-ex-b4
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/minato/decklist
+# list: la plus représentative de 176 listes (89 % à 2 cartes près), minato, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Fire, Lightning pour 141 des 141 joueurs qui la déclarent
 Energy: Fire, Lightning
-2 Dratini A1 183
-2 Dragonair B4 117
+2 Dratini B2b 51
 2 Gouging Fire B3a 54
+2 Dragonair B4 117
 1 Mega Rayquaza ex B4 120
-2 Professor's Research P-A 007
+1 Sabrina A1 225
+1 Pokémon Center Lady A2b 70
 2 Copycat B1 225
-1 Cyrus A2 150
-1 Professor Sada B3a 72
-2 Poké Ball P-A 005
-1 Skull Fossil A2 144
 1 Ancient Booster Energy Capsule B3a 69
+1 Professor Sada B3a 72
 1 Small Balloon B3b 64
 2 Rainbow Cave B4 155
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

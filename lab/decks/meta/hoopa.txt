@@ -1,15 +1,20 @@
+# archetype: Hoopa ex Mega Absol ex
+# limitless: hoopa-ex-b4-mega-absol-ex-b1
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/https/decklist
+# list: la plus représentative de 172 listes (94 % à 2 cartes près), https, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Darkness pour 117 des 118 joueurs qui la déclarent
 Energy: Darkness
-2 Hoopa ex B4 103
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
-2 Professor's Research P-A 007
+2 Hoopa ex B4 103
 2 Cyrus A2 150
-1 Copycat B1 225
+1 Mars A2 155
 1 Pokémon Center Lady A2b 70
-2 Poké Ball P-A 005
-2 Lucky Ice Pop B2 145
 1 Repel A3a 64
-1 X Speed P-A 002
+1 Copycat B1 225
+2 Lucky Ice Pop B2 145
 1 Field Blower B3 147
 2 Deceptive Needle B4 148
-1 Starting Plains B2 154
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7
