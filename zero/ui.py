@@ -52,6 +52,7 @@ textarea{width:100%;box-sizing:border-box;height:420px;font-family:ui-monospace,
 <select id="lang"><option value="fr" data-i18n="img_fr"></option><option value="en" data-i18n="img_en"></option></select>
 <button onclick="copyText()" data-i18n="copy"></button><button onclick="window.print()" data-i18n="print"></button>
 <a href="/train" style="margin-left:auto;color:var(--acc)" data-i18n="to_train"></a>
+<a href="/live" style="color:var(--acc)" data-i18n="to_live"></a>
 <button id="langbtn" onclick="toggleLang()" title="Langue / Language"></button></header>
 <main><div id="left"><textarea id="txt" spellcheck="false" data-i18n-ph="paste_ph"></textarea>
 <p style="color:var(--mut);font-size:13px" data-i18n="edit_hint"></p></div>
@@ -136,6 +137,7 @@ pre{white-space:pre-wrap;font:12px ui-monospace,monospace;margin:0;color:var(--m
 </style></head><body>
 <header><h1 data-i18n="h_train"></h1><select id="run"></select>
 <span class="mut" id="upd"></span><a href="/" style="margin-left:auto" data-i18n="back"></a>
+<a href="/live" data-i18n="to_live"></a>
 <button id="langbtn" onclick="toggleLang()" title="Langue / Language"></button></header>
 <main>
 <div class="box wide" id="status"></div>
@@ -221,10 +223,104 @@ applyI18n();minLabels();
  tick();setInterval(tick,20000)})();
 </script></body></html>"""
 
+LIVE_PAGE = r"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>pocket-zero</title>
+<style>
+:root{--bg:#f6f6f8;--fg:#1d1d22;--card:#fff;--mut:#6b6b76;--ok:#1f8a4c;--ko:#c2352b;--warn:#b7791f;--acc:#3557c4;--grid:#8882}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#ececf1;--card:#22222a;--mut:#9a9aa6;--ok:#4cc27e;--ko:#ff7468;--warn:#f0b450;--acc:#8ea6ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
+header{padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+h1{font-size:18px;margin:0 12px 0 0}h2{font-size:15px;margin:0 0 8px}a{color:var(--acc)}
+select,button{font:inherit;color:inherit;background:var(--card);border:1px solid #8884;border-radius:8px;padding:6px 10px}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;padding:0 16px 16px}
+.box{background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px #0002;min-width:0}
+.wide{grid-column:1/-1}.mut{color:var(--mut);font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpi div b{display:block;font-size:18px}
+.bar{height:10px;background:var(--grid);border-radius:5px;overflow:hidden;margin:10px 0 4px}.bar i{display:block;height:100%;background:var(--acc);transition:width .5s}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:5px 6px;text-align:left;border-bottom:1px solid var(--grid)}
+th{color:var(--mut);font-weight:600;white-space:nowrap}td.n,th.n{text-align:right;white-space:nowrap}
+.ok{color:var(--ok)}.ko{color:var(--ko)}.warn{color:var(--warn)}.scroll{overflow-x:auto}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--grid);font-size:13px;margin-right:6px}
+#events div{padding:3px 0;border-bottom:1px solid var(--grid);font-size:13px}#events span{color:var(--mut);margin-right:8px;font-family:ui-monospace,monospace}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}dt{color:var(--mut)}dd{margin:0;font-weight:600}
+</style></head><body>
+<header><h1 data-i18n="h_live"></h1><select id="job"></select><span class="mut" id="upd"></span>
+<a href="/" style="margin-left:auto" data-i18n="back"></a><a href="/train" data-i18n="to_train"></a>
+<button id="langbtn" onclick="toggleLang()" title="Langue / Language"></button></header>
+<main>
+<div class="box wide" id="head"></div>
+<div class="box"><h2 data-i18n="now_t"></h2><div id="now"></div></div>
+<div class="box"><h2 data-i18n="info_t"></h2><div id="info"></div></div>
+<div class="box wide"><h2 data-i18n="rows_t"></h2><div class="scroll" id="rows"></div></div>
+<div class="box wide"><h2 data-i18n="ev_t"></h2><div id="events"></div></div>
+</main>
+<script>
+/*I18N*/
+const TITLE_KEY='t_live';
+const $=id=>document.getElementById(id);let JOB='',LAST=null,JOBS=[];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const loc=()=>LANG=='fr'?'fr-BE':'en-GB';
+const tt=(k,f)=>T[LANG][k]??T.en[k]??f;
+function dur(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h} h ${String(m).padStart(2,'0')}`:`${m} min`}
+const pct=v=>v==null?'-':(100*v).toFixed(1)+' %';
+const pts=v=>v==null?'-':(v>=0?'+':'')+(100*v).toFixed(1)+' pts';
+// Results columns per tool: [field, label key, format]
+const COLS={forge:[['deck','col_deck','link'],['status','col_status','status'],['changes','col_changes','n'],['last','col_last'],['score','col_score','pct'],['gain','col_gain','gain']],
+ search:[['species','col_species','link'],['total','col_total','pct'],['meta','col_meta','pct'],['field','col_field','pct'],['games','col_games','n']],
+ ranked:[['deck','col_deck','link'],['archetype','col_arch'],['players','col_players','n'],['win','col_win','pct'],['master','col_master','pct'],['games_master','col_gm','n']]};
+function cell(r,[f,,fmt]){const v=r[f];
+ if(fmt=='link')return r.path?`<a href="/?deck=${encodeURIComponent(r.path)}" target="_blank">${esc(v)}</a>`:esc(v);
+ if(fmt=='pct')return pct(v);if(fmt=='n')return v??'-';
+ if(fmt=='gain')return v==null?'-':`${r.proven?'<span class="ok">✓</span> ':''}${pts(v)}`;
+ if(fmt=='status')return `<span class="${v=='running'?'warn':v=='waiting'?'mut':'ok'}">${esc(tt('rs_'+v,v))}</span>`;
+ return esc(v)}
+function stateOf(j){return j.state=='running'&&j.stale?'stale':j.state}
+function render(j){LAST=j;if(!j){$('head').innerHTML=`<p class="mut">${t('no_jobs')}</p>`;['now','info','rows','events'].forEach(id=>$(id).innerHTML='');return}
+ const st=stateOf(j),cls={running:'ok',done:'ok',failed:'ko',stopped:'ko',stale:'warn'}[st];
+ const p=j.progress,frac=p&&p.total?Math.min(1,p.done/p.total):null,el=(j.updated||Date.now()/1000)-j.started;
+ const eta=st=='running'&&frac&&frac<1&&frac>0.02?t('eta',dur(el*(1-frac)/frac)):'';
+ $('head').innerHTML=`<div class="kpi"><div><span class="badge">${esc(tt('tool_'+j.tool,j.tool))}</span><b>${esc(j.name)}</b><span class="${cls}">${t('js_'+st)}</span></div>
+  <div><span class="mut">${t('k_step')}</span><b>${esc(tt('phase_'+j.phase,j.phase||'-'))}</b></div>
+  <div><span class="mut">${t('started_t')}</span><b>${new Date(j.started*1000).toLocaleString(loc(),{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><span class="mut">${st=='running'?t('since',dur(el)):dur(el)}</span></div>
+  <div><span class="mut">${t('progress_t')}</span><b>${p?`${p.done} / ${p.total}`:'-'}</b><span class="mut">${eta}</span></div></div>
+  ${frac!=null?`<div class="bar"><i style="width:${100*frac}%"></i></div>`:''}`;
+ const kv=(o,pre)=>{const e=Object.entries(o||{}).filter(([,v])=>v!=null&&v!=='');return e.length?'<dl>'+e.map(([k,v])=>`<dt>${esc(tt(pre+k,k))}</dt><dd>${typeof v=='number'&&v>0&&v<1&&String(v).includes('.')?pct(v):esc(v)}</dd>`).join('')+'</dl>':'<p class="mut">-</p>'};
+ $('now').innerHTML=kv(j.current,'cur_');$('info').innerHTML=kv(j.info,'info_');
+ const cols=COLS[j.tool]||Object.keys((j.rows||[])[0]||{}).filter(k=>k!='key'&&k!='path').map(k=>[k,k]);
+ $('rows').innerHTML=(j.rows||[]).length?`<table><tr>${cols.map(c=>`<th class="${['pct','n','gain'].includes(c[2])?'n':''}">${esc(tt(c[1],c[0]))}</th>`).join('')}</tr>`+
+  j.rows.map(r=>`<tr>${cols.map(c=>`<td class="${['pct','n','gain'].includes(c[2])?'n':''}">${cell(r,c)}</td>`).join('')}</tr>`).join('')+'</table>':`<p class="mut">${t('no_rows')}</p>`;
+ $('events').innerHTML=(j.events||[]).length?(LANG=='fr'?'':`<p class="mut">${t('hl_note')}</p>`)+[...j.events].reverse().map(e=>`<div><span>${esc(e[0])}</span>${esc(e[1])}</div>`).join(''):'<p class="mut">-</p>';
+ $('upd').textContent=t('upd5',new Date().toLocaleTimeString(loc()))}
+async function tick(){try{JOBS=await (await fetch('/live/jobs')).json();
+ const sel=$('job'),cur=JOB;sel.innerHTML='';for(const j of JOBS){const o=new Option(`${tt('tool_'+j.tool,j.tool)} · ${j.name} (${t('js_'+stateOf(j))})`,j.id);sel.append(o)}
+ if(!JOBS.length){JOB='';render(null);return}
+ const want=new URLSearchParams(location.search).get('job');JOB=JOBS.some(j=>j.id==cur)?cur:JOBS.some(j=>j.id==want)?want:JOBS[0].id;sel.value=JOB;
+ render(await (await fetch('/live/job?id='+encodeURIComponent(JOB))).json())}catch(e){$('upd').textContent=t('offline')}}
+$('job').onchange=e=>{JOB=e.target.value;history.replaceState(null,'','?job='+encodeURIComponent(JOB));tick()};
+window.onLang=()=>{if(JOBS.length)tick();else render(null)};
+applyI18n();tick();setInterval(tick,5000);
+</script></body></html>"""
+
 # Both pages: French or English (browser language by default, the FR/EN button switches and
 # remembers). Texts from the training log (highlights, journal) stay in French.
 I18N = r"""const T={
-fr:{t_decks:'pocket-zero decks',t_train:'pocket-zero entraînement',img_fr:'Images en français',img_en:'Images en anglais',copy:'Copier le texte',print:'Imprimer / PDF',
+fr:{t_live:'pocket-zero outils en direct',h_live:'pocket-zero · outils en direct',to_live:'Outils en direct →',
+tool_forge:'Forge',tool_search:'Recherche de decks',tool_ranked:'Ranked simulé',
+js_running:'● en cours',js_done:'terminé',js_failed:'● échec',js_stopped:'● arrêté',js_stale:'● plus de nouvelles',
+phase_climb:'Amélioration des decks',phase_final:'Mesure finale',phase_screen:'Criblage des lignées',phase_pairs:"Paires d'attaquants",
+phase_genetic:'Algorithme génétique',phase_refs:'Références méta',phase_matrix:'Matrice des matchups',phase_season:'Saison',phase_done:'Terminé',
+now_t:'En ce moment',info_t:'Réglages',rows_t:'Résultats (se remplissent en direct)',ev_t:'Événements',started_t:'Lancé',progress_t:'Avancement',
+eta:'fin estimée dans {0}',upd5:'mis à jour à {0} · rafraîchi toutes les 5 s',
+no_jobs:"Aucun outil lancé pour l'instant. Lance run.bat forge, run.bat search ou run.bat ranked : leur avancement s'affiche ici en direct.",
+no_rows:'Pas encore de résultats.',
+cur_deck:'Deck',cur_step:'Étape',cur_seed:'Graine',cur_alive:'Variantes en course',cur_score:'Score actuel',cur_lines:'Lignées',cur_best:'Meilleur score',
+cur_gen:'Génération',cur_meta:'Méta',cur_field:'Terrain',cur_archetypes:'Archétypes vivants',cur_games:'Parties',cur_pairs:'Paires',cur_round:'Tour de saison',cur_master:'Joueurs Master Ball',
+info_climb:'Bot (amélioration)',info_final:'Bot (mesure finale)',info_opponents:'Adversaires',info_engine:'Moteur',info_decks:'Decks',info_player:'Bot',
+info_players:'Joueurs',info_matches:'Parties par joueur',info_games:'Parties par paire',info_screen:'Criblage',info_search:'Génétique',info_gens:'Générations',info_lock:'Cartes imposées',
+col_deck:'Deck',col_status:'État',col_changes:'Changements',col_last:'Dernier changement',col_score:'Score méta',col_gain:'Gain prouvé',col_species:'Archétype',
+col_total:'Score',col_meta:'Méta',col_field:'Terrain',col_games:'Parties',col_arch:'Archétype',col_players:'Joueurs',col_win:'Victoires',col_master:'Master Ball',col_gm:'Parties pour Master',
+rs_waiting:'en attente',rs_running:'en cours',rs_done:'amélioré',rs_final:'mesuré',
+t_decks:'pocket-zero decks',t_train:'pocket-zero entraînement',img_fr:'Images en français',img_en:'Images en anglais',copy:'Copier le texte',print:'Imprimer / PDF',
 to_train:'Entraînement en direct →',paste_ph:'Colle une decklist (format du moteur : « 2 Oricorio A3 66 »)',
 edit_hint:'Modifie le texte : la liste se met à jour. Lignes « # » = commentaires (sources). Clic sur une carte : zoom (flèches, Échap).',
 cards_n:'{0}/20 cartes',max2:'2 exemplaires max',basic:'Pokémon de base',unknown:'inconnues : ',energy:'Énergie : ',
@@ -245,7 +341,23 @@ dk_empty_min:'Aucun deck avec au moins {0} parties ({1} en dessous) : baisse le 
 dk_empty:"Pas encore de résultats : ils arrivent à la fin de l'auto-jeu de chaque itération.",
 kind_meta:'méta',kind_src:'autre source',kind_forge:'forgé',kind_line:'lignée',kind_pair:'paire',kind_mutant:'mutant',kind_cover:'découverte',kind_solo:'solo',
 tag_top:'Top',tag_meta:'Méta',tag_devs:'Devs',tag_pepites:'Pépites',tag_serie:'Série',tag_eclair:'Éclair',tag_exploit:'Exploit',tag_marathon:'Marathon',tag_depart:'Départ',tag_record:'Record'},
-en:{t_decks:'pocket-zero decks',t_train:'pocket-zero training',img_fr:'French card images',img_en:'English card images',copy:'Copy text',print:'Print / PDF',
+en:{t_live:'pocket-zero live tools',h_live:'pocket-zero · live tools',to_live:'Live tools →',
+tool_forge:'Forge',tool_search:'Deck search',tool_ranked:'Simulated ranked',
+js_running:'● running',js_done:'finished',js_failed:'● failed',js_stopped:'● stopped',js_stale:'● no news',
+phase_climb:'Improving the decks',phase_final:'Final measurement',phase_screen:'Screening the lines',phase_pairs:'Attacker pairs',
+phase_genetic:'Genetic algorithm',phase_refs:'Meta references',phase_matrix:'Matchup matrix',phase_season:'Season',phase_done:'Finished',
+now_t:'Right now',info_t:'Settings',rows_t:'Results (filling in live)',ev_t:'Events',started_t:'Started',progress_t:'Progress',
+eta:'estimated end in {0}',upd5:'updated at {0} · refreshed every 5 s',
+no_jobs:'No tool running yet. Start run.bat forge, run.bat search or run.bat ranked: their progress shows here live.',
+no_rows:'No results yet.',
+cur_deck:'Deck',cur_step:'Step',cur_seed:'Seed',cur_alive:'Variants still in',cur_score:'Current score',cur_lines:'Lines',cur_best:'Best score',
+cur_gen:'Generation',cur_meta:'Meta',cur_field:'Field',cur_archetypes:'Archetypes alive',cur_games:'Games',cur_pairs:'Pairs',cur_round:'Season round',cur_master:'Master Ball players',
+info_climb:'Bot (improving)',info_final:'Bot (final measurement)',info_opponents:'Opponents',info_engine:'Engine',info_decks:'Decks',info_player:'Bot',
+info_players:'Players',info_matches:'Games per player',info_games:'Games per pair',info_screen:'Screening',info_search:'Genetic',info_gens:'Generations',info_lock:'Required cards',
+col_deck:'Deck',col_status:'Status',col_changes:'Changes',col_last:'Last change',col_score:'Meta score',col_gain:'Proven gain',col_species:'Archetype',
+col_total:'Score',col_meta:'Meta',col_field:'Field',col_games:'Games',col_arch:'Archetype',col_players:'Players',col_win:'Wins',col_master:'Master Ball',col_gm:'Games to Master',
+rs_waiting:'waiting',rs_running:'running',rs_done:'improved',rs_final:'measured',
+t_decks:'pocket-zero decks',t_train:'pocket-zero training',img_fr:'French card images',img_en:'English card images',copy:'Copy text',print:'Print / PDF',
 to_train:'Live training →',paste_ph:'Paste a decklist (engine format: "2 Oricorio A3 66")',
 edit_hint:'Edit the text: the list updates. "#" lines are comments (sources). Click a card to zoom (arrows, Esc).',
 cards_n:'{0}/20 cards',max2:'2 copies max',basic:'Basic Pokémon',unknown:'unknown: ',energy:'Energy: ',
@@ -254,7 +366,7 @@ rmse_t:'Gap to real matchups (RMSE, lower is better)',leg_ref:'e3 reference (11.
 val_t:'Latest validation',val_it:'Validation at iteration {0}',top_t:'Decks that win the most',win1:'last iteration',win10:'last 10 iterations',win0:'whole run',
 k_all:'all decks',k_home:'homemade (built by the bot)',k_real:'real decks (meta, sources, forged, devs)',min_n:'≥ {0} games',th_wins:'Wins',th_games:'Games',th_rate:'Rate',
 top_note:'Self-play results against the whole training pool (weak decks included, with a little exploration): a scouting tool, not a proof. Click a deck to see its cards; confirm with the forge (<code>--deck</code>) or the ranked simulation.',
-hl_t:'Highlights',hl_it:'Highlights of iteration {0}',hl_note:'From the training log (in French).',log_t:'Live log',
+hl_t:'Highlights',hl_it:'Highlights of iteration {0}',hl_note:'Messages from the tools (in French).',log_t:'Live log',
 k_it:'Iteration',k_step:'Step',k_dur:'Iteration time',k_dur2:'mean of the last 5',k_eta:'Estimated end',k_e3:'vs e3 (5-it. mean)',k_best:'best',
 st_done:'finished',st_run:'● running',st_stop:'● stopped',st_quiet:'(last message {0} ago)',in_t:'in {0}',since:'for {0}',interrupted:'(interrupted)',
 ph_selfplay:'Self-play on the GPUs',ph_train:'Training, then evaluation',ph_valid:'Validation (real matchups)',ph_end:'End of iteration',ph_done:'Finished',
@@ -276,6 +388,7 @@ function applyI18n(){document.documentElement.lang=LANG;document.title=t(TITLE_K
 function toggleLang(){LANG=LANG=='fr'?'en':'fr';try{localStorage.setItem('pz_lang',LANG)}catch(e){}applyI18n();if(window.onLang)window.onLang()}"""
 PAGE = PAGE.replace('/*I18N*/', I18N)
 TRAIN = TRAIN.replace('/*I18N*/', I18N)
+LIVE_PAGE = LIVE_PAGE.replace('/*I18N*/', I18N)
 
 HEADER = re.compile(r'^(\d\d):(\d\d):(\d\d) === itération (\d+)/(\d+)')
 VALID = re.compile(r'(\S+)\s+vs\s+(\S+)\s+sim\s+([\d.]+)\s+réel\s+([\d.]+)\s+écart\s+([+-]?[\d.]+)')
@@ -443,6 +556,25 @@ def top_decks(name, window, kind, min_games):
 
 
 
+LIVE_DIR = os.path.join(engine.ROOT, 'results', 'live')
+
+
+def live_jobs():
+    """Every live record (results/live/*.json), the most recently updated first; a running one
+    that has not written for 15 minutes is marked stale (crashed or closed window)."""
+    out = []
+    for f in glob.glob(os.path.join(LIVE_DIR, '*.json')):
+        try:
+            with open(f, encoding='utf-8') as fh:
+                d = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        d['id'] = os.path.basename(f)[:-5]
+        d['stale'] = d.get('state') == 'running' and time.time() - d.get('updated', 0) > 900
+        out.append(d)
+    return sorted(out, key=lambda d: -d.get('updated', 0))
+
+
 def deck_files():
     pats = ['lab/decks/meta/*.txt', 'lab/decks/sources/*/*.txt', 'results/**/*.txt', 'lab/decks/solo/*/*.txt']
     out = []
@@ -487,6 +619,18 @@ class Handler(BaseHTTPRequestHandler):
             self.send(open(os.path.join(engine.ROOT, p), encoding='utf-8').read(), 'text/plain')
         elif u.path == '/train':
             self.send(TRAIN, 'text/html')
+        elif u.path == '/live':
+            self.send(LIVE_PAGE, 'text/html')
+        elif u.path == '/live/jobs':
+            self.send(json.dumps([{k: d.get(k) for k in ('id', 'tool', 'name', 'state', 'stale', 'phase', 'progress', 'updated')}
+                                  for d in live_jobs()]))
+        elif u.path == '/live/job':
+            want = q.get('id', [''])[0]
+            job = next((d for d in live_jobs() if d['id'] == want), None)
+            if job is None:
+                self.send_error(404)
+                return
+            self.send(json.dumps(job))
         elif u.path == '/train/runs':
             self.send(json.dumps(runs()))
         elif u.path in ('/train/state', '/train/decks'):

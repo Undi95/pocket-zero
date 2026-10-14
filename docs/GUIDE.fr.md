@@ -221,7 +221,7 @@ chance s'annule, il ne reste que l'effet du changement.
   pour ça que la forge est plus fiable que de comparer deux decks différents.
 
 **Résultats** : `results\forge\<nom>\FORGE.md` (score, gain ✓ prouvé ou ≈, chaque changement,
-matchups) et `results\forge\<nom>\decks\` (les listes, visibles dans `run.bat ui`). Relancer
+matchups) et `results\forge\<nom>\decks\` (les listes, visibles dans `run.bat ui` ; suivi en direct sur la page « Outils en direct »). Relancer
 avec le même nom reprend où elle s'était arrêtée.
 
 **Options** : `--top 10` (nombre de listes méta), `--climb z32` (bot pendant l'amélioration),
@@ -318,6 +318,19 @@ jeu (20 cartes, 2 exemplaires, un Pokémon de base).
   navigateur).
 - Accessible depuis le réseau local par défaut (l'adresse s'affiche au lancement). Au premier
   lancement, Windows demande l'accès réseau pour Python : coche « Réseaux privés ».
+
+**Outils en direct** (`http://localhost:8765/live`, rafraîchi toutes les 5 secondes) : la forge, la
+recherche de decks et le ranked en cours (ou terminés), choisis dans la liste en haut.
+
+- étape en cours, avancement, heure de lancement, fin estimée ;
+- « En ce moment » : pour la forge, le deck, l'étape, la graine, les variantes encore en course et
+  le score actuel ; pour la recherche, la génération, le meilleur score (méta et terrain) et les
+  archétypes vivants ; pour le ranked, les parties de la matrice puis les tours de la saison ;
+- « Résultats » qui se remplissent en direct, avec un lien vers les cartes de chaque deck (la
+  forge et la recherche enregistrent leur meilleur deck du moment) ;
+- les événements (changements gardés ou refusés, générations, validations).
+
+Chaque outil écrit son avancement dans `results\live\<outil>-<nom>.json`.
 
 ## 12. La méta et ses mises à jour automatiques
 

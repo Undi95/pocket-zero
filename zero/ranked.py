@@ -21,6 +21,7 @@ import os
 import random
 
 from . import engine
+from .live import Live, Off
 
 TIERS = [('Débutant', 0), ('Poké Ball', 145), ('Super Ball', 355), ('Hyper Ball', 710), ('Master Ball', 1450)]
 SUB = [0, 20, 50, 95, 145, 195, 245, 300, 355, 420, 490, 600, 710, 860, 1010, 1225, 1450]
@@ -60,7 +61,7 @@ def population(extra):
     return decks
 
 
-def matrix(decks, player, games, threads, cache_f, weights=None):
+def matrix(decks, player, games, threads, cache_f, weights=None, live=Off()):
     cache = json.load(open(cache_f)) if os.path.exists(cache_f) else {}
     paths = sorted(decks)
     pairs = [(a, b) for a, b in itertools.combinations(paths, 2)
@@ -72,7 +73,11 @@ def matrix(decks, player, games, threads, cache_f, weights=None):
         idx = {p: i for i, p in enumerate(paths)}
         games_list = [(idx[a], idx[b], k * 7919 + idx[a] * 104_729 + idx[b]) for a, b in pairs for k in range(games)]
         print(f'  {len(games_list)} parties sur {len(judge.devices)} GPU...', flush=True)
-        res = judge.play(paths, games_list, int(player.split(':')[0][1:]))
+        live.event(f'matrice : {len(games_list)} parties sur {len(judge.devices)} GPU')
+        res, step = [], 4096 * len(judge.devices)  # in slices, for the progress bar (each one keeps the GPUs full)
+        for k in range(0, len(games_list), step):
+            res += judge.play(paths, games_list[k:k + step], int(player.split(':')[0][1:]))
+            live.set(True, progress=(len(res), len(games_list)), current={'games': f'{len(res)}/{len(games_list)}'})
         judge.close()
         for n, (a, b) in enumerate(pairs):
             cache[f'{player}|{games}|{a}|{b}'] = sum(res[n * games:(n + 1) * games]) / games
@@ -81,6 +86,7 @@ def matrix(decks, player, games, threads, cache_f, weights=None):
     for n, (a, b) in enumerate(pairs, 1):
         r = engine.match(a, b, player, games, threads)
         cache[f'{player}|{games}|{a}|{b}'] = r['score_a']
+        live.set(progress=(n, len(pairs)), current={'pairs': f'{n}/{len(pairs)}'})
         if n % 20 == 0 or n == len(pairs):
             print(f'  matchups : {n}/{len(pairs)}', flush=True)
             json.dump(cache, open(cache_f, 'w'))
@@ -104,12 +110,27 @@ def main():
     ap.add_argument('--threads', type=int, default=0)
     ap.add_argument('--seed', type=int, default=0)
     a = ap.parse_args()
+    live = Live('ranked', 'saison', player=a.player, players=a.players, matches=a.matches, games=a.games)
+    try:
+        season(a, live)
+    except BaseException as e:
+        live.event(f'arrêt : {type(e).__name__} {e}')
+        live.done('stopped' if isinstance(e, KeyboardInterrupt) else 'failed')
+        raise
+    live.done()
+
+
+def season(a, live):
     out = os.path.join(engine.ROOT, 'results', 'ranked')
     os.makedirs(out, exist_ok=True)
     player = engine.zspec(a.player[1:], a.weights) if a.player.startswith('z') and os.path.exists(a.weights) else a.player
     decks = population(a.deck)
     print(f'{len(decks)} decks, matrice {a.games} parties par paire avec {a.player}', flush=True)
-    score = matrix(decks, player, a.games, a.threads or None, os.path.join(out, 'matrix.json'), a.weights)
+    live.d['info'].update(decks=len(decks))
+    live.set(True, phase='matrix')
+    live.event(f'{len(decks)} decks, matrice {a.games} parties par paire avec {a.player}')
+    score = matrix(decks, player, a.games, a.threads or None, os.path.join(out, 'matrix.json'), a.weights, live)
+    live.set(True, phase='season', progress=(0, a.matches), current={})
 
     rng = random.Random(a.seed)
     paths = sorted(decks)
@@ -130,6 +151,9 @@ def main():
                 x['g'] += 1
                 if x['master_at'] is None and x['pts'] >= 1450:
                     x['master_at'] = rnd + 1
+        if rnd % 10 == 9:
+            live.set(progress=(rnd + 1, a.matches),
+                     current={'round': rnd + 1, 'master': sum(x['master_at'] is not None for x in pl)})
 
     rows = {}
     for x in pl:
@@ -158,6 +182,13 @@ def main():
                      f"{100 * r['master'] / r['n']:.0f} % | {at[len(at) // 2] if at else '-'} | {rank_name(r['pts'] / r['n'])} | "
                      + ' | '.join(f"{100 * w / g:.0f} %" if g else '-' for w, g in r['tier']) + ' |')
     open(os.path.join(out, 'CLASSEMENT.md'), 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+    live.rows([{'key': d, 'deck': os.path.splitext(os.path.basename(d))[0], 'archetype': decks[d][0],
+                'path': os.path.relpath(d, engine.ROOT).replace(os.sep, '/'), 'players': r['n'],
+                'win': round(r['w'] / max(r['g'], 1), 4), 'master': round(r['master'] / r['n'], 4),
+                'games_master': sorted(r['at'])[len(r['at']) // 2] if r['at'] else None}
+               for d, r in sorted(rows.items(), key=lambda kv: -kv[1]['w'] / max(kv[1]['g'], 1))])
+    live.set(True, phase='done', progress=(a.matches, a.matches))
+    live.event('classement écrit : results/ranked/CLASSEMENT.md')
     print('\n'.join(lines[4:16]))
     print(f'\nClassement complet : {os.path.join(out, "CLASSEMENT.md")}')
 

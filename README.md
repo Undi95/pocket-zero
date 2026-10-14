@@ -22,7 +22,7 @@ the GPU training, the deck tools and the web interface (see [Credits](#credits))
 | **Improves decks with proof** | The *forge* tries one change at a time (a trainer, a copy, an evolution line, an energy) against the real meta, on the *same* games as the current list, and keeps it only if it wins clearly. Homemade mode builds new archetypes from the whole card pool. |
 | **Tests in real conditions** | A simulated ranked season with the official ladder rules (Beginner to Master Ball) and the real meta shares. |
 | **Stays up to date** | The meta decklists (Limitless tournaments, Game8, DotGG shares) refresh automatically twice a week. |
-| **Shows everything** | A web interface in French and English: decklists with the official card images (click to zoom), and a live page that follows the training and the decks that win the most. |
+| **Shows everything** | A web interface in French and English: decklists with the official card images (click to zoom), a live page that follows the training and the decks that win the most, and live pages for the forge, the deck search and the ranked simulation. |
 
 ## Quick start (Windows)
 

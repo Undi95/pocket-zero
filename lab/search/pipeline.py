@@ -19,9 +19,13 @@ Usage:
   python3 lab/search/pipeline.py                          # full run
   python3 lab/search/pipeline.py --lock "B1a 42,B1a 62"   # build around given cards
 """
-import argparse, collections, json, os, random, re, shutil, subprocess, tempfile, time
+import argparse, collections, json, os, random, re, shutil, subprocess, sys, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from zero.live import Live, Off  # live progress for run.bat ui (/live); Off when used as a library (forge)
+LIVE = Off()
 _EXE = 'deckgym.exe' if os.name == 'nt' else 'deckgym'
 BIN = os.environ.get('PZ_DECKGYM') or next(
     (p for p in (os.path.join(ROOT, 'bin', _EXE), os.path.join(ROOT, 'target', 'release', _EXE)) if os.path.exists(p)),
@@ -374,6 +378,7 @@ def stage_A(per_opp=4):
             if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
             res.append({'final': f, 'deck': d, 'score': s})
         if i % 50 == 0 and res: log(f'A {i}/{len(finals)} best={max(r["score"] for r in res):.3f}')
+        if res: LIVE.set(phase='screen', progress=(i + 1, len(finals)), current={'lines': f'{i + 1}/{len(finals)}', 'best': round(max(r['score'] for r in res), 4)})
     res.sort(key=lambda r: -r['score'])
     json.dump(res, open(stage_file('A'), 'w')); save_cache(True)
     return res
@@ -395,6 +400,7 @@ def stage_B(A, top=30, per_opp=6):
             if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
             res.append({'finals': [finals[i], finals[j]], 'deck': d, 'score': s})
         log(f'B {i+1}/{len(finals)} best={max([r["score"] for r in res] or [0]):.3f}')
+        LIVE.set(phase='pairs', progress=(i + 1, len(finals)), current={'best': round(max([r['score'] for r in res] or [0]), 4)})
     res.sort(key=lambda r: -r['score'])
     json.dump(res, open(stage_file('B'), 'w')); save_cache(True)
     return res
@@ -419,7 +425,27 @@ def stage_F(A, B, size=10):
         name = re.sub(r'[^a-z0-9]+', '-', r['species'].lower()).strip('-')
         write_deck(r['deck'], os.path.join(GAUNTLET, f'field-{i:02d}-{name}.txt'))
     log('F: terrain = ' + ' | '.join(r['species'] for r in field))
+    LIVE.event('terrain : ' + ' | '.join(r['species'] for r in field))
     return field
+
+def live_rows(P, player, final=False):
+    """The live table: best deck of each archetype (the best one saved for run.bat ui)."""
+    rows, seen = [], set()
+    for d in P:
+        sp = species(d)
+        if sp in seen: continue
+        seen.add(sp)
+        s = full_score(d, player)
+        name = f'{len(rows) + 1}-' + re.sub(r'[^a-z0-9]+', '-', sp.lower()).strip('-') if final else 'meilleur-en-cours'
+        path = os.path.join(RES, 'decks', name + '.txt')
+        if final or not rows:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            write_deck(d, path)
+        rows.append({'key': sp, 'species': sp, 'total': round(s['total'], 4), 'meta': round(s['meta'], 4),
+                     'field': None if s['field'] is None else round(s['field'], 4), 'games': s['games'],
+                     'path': os.path.relpath(path, ROOT).replace(os.sep, '/') if final or len(rows) == 0 else None})
+        if len(rows) == 8: break
+    LIVE.rows(rows)
 
 def select(cands, pop, per_species=2):
     """Best decks first, but at most per_species of each archetype, so the search keeps several ideas alive."""
@@ -453,6 +479,11 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
         log(f'{tag} gen {g+1}/{gens} best={s["total"]:.3f} (méta {s["meta"]:.3f}, terrain {s["field"] or 0:.3f}, '
             f'{s["games"]} parties) [{species(b)}] {",".join(b["e"])} | {short(b)}')
         log(f'{tag}   archétypes vivants: ' + ' | '.join(sorted({species(x) for x in P})))
+        live_rows(P, SEARCH)
+        LIVE.set(True, phase='genetic', progress=(g + 1, gens),
+                 current={'gen': f'{g + 1}/{gens}', 'best': round(s['total'], 4), 'meta': round(s['meta'], 4),
+                          'field': round(s['field'] or 0, 4), 'archetypes': len({species(x) for x in P})})
+        LIVE.event(f'génération {g + 1}/{gens} : {species(b)} {100 * s["total"]:.1f} %')
         json.dump({'gen': g + 1, 'pop': P}, open(f, 'w')); save_cache(True)
     return P
 
@@ -512,8 +543,12 @@ def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
         evaluate(d, per_opp, FINAL, GAUNTLET)
         out.append({'deck': d, **full_score(d, FINAL)})
         log(f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} parties)')
+        LIVE.set(True, phase='final', progress=(len(out), top), current={'deck': species(d), 'best': round(max(r['total'] for r in out), 4)})
+        LIVE.event(f'validation : {species(d)} {100 * out[-1]["total"]:.1f} %')
         if len(out) == top: break
     out.sort(key=lambda r: -r['total'])
+    live_rows([r['deck'] for r in out], FINAL, final=True)
+    LIVE.set(True, phase='refs', current={})
     refs = {}
     for name in sorted(WEIGHTS, key=lambda n: -WEIGHTS[n]):  # every meta deck, same bot, same gauntlet
         ref = parse_deck(os.path.join(META, name + '.txt'))
@@ -545,17 +580,7 @@ def report(out, refs, tag):
     open(os.path.join(RES, f'RESULTATS_{tag}.md'), 'w', encoding='utf-8').write('\n'.join(L))
     log(f'rapport écrit: RESULTATS_{tag}.md')
 
-if __name__ == '__main__':
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--lock', default='', help='cartes imposées, ex "B1a 42,B1a 62"')
-    ap.add_argument('--gens', type=int, default=25)
-    ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
-    a = ap.parse_args()
-    if a.check:
-        check()
-        raise SystemExit(0)
-    lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
-    lock = tuple(CANON.get(sig(CARD[c]), c) for c in lock)
+def main(a, lock):
     t0 = time.time()
     A = stage_A(); log(f'A terminé ({(time.time()-t0)/60:.0f} min) top: ' + ', '.join(CARD[r['final']]['name'] for r in A[:8]))
     B = stage_B(A); log(f'B terminé ({(time.time()-t0)/60:.0f} min) top: ' + ' | '.join(' + '.join(CARD[f]['name'] for f in r['finals']) for r in B[:5]))
@@ -577,3 +602,24 @@ if __name__ == '__main__':
     P = stage_C(seeds, immigrants, gens=a.gens, lock=lock, tag=tag)
     stage_D(P, tag='D' if not lock else 'D_lock', lock=lock)
     log(f'FINI en {(time.time()-t0)/3600:.1f} h')
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--lock', default='', help='cartes imposées, ex "B1a 42,B1a 62"')
+    ap.add_argument('--gens', type=int, default=25)
+    ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
+    a = ap.parse_args()
+    if a.check:
+        check()
+        raise SystemExit(0)
+    lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
+    lock = tuple(CANON.get(sig(CARD[c]), c) for c in lock)
+    LIVE = Live('search', os.path.basename(os.path.normpath(RES)), screen=SCREEN, search=SEARCH, final=FINAL,
+                gens=a.gens, lock=a.lock)
+    try:
+        main(a, lock)
+    except BaseException as e:
+        LIVE.event(f'arrêt : {type(e).__name__} {e}')
+        LIVE.done('stopped' if isinstance(e, KeyboardInterrupt) else 'failed')
+        raise
+    LIVE.done()

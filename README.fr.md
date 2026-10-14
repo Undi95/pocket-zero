@@ -24,7 +24,7 @@ cartes, le bot AlphaZero, l'entraînement sur GPU, les outils de decks et l'inte
 | **Améliore les decks, preuve à l'appui** | La *forge* essaie un changement à la fois (un dresseur, une copie, une lignée, une énergie) contre la vraie méta, sur les *mêmes* parties que la liste actuelle, et ne le garde que s'il gagne nettement. Le mode maison construit de nouveaux archétypes avec tout le pool de cartes. |
 | **Teste en conditions réelles** | Une saison de ranked simulée avec les règles officielles du classement (Débutant à Master Ball) et les vraies parts de méta. |
 | **Reste à jour** | Les decklists méta (tournois Limitless, Game8, parts DotGG) se mettent à jour automatiquement deux fois par semaine. |
-| **Montre tout** | Une interface web en français et en anglais : decklists avec les images officielles des cartes (clic pour zoomer), et une page en direct qui suit l'entraînement et les decks qui gagnent le plus. |
+| **Montre tout** | Une interface web en français et en anglais : decklists avec les images officielles des cartes (clic pour zoomer), une page en direct qui suit l'entraînement et les decks qui gagnent le plus, et le suivi en direct de la forge, de la recherche de decks et du ranked. |
 
 ## Démarrage rapide (Windows)
 

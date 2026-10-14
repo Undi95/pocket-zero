@@ -34,6 +34,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from . import engine
+from .live import Live, Off
 
 
 def setup(res, weights, climb, final):
@@ -180,7 +181,7 @@ def stats(ds):
     return m, se, n
 
 
-def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
+def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log, live=Off(), name='', save=None):
     """Each step: all variants play the same seeded games as the current deck, chunk after chunk
     (one batched job per chunk); clearly worse ones drop out, a significantly better one (2
     standard errors, at least 4 chunks) is confirmed on new seeds and becomes the deck."""
@@ -204,12 +205,15 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
             alive = keep
             log(f'    étape {step + 1}, graine {c + 1}/{chunks} : {len(alive)} variantes encore en course '
                 f'({(time.time() - t0) / 60:.0f} min)')
+            live.set(current={'deck': name, 'step': step + 1, 'seed': f'{c + 1}/{chunks}',
+                              'alive': f'{len(alive)}/{len(variants)}', 'score': round(sc[0][0], 4)})
             good = [i for i in alive if stats(deltas[i])[2] >= 4 and stats(deltas[i])[0] - 2 * stats(deltas[i])[1] > 0]
             if good:
                 winner = max(good, key=lambda i: stats(deltas[i])[0])
                 break
         if winner is None:
             log(f'    plus aucun changement gagnant après {step + 1} étapes')
+            live.event(f'{name} : plus aucun changement gagnant après {step + 1} étapes')
             break
         v = variants[winner]
         fresh = [J.scores([best, v], rng.randrange(1 << 30), player) for _ in range(max(2, chunks // 2))]
@@ -218,9 +222,14 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log):
         if m2 > 0:
             changes.append((diff(P, best, v), m, m2))
             log(f'    étape {step + 1} : {changes[-1][0]}  (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
+            live.event(f'{name}, étape {step + 1} : {changes[-1][0]} (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
             best = v
+            live.row(name, changes=len(changes), last=changes[-1][0], gain=round(sum(c[2] for c in changes), 4))
+            if save:
+                save(best)
         else:
             log(f'    étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f}), on continue')
+            live.event(f'{name}, étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f})')
     return best, changes
 
 
@@ -242,7 +251,17 @@ def main():
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--engine', default='auto', choices=['auto', 'gpu', 'cpu'], help='où jouer les parties (auto : GPU si disponible)')
     a = ap.parse_args()
+    live = Live('forge', a.name, climb=a.climb, final=a.final)
+    try:
+        run(a, live)
+    except BaseException as e:
+        live.event(f'arrêt : {type(e).__name__} {e}')
+        live.done('stopped' if isinstance(e, KeyboardInterrupt) else 'failed')
+        raise
+    live.done()
 
+
+def run(a, live):
     res = os.path.join(engine.ROOT, 'results', 'forge', a.name)
     os.makedirs(os.path.join(res, 'decks'), exist_ok=True)
     climb_p = engine.zspec(a.climb[1:], None) if a.climb.startswith('z') else a.climb
@@ -287,16 +306,34 @@ def main():
     rng = random.Random(a.seed)
     log(f'Forge "{a.name}" : {len(starts)} decks, amélioration {a.climb}, mesure finale {a.final}, '
         f'{len(weights)} adversaires pondérés par la méta réelle, parties sur {log_engine}')
+    live.d['info'].update(opponents=len(weights), engine=log_engine, decks=len(starts))
+    deck_path = lambda name: os.path.join(res, 'decks', name + '.txt')
+    rel = lambda name: os.path.relpath(deck_path(name), engine.ROOT).replace(os.sep, '/')
     for name, d in starts:
+        s = state.get(name, {})
+        live.row(name, deck=name, status='done' if 'best' in s else 'waiting', changes=len(s.get('changes', [])),
+                 last=(s.get('changes') or [[''],])[-1][0], path=rel(name) if os.path.exists(deck_path(name)) else None)
+    for k, (name, d) in enumerate(starts):
+        live.set(True, phase='climb', progress=(k, len(starts)))
         if name in state and 'best' in state[name]:
             continue
         log(f'== {name}')
+        live.event(f'== {name}')
+        live.row(name, status='running')
         t0 = time.time()
-        best, changes = climb(P, J, d, rng, usage, lock, climb_p, a.steps, a.cands, a.chunks, log)
+
+        def save(deck, name=name):  # the current best list, visible in run.bat ui while it climbs
+            P.write_deck(deck, deck_path(name))
+            live.row(name, path=rel(name))
+        best, changes = climb(P, J, d, rng, usage, lock, climb_p, a.steps, a.cands, a.chunks, log, live, name, save)
         state[name] = {'start': d, 'best': best, 'changes': changes, 'minutes': round((time.time() - t0) / 60)}
         json.dump(state, open(state_f, 'w'))
+        save(best)
+        live.row(name, status='done', changes=len(changes))
 
     log('== mesure finale')
+    live.set(True, phase='final', progress=(0, len(state)), current={})
+    live.event('== mesure finale')
     lines = [f'# Forge « {a.name} »', '',
              f'Adversaires : {len(weights)} listes réelles (Limitless et autres sources), pondérées par la part de méta '
              f'(DotGG). Mesure finale : {a.final}, parties appariées (deck de départ et deck forgé sur les mêmes parties).',
@@ -321,6 +358,9 @@ def main():
             s['final'] = {'gain': max(m, 0.0) if k else 0.0, 'se': se, 'score': sum(r[k][0] for r in runs) / len(runs),
                           'per': {o: w / n for o, (w, n) in per.items() if n}}
             json.dump(state, open(state_f, 'w'))
+        live.row(name, status='final', score=round(s['final']['score'], 4), gain=round(s['final']['gain'], 4),
+                 proven=s['final']['gain'] - 2 * s['final']['se'] > 0, changes=len(s['changes']), path=rel(name))
+        live.set(progress=(len(rows) + 1, len(state)))
         P.write_deck(s['best'], os.path.join(res, 'decks', name + '.txt'))
         rows.append((s['final']['score'], name, s))
     rows.sort(key=lambda r: -r[0])

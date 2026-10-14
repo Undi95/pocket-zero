@@ -219,7 +219,7 @@ coin flips): luck cancels out, only the effect of the change remains.
   biases: that is why the forge is more reliable than comparing two different decks.
 
 **Results**: `results\forge\<name>\FORGE.md` (score, gain ✓ proven or ≈, every change,
-matchups) and `results\forge\<name>\decks\` (the lists, visible in `run.bat ui`). Running again
+matchups) and `results\forge\<name>\decks\` (the lists, visible in `run.bat ui`; followed live on the "Live tools" page). Running again
 with the same name resumes where it stopped.
 
 **Options**: `--top 10` (number of meta lists), `--climb z32` (bot during the improvement),
@@ -313,6 +313,19 @@ Basic Pokémon).
 - 🌐 button: interface in French or English (remembered; the browser language by default).
 - Reachable from the local network by default (the address is printed at startup). On the first
   start, Windows asks for network access for Python: tick "Private networks".
+
+**Live tools** (`http://localhost:8765/live`, refreshed every 5 seconds): the forge, the deck
+search and the ranked simulation in progress (or finished), picked from the list at the top.
+
+- current step, progress, start time, estimated end;
+- "Right now": for the forge, the deck, the step, the seed, the variants still in and the current
+  score; for the search, the generation, the best score (meta and field) and the archetypes alive;
+  for the ranked simulation, the matrix games then the season rounds;
+- "Results" filling in live, with a link to each deck's cards (the forge and the search save
+  their current best deck);
+- the events (changes kept or refused, generations, validations).
+
+Each tool writes its progress to `results\live\<tool>-<name>.json`.
 
 ## 12. The meta and its automatic updates
 
