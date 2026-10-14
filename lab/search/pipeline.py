@@ -467,8 +467,15 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
     f = stage_file(tag)
     state = json.load(open(f)) if os.path.exists(f) else {'gen': 0, 'pop': seeds}
     P = [p for p in state['pop'] if valid(p, lock)]
+
+    def measure(decks, n, what):  # a generation is long: show that it moves
+        for i, d in enumerate(decks, 1):
+            evaluate(d, n, SEARCH, GAUNTLET)
+            if i % 10 == 0 or i == len(decks):
+                log(f'{tag} {what} : {i}/{len(decks)} decks mesurés')
+                LIVE.set(progress=(i, len(decks)))
     if state['gen'] == 0:
-        for p in P: evaluate(p, per_opp, SEARCH, GAUNTLET)
+        measure(P, per_opp, 'départ')
         P = select(P, pop)
     for g in range(state['gen'], gens):
         rng = random.Random(1234 + g)
@@ -479,7 +486,7 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
                 if c: children.append(c)
         for c in rng.sample(immigrants_pool, min(2, len(immigrants_pool))):  # fresh blood from screening
             if valid(c, lock): children.append(c)
-        for c in children: evaluate(c, per_opp, SEARCH, GAUNTLET)
+        measure(children, per_opp, f'gen {g+1}/{gens}')
         for p in P: evaluate(p, max(1, per_opp // 2), SEARCH, GAUNTLET)  # elites accumulate games -> less noise
         P = select({key(x): x for x in P + children}.values(), pop)
         b = P[0]; s = full_score(b, SEARCH)
