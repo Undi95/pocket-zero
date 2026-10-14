@@ -19,7 +19,7 @@ Usage:
   python3 lab/search/pipeline.py                          # full run
   python3 lab/search/pipeline.py --lock "B1a 42,B1a 62"   # build around given cards
 """
-import argparse, collections, json, os, random, re, shutil, subprocess, sys, tempfile, time
+import argparse, atexit, collections, json, os, random, re, shutil, subprocess, sys, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
@@ -218,7 +218,58 @@ def save_cache(force=False):
 
 def opponents(folder): return sorted(f[:-4] for f in os.listdir(folder) if f.endswith('.txt'))
 
+_JUDGE = []  # the GPU judge, created on first use (None: no GPU)
+_SEEDS = random.Random()  # its own generator: the stages' seeded generators stay untouched
+
+
+def gpu_sims(player):
+    """Simulations of a network player the GPUs can play (z8, z32...), else None: CPU engine."""
+    m = re.fullmatch(r'z(\d+)', player)
+    if not m or int(m[1]) < 1 or os.environ.get('PZ_NO_GPU'):
+        return None
+    if not _JUDGE:
+        from zero import engine, gpu_eval
+        judge = gpu_eval.GpuJudge(os.environ['POCKET_ZERO_WEIGHTS'], engine.info()) \
+            if gpu_eval.available() and os.environ.get('POCKET_ZERO_WEIGHTS') else None
+        if judge:
+            atexit.register(judge.close)
+            log(f'parties {player} sur GPU : {", ".join(judge.devices)}')
+        _JUDGE.append(judge)
+    return int(m[1]) if _JUDGE[0] else None
+
+
+def run_games_many(decks, per_opp, player, folder, seed=None, progress=None):
+    """GPU path: every deck against every opponent of `folder`, `per_opp` games each, in one batch.
+    One {opponent: (wins, games)} per deck, ties counted half. With `seed`, game k against
+    opponent j gets the same seed whatever the deck (paired comparisons)."""
+    sims = gpu_sims(player)
+    judge, opps, n = _JUDGE[0], opponents(folder), len(decks)
+    tmp = tempfile.mkdtemp(prefix='pz_search_')
+    try:
+        paths = []
+        for i, d in enumerate(decks):
+            paths.append(os.path.join(tmp, f'd{i}.txt'))
+            write_deck(d, paths[-1])
+        paths += [os.path.join(folder, o + '.txt') for o in opps]
+        games = [(i, n + j, (seed * 7919 + j * 104_729 + k) % 2**31 if seed is not None else _SEEDS.getrandbits(31))
+                 for i in range(n) for j in range(len(opps)) for k in range(per_opp)]
+        res, step = [], 4096 * len(judge.devices)
+        for at in range(0, len(games), step):
+            res += judge.play(paths, games[at:at + step], sims)
+            if progress:
+                progress(len(res), len(games))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    out = [{} for _ in decks]
+    for (i, b, _), r in zip(games, res):
+        w, g = out[i].get(opps[b - n], (0, 0))
+        out[i][opps[b - n]] = (w + r, g + 1)
+    return out
+
+
 def run_games(d, per_opp, player, folder, seed=None):
+    if gpu_sims(player):
+        return run_games_many([d], per_opp, player, folder, seed)[0]
     with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f: path = f.name
     write_deck(d, path)
     n_opp = len(opponents(folder))
@@ -265,6 +316,21 @@ def evaluate(d, per_opp, player=SCREEN, folder=None):
         a = rec.get(opp, [0, 0]); rec[opp] = [a[0] + w, a[1] + n]
     save_cache()
     return score(d, player)
+
+def evaluate_many(decks, per_opp, player, folder=None, progress=None):
+    """evaluate() for many decks: a single GPU batch when the player runs on the GPUs."""
+    decks = list(decks)
+    if not gpu_sims(player):
+        for i, d in enumerate(decks, 1):
+            evaluate(d, per_opp, player, folder)
+            if progress:
+                progress(i, len(decks))
+        return
+    for d, per in zip(decks, run_games_many(decks, per_opp, player, folder or META, progress=progress)):
+        rec = CACHE.setdefault(f'{player}:{key(d)}', {})
+        for opp, (w, n) in per.items():
+            a = rec.get(opp, [0, 0]); rec[opp] = [a[0] + w, a[1] + n]
+    save_cache()
 
 def winrates(d, player):
     rec = CACHE.get(f'{player}:{key(d)}', {})
@@ -469,11 +535,14 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
     P = [p for p in state['pop'] if valid(p, lock)]
 
     def measure(decks, n, what):  # a generation is long: show that it moves
-        for i, d in enumerate(decks, 1):
-            evaluate(d, n, SEARCH, GAUNTLET)
-            if i % 10 == 0 or i == len(decks):
-                log(f'{tag} {what} : {i}/{len(decks)} decks mesurés')
-                LIVE.set(progress=(i, len(decks)))
+        shown = [-1]
+
+        def progress(i, t):
+            LIVE.set(progress=(i, t))
+            if i == t or 10 * i // t > shown[0]:
+                shown[0] = 10 * i // t
+                log(f'{tag} {what} : {100 * i // t} %')
+        evaluate_many(decks, n, SEARCH, GAUNTLET, progress)
     if state['gen'] == 0:
         measure(P, per_opp, 'départ')
         P = select(P, pop)
@@ -487,7 +556,7 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
         for c in rng.sample(immigrants_pool, min(2, len(immigrants_pool))):  # fresh blood from screening
             if valid(c, lock): children.append(c)
         measure(children, per_opp, f'gen {g+1}/{gens}')
-        for p in P: evaluate(p, max(1, per_opp // 2), SEARCH, GAUNTLET)  # elites accumulate games -> less noise
+        evaluate_many(P, max(1, per_opp // 2), SEARCH, GAUNTLET)  # elites accumulate games -> less noise
         P = select({key(x): x for x in P + children}.values(), pop)
         b = P[0]; s = full_score(b, SEARCH)
         log(f'{tag} gen {g+1}/{gens} best={s["total"]:.3f} (méta {s["meta"]:.3f}, terrain {s["field"] or 0:.3f}, '
@@ -564,9 +633,10 @@ def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
     live_rows([r['deck'] for r in out], FINAL, final=True)
     LIVE.set(True, phase='refs', current={})
     refs = {}
-    for name in sorted(WEIGHTS, key=lambda n: -WEIGHTS[n]):  # every meta deck, same bot, same gauntlet
-        ref = parse_deck(os.path.join(META, name + '.txt'))
-        evaluate(ref, per_opp // 3, FINAL, GAUNTLET)
+    ref_decks = {name: parse_deck(os.path.join(META, name + '.txt'))  # every meta deck, same bot, same gauntlet
+                 for name in sorted(WEIGHTS, key=lambda n: -WEIGHTS[n])}
+    evaluate_many(ref_decks.values(), per_opp // 3, FINAL, GAUNTLET)
+    for name, ref in ref_decks.items():
         refs[name] = {k: v for k, v in full_score(ref, FINAL).items() if k != 'per_opp'}
         log(f'{tag}: réf {name} -> {refs[name]["total"]:.3f}')
     json.dump({'top': out, 'refs': refs}, open(stage_file(tag), 'w'))
