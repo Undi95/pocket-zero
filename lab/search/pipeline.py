@@ -179,6 +179,12 @@ def species(d):
     top = [n for n, _ in att.most_common(2)]
     return ' + '.join(sorted(top)) or '?'
 
+
+def lead(d):
+    """The main attacker: diversity is counted on it, otherwise one archetype with a different
+    second card each time (Ninetales + Milotic, + Feebas, + Porygon...) fills the whole search."""
+    return species(d).split(' + ')[0]
+
 def write_deck(d, path):
     lines = ['Energy: ' + ', '.join(d['e'])]
     for cid, k in sorted(collections.Counter(d['c']).items()):
@@ -483,12 +489,12 @@ def stage_F(A, B, size=10):
     if os.path.exists(stage_file('F')):
         field = json.load(open(stage_file('F')))
     else:
-        meta_species = {species(parse_deck(os.path.join(META, f))) for f in os.listdir(META) if f.endswith('.txt')}
-        field, seen = [], set(meta_species)
+        meta_leads = {lead(parse_deck(os.path.join(META, f))) for f in os.listdir(META) if f.endswith('.txt')}
+        field, seen = [], set(meta_leads)
         for r in sorted(A + B, key=lambda r: -r['score']):
             sp = species(r['deck'])
-            if sp in seen: continue
-            seen.add(sp); field.append({'species': sp, 'deck': r['deck'], 'score_e2': r['score']})
+            if lead(r['deck']) in seen: continue
+            seen.add(lead(r['deck'])); field.append({'species': sp, 'deck': r['deck'], 'score_e2': r['score']})
             if len(field) == size: break
         json.dump(field, open(stage_file('F'), 'w'))
     shutil.rmtree(GAUNTLET, ignore_errors=True); os.makedirs(GAUNTLET)
@@ -524,7 +530,7 @@ def select(cands, pop, per_species=2):
     """Best decks first, but at most per_species of each archetype, so the search keeps several ideas alive."""
     out, cnt = [], collections.Counter()
     for d in sorted(cands, key=lambda x: -score(x, SEARCH)[0]):
-        sp = species(d)
+        sp = lead(d)
         if cnt[sp] < per_species: out.append(d); cnt[sp] += 1
         if len(out) == pop: break
     return out
@@ -618,8 +624,8 @@ def polish(d, lock=(), per_opp=6, n_alts=8, margin=0.01):
 def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
     out, seen = [], set()
     for d in P:  # best deck of each archetype
-        if species(d) in seen: continue
-        seen.add(species(d))
+        if lead(d) in seen: continue
+        seen.add(lead(d))
         if POLISH:
             log(f'{tag}: polissage de {species(d)}')
             d = polish(d, lock)
@@ -672,7 +678,7 @@ def main(a, lock):
     pool = [r['deck'] for r in B + A]
     seeds, seen = [], collections.Counter()
     for d in sorted(pool, key=lambda d: -score(d)[0]):  # 24 seeds, at most 2 per archetype
-        if seen[species(d)] < 2: seeds.append(d); seen[species(d)] += 1
+        if seen[lead(d)] < 2: seeds.append(d); seen[lead(d)] += 1
         if len(seeds) == 24: break
     immigrants = [r['deck'] for r in A[:150]]
     tag = 'C' if not lock else 'C_lock'
