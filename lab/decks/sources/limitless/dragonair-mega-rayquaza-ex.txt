@@ -1,11 +1,12 @@
 # archetype: Dragonair Mega Rayquaza ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac37d3a85920e4d25364422/player/hakitcgp/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-10-05
-# share: 5.1 % des joueurs (109 sur 2138, 20 tournois de 14 jours)
-# win_rate: 52.9 %
+# share: 5.2 % des joueurs (112 sur 2137, 20 tournois de 14 jours)
+# win_rate: 52.8 %
 # list: hakitcgp, 1e sur 117 (10-0-2), 🐧 PGX TOURNAMENT #2【 💰$25 USD + FA DELUXE ⭐⭐】
+# energy: Fire, Lightning pour 92 des 92 joueurs qui la déclarent
 Energy: Fire, Lightning
 1 Dratini B2b 51
 2 Gouging Fire B3a 54

@@ -1,11 +1,12 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac37d3a85920e4d25364422/player/hikennoasce/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-10-05
-# share: 4.5 % des joueurs (96 sur 2138, 20 tournois de 14 jours)
-# win_rate: 54.1 %
+# share: 4.0 % des joueurs (85 sur 2137, 20 tournois de 14 jours)
+# win_rate: 55.7 %
 # list: hikennoasce, 3e sur 117 (9-2-0), 🐧 PGX TOURNAMENT #2【 💰$25 USD + FA DELUXE ⭐⭐】
+# energy: Lightning pour 65 des 65 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66

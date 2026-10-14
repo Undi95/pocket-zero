@@ -1,11 +1,12 @@
 # archetype: Mega Blaziken ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/hakitcgp/decklist
-# retrieved: 2026-10-13
-# published: 2026-10-03
-# share: 2.4 % des joueurs (51 sur 2138, 20 tournois de 14 jours)
-# win_rate: 49.8 %
-# list: hakitcgp, 6e sur 181 (7-2-2), Dark League Pocket Tournament 100$usd
+# source: https://play.limitlesstcg.com/tournament/6acde535115c12b73a5a2d57/player/coffplays/decklist
+# retrieved: 2026-10-14
+# published: 2026-10-13
+# share: 2.2 % des joueurs (46 sur 2137, 20 tournois de 14 jours)
+# win_rate: 50.7 %
+# list: coffplays, 3e sur 103 (8-1-1), Block Dragon ~ Perfect Order Format: $5 + FA Card
+# energy: Fire pour 33 des 33 joueurs qui la déclarent
 Energy: Fire
 2 Torchic B1 33
 2 Mega Blaziken ex B1 36

@@ -1,12 +1,13 @@
 # archetype: Mega Altaria ex Espeon
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aba729f880ed327106de6e4/player/chaun/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-10-01
-# share: 10.0 % des joueurs (214 sur 2138, 20 tournois de 14 jours)
-# win_rate: 47.1 %
+# share: 9.6 % des joueurs (206 sur 2137, 20 tournois de 14 jours)
+# win_rate: 46.9 %
 # list: chaun, 1e sur 88 (9-1-2), Dark League Pocket Tournament 20$usd
-Energy: Darkness, Psychic
+# energy: Psychic pour 141 des 141 joueurs qui la déclarent
+Energy: Psychic
 2 Igglybuff A4a 59
 1 Mega Altaria ex B1 102
 2 Eevee B1 184

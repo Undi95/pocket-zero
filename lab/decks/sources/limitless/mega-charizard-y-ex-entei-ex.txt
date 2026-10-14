@@ -1,11 +1,12 @@
 # archetype: Mega Charizard Y ex Entei ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac37d3a85920e4d25364422/player/danimaton/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-10-05
-# share: 2.4 % des joueurs (52 sur 2138, 20 tournois de 14 jours)
-# win_rate: 48.6 %
+# share: 2.2 % des joueurs (47 sur 2137, 20 tournois de 14 jours)
+# win_rate: 48.8 %
 # list: danimaton, 5e sur 117 (7-1-2), 🐧 PGX TOURNAMENT #2【 💰$25 USD + FA DELUXE ⭐⭐】
+# energy: Fire pour 34 des 34 joueurs qui la déclarent
 Energy: Fire
 2 Entei ex A4a 10
 1 Charizard B1a 13

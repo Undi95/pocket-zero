@@ -1,11 +1,12 @@
 # archetype: Mega Gardevoir ex Mega Diancie ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6abf6e31880ed327106e1948/player/hi1214/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-10-03
-# share: 2.6 % des joueurs (56 sur 2138, 20 tournois de 14 jours)
-# win_rate: 45.8 %
+# share: 2.8 % des joueurs (60 sur 2137, 20 tournois de 14 jours)
+# win_rate: 47.1 %
 # list: hi1214, 2e sur 110 (8-2-1), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #14
+# energy: Psychic pour 43 des 43 joueurs qui la déclarent
 Energy: Psychic
 1 Comfey A3 80
 2 Ralts B2 63

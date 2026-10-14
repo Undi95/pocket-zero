@@ -13,6 +13,7 @@ know yet (new expansion) is skipped and reported. Standard library only. A sourc
 layout changed prints an error and is skipped: the files already there stay as they are.
 """
 import calendar
+import collections
 import html
 import json
 import os
@@ -111,8 +112,11 @@ def limitless(days=14, min_players=32, max_tournaments=20, min_share=0.01):
                 continue
             rec = r.get('record') or {}
             w, l, d = rec.get('wins', 0), rec.get('losses', 0), rec.get('ties', 0)
-            a = arch.setdefault(r['deck']['id'], {'name': r['deck']['name'], 'players': 0, 'w': 0, 'l': 0, 'd': 0, 'best': None})
+            a = arch.setdefault(r['deck']['id'], {'name': r['deck']['name'], 'players': 0, 'w': 0, 'l': 0, 'd': 0, 'best': None,
+                                                  'energy': collections.Counter()})
             a['players'] += 1
+            if r['decklist'].get('energy'):  # many lists leave it empty
+                a['energy'][tuple(sorted(r['decklist']['energy']))] += 1
             a['w'], a['l'], a['d'] = a['w'] + w, a['l'] + l, a['d'] + d
             score = (w - l, t['players'], -(r.get('placing') or 999))
             if a['best'] is None or score > a['best'][0]:
@@ -149,7 +153,14 @@ def limitless(days=14, min_players=32, max_tournaments=20, min_share=0.01):
         if bad:
             out.append((a['name'], f'{100 * share:.1f} %', None, 'cartes inconnues du moteur : ' + ', '.join(bad)))
             continue
-        path, err = write_deck('limitless', a['name'], counts, r['decklist'].get('energy') or [], header)
+        # The best list's own energy, else the one most players of the archetype declare (never
+        # "every Pokémon type": support Pokémon such as Indeedee ex or Ogerpon ex are played for
+        # their Abilities and don't decide the energy).
+        energy = r['decklist'].get('energy') or (list(a['energy'].most_common(1)[0][0]) if a['energy'] else [])
+        if a['energy']:
+            top, n = a['energy'].most_common(1)[0]
+            header['energy'] = f"{', '.join(top)} pour {n} des {sum(a['energy'].values())} joueurs qui la déclarent"
+        path, err = write_deck('limitless', a['name'], counts, energy, header)
         out.append((a['name'], f'{100 * share:.1f} %', path, err))
     os.makedirs(os.path.join(OUT, 'limitless'), exist_ok=True)
     write_if_changed(os.path.join(OUT, 'limitless', 'shares.json'), json.dumps(

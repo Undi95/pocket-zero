@@ -1,11 +1,12 @@
 # archetype: Hoopa ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6abd0683880ed327106e015b/player/elluquitas96/decklist
-# retrieved: 2026-10-13
+# retrieved: 2026-10-14
 # published: 2026-09-30
-# share: 4.7 % des joueurs (100 sur 2138, 20 tournois de 14 jours)
-# win_rate: 52.8 %
+# share: 4.7 % des joueurs (100 sur 2137, 20 tournois de 14 jours)
+# win_rate: 51.9 %
 # list: elluquitas96, 1e sur 80 (9-1-1), 🔱 IMPERIUM Mega Deluxe edition – $5 + FA Cards 🔱
+# energy: Darkness pour 69 des 70 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
