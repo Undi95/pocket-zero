@@ -6,9 +6,34 @@ a results table that fills as it goes, and the latest events. Writes are throttl
 """
 import json
 import os
+import socket
+import subprocess
+import sys
 import time
+import webbrowser
 
 DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'results', 'live')
+
+
+def open_ui(page='/live', port=8765):
+    """Shows `page` of run.bat ui in the browser. The interface is started in its own window if it
+    is not running yet: it stays open (and reachable from the local network) after the tool ends.
+    PZ_NO_UI=1 skips it."""
+    if os.environ.get('PZ_NO_UI'):
+        return
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        running = s.connect_ex(('127.0.0.1', port)) == 0
+    if running:
+        webbrowser.open(f'http://localhost:{port}{page}')
+        return
+    kw = {'creationflags': subprocess.CREATE_NEW_CONSOLE} if os.name == 'nt' else \
+        {'start_new_session': True, 'stdout': subprocess.DEVNULL, 'stderr': subprocess.DEVNULL}
+    try:
+        subprocess.Popen([sys.executable, '-m', 'zero.ui', '--page', page, '--port', str(port)],
+                         cwd=os.path.dirname(os.path.dirname(DIR)), **kw)
+    except OSError:
+        pass
 
 
 class Live:

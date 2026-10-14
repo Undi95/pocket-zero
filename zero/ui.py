@@ -707,8 +707,9 @@ def main():
                     help='0.0.0.0 (défaut) : ouverte aux autres appareils du réseau local ; 127.0.0.1 : ce PC seulement')
     ap.add_argument('--train', action='store_true', help="ouvre directement la page de l'entraînement")
     ap.add_argument('--run', default='', help='run affiché par la page de l\'entraînement')
+    ap.add_argument('--page', default='', help='page ouverte dans le navigateur, ex. /live')
     a = ap.parse_args()
-    url = f'http://localhost:{a.port}' + ('/train' if a.train or a.run else '') + (f'?run={a.run}' if a.run else '')
+    url = f'http://localhost:{a.port}' + (a.page or ('/train' if a.train or a.run else '') + (f'?run={a.run}' if a.run else ''))
     try:
         srv = Server((a.host, a.port), Handler)
     except OSError:  # already open (another run.bat ui, or a training run that opened it)

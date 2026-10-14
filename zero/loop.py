@@ -12,12 +12,11 @@ import json
 import math
 import os
 import shutil
-import subprocess
-import sys
 import time
 
 import torch
 
+from .live import open_ui
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
 from .decks import (COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool,
@@ -242,10 +241,7 @@ def main():
     log(f'run {a.run} : reprise à l\'itération {state["iteration"]}, appareil {a.device}, '
         f'{torch.cuda.device_count()} GPU')
     if not a.no_ui:  # the live page; a page already open is reused
-        try:
-            subprocess.Popen([sys.executable, '-m', 'zero.ui', '--train', '--run', a.run], cwd=engine.ROOT)
-        except OSError:
-            pass
+        open_ui(f'/train?run={a.run}')
 
     metrics_f = os.path.join(run_dir, 'metrics.csv')
     header = ['iteration', 'samples', 'policy_loss', 'value_loss', 'val_policy_loss', 'val_value_loss',

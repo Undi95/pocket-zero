@@ -22,7 +22,7 @@ import os
 import random
 
 from . import engine
-from .live import Live, Off
+from .live import Live, Off, open_ui
 
 TIERS = [('Débutant', 0), ('Poké Ball', 145), ('Super Ball', 355), ('Hyper Ball', 710), ('Master Ball', 1450)]
 SUB = [0, 20, 50, 95, 145, 195, 245, 300, 355, 420, 490, 600, 710, 860, 1010, 1225, 1450]
@@ -117,6 +117,7 @@ def main():
     ap.add_argument('--seed', type=int, default=0)
     a = ap.parse_args()
     live = Live('ranked', 'saison', player=a.player, players=a.players, matches=a.matches, games=a.games)
+    open_ui()
     try:
         season(a, live)
     except BaseException as e:

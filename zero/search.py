@@ -12,6 +12,9 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from zero.live import open_ui  # noqa: E402
+
 from . import engine
 from .engine import ROOT
 
@@ -55,6 +58,7 @@ def main():
         cmd += ['--check']
     print(f'Recherche "{a.name}" : criblage {a.screen}, génétique {a.search}, validation {a.final}, '
           f'réseau {a.weights}', flush=True)
+    open_ui()
     sys.exit(subprocess.call(cmd, env=env, cwd=ROOT))
 
 
