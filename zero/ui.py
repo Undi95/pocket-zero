@@ -524,6 +524,15 @@ def deck_content(path):
         l.strip() for l in open(p, encoding='utf-8') if l.strip() and not l.startswith('#'))))
 
 
+def deck_file(d, stem):
+    """A pool deck's list: its file, else the copy kept when its results were recorded (the pool's
+    copies are rebuilt at every start)."""
+    for p in (os.path.join(d, 'decks', stem + '.txt'), os.path.join(d, 'decks', 'archive', stem + '.txt')):
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def top_decks(name, window, kind, min_games):
     d = os.path.join(engine.ROOT, 'runs', name)
     stats_f = os.path.join(d, highlights_mod.STATS_FILE)
@@ -537,8 +546,8 @@ def top_decks(name, window, kind, min_games):
     groups = {}
     for it in its[-window:] if window else its:
         for stem, (w, n) in stats[it].items():
-            p = os.path.join(d, 'decks', stem + '.txt')
-            g = groups.setdefault(deck_content(p) if os.path.exists(p) else stem, [0, 0, set()])
+            p = deck_file(d, stem)
+            g = groups.setdefault(deck_content(p) if p else stem, [0, 0, set()])
             g[0] += w
             g[1] += n
             g[2].add(stem)
@@ -551,10 +560,11 @@ def top_decks(name, window, kind, min_games):
         if n < min_games:
             hidden += 1
             continue
-        path = os.path.join(d, 'decks', stem + '.txt')
+        order = sorted(stems, key=lambda s: (s != stem, s.startswith('focus-'), s))
+        path = next(filter(None, (deck_file(d, s) for s in order)), None)  # any copy of that list
         rows.append({'label': label, 'kind': k, 'wins': w, 'games': n, 'rate': w / n,
                      'score': (w + 5) / (n + 10),  # a few games say little: pulled towards 50 %
-                     'path': f'runs/{name}/decks/{stem}.txt' if os.path.exists(path) else None})
+                     'path': os.path.relpath(path, engine.ROOT).replace(os.sep, '/') if path else None})
     rows.sort(key=lambda r: -r['score'])
     used = its[-window:] if window else its
     return {'rows': rows[:150], 'hidden': hidden, 'iterations': len(used),
@@ -618,7 +628,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send(json.dumps(deck_files()))
         elif u.path == '/deck':
             p = q.get('path', [''])[0]
-            pool = re.fullmatch(r'runs/[\w.-]+/decks/[\w.-]+\.txt', p) and '..' not in p
+            pool = re.fullmatch(r'runs/[\w.-]+/decks/(archive/)?[\w.-]+\.txt', p) and '..' not in p
             if not (pool and os.path.exists(os.path.join(engine.ROOT, p))) and p not in deck_files():
                 self.send_error(404)  # only the repository's deck files and the training pools
                 return

@@ -7,6 +7,7 @@ import collections
 import csv
 import json
 import os
+import shutil
 
 STATS_FILE = 'victoires.json'  # runs/<run>/: per-deck results of every iteration (run.bat ui)
 
@@ -62,6 +63,13 @@ def record(run_dir, iteration, paths):
     if not res:
         return False
     stats[str(iteration)] = res
+    # The pool's copies are rebuilt at every start: keep each list so the page can still show it.
+    archive = os.path.join(run_dir, 'decks', 'archive')
+    os.makedirs(archive, exist_ok=True)
+    for stem in res:
+        src = os.path.join(run_dir, 'decks', stem + '.txt')
+        if not stem.startswith('focus-') and os.path.exists(src):
+            shutil.copyfile(src, os.path.join(archive, stem + '.txt'))
     with open(f + '.tmp', 'w', encoding='utf-8') as fh:
         json.dump(stats, fh, separators=(',', ':'))
     os.replace(f + '.tmp', f)
