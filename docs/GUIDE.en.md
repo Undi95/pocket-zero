@@ -140,8 +140,11 @@ run.bat train --run big1 --net big --iterations 150
    held-out games.
 3. **Evaluation**: 400 games against the previous network, against `e2` and against `e3` (two
    hand-written bots).
-4. Every 5 iterations: **validation** against 10 real tournament matchups (Limitless) between 5
-   meta decks: the mean gap (RMSE) tells whether the bot pilots the decks like real players.
+4. Every 5 iterations: **validation** against the 15 best-measured real matchups between
+   reference lists (`lab\decks\meta\reference.json`, hundreds of Limitless matches each, 200
+   bot games per matchup): the mean gap (RMSE) tells whether the bot pilots the decks like real
+   players. Then the bot plays itself from 20 iterations earlier (`ladder.csv`): above 50 %, it
+   is still improving.
 
 On the reference machine (2× RTX 5090, big network), one iteration takes ~12 minutes:
 150 iterations ≈ 30 hours.
@@ -152,7 +155,10 @@ On the reference machine (2× RTX 5090, big network), one iteration takes ~12 mi
 - **`vs_e3`**: the progress. Read it as a 5-iteration mean (the log prints it): 400 games
   measure within ±5 %. The score has a ceiling (luck exists: even a perfect player does not win
   100 % against a weak one), so +1 point at 65 % is worth much more than +1 point at 50 %.
-- **RMSE**: the gap to real matchups, lower is better. `e3` is at ~11-12 points.
+- **RMSE**: the gap to real matchups, lower is better. The log prints next to it the gap that
+  sampling noise alone would give (real matches and our games are both samples) and `e3`'s gap
+  on the same table (13.9 in October 2026). A gap on one matchup is not necessarily the bot's
+  fault: it may play a card better than humans do (Field Blower against Dedenne).
 - **Held-out losses**: as long as the policy loss goes down, the network is still learning.
 - The highlights after each self-play (deck of the iteration, gems outside the meta, streaks,
   upsets) are for fun and for spotting decks.
@@ -333,7 +339,8 @@ Each tool writes its progress to `results\live\<tool>-<name>.json`.
 
 | Folder | Content | Updated |
 |---|---|---|
-| `lab\decks\meta\` | 17 reference Limitless lists (validation, evaluation, training pool) | by hand: fixed so the measurements stay comparable |
+| `lab\decks\meta\` | 17 reference lists: the most representative list of each archetype on Limitless (validation, evaluation, training pool) | `run.bat reference`, **between two runs** (they are a run's yardstick) |
+| `lab\decks\meta\reference.json` | the real win rates between reference lists (Limitless's table for the period, converted from best-of-3 matches), each archetype's share, the `e3` yardstick | `run.bat reference` |
 | `lab\decks\sources\limitless\` | the list of the best player of each archetype ≥ 1 % in the tournaments of the last 14 days (≥ 32 players), with share and win rate | automatically |
 | `lab\decks\sources\game8\` | the lists of the Game8 tier list (tiers S and A) | automatically |
 | `lab\decks\sources\dotgg\shares.json` | the meta share of each archetype (ptcgpocket.gg) | automatically |

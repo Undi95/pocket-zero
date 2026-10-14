@@ -140,9 +140,11 @@ run.bat train --run grand --net big --iterations 150
    mieux sur des parties de contrôle jamais vues.
 3. **Évaluation** : 400 parties contre le réseau précédent, contre `e2` et contre `e3` (deux bots
    écrits à la main).
-4. Toutes les 5 itérations : **validation** contre 10 vrais matchups de tournoi (Limitless) entre
-   5 decks de la méta : l'écart moyen (RMSE) dit si le bot pilote les decks comme les vrais
-   joueurs.
+4. Toutes les 5 itérations : **validation** contre les 15 vrais matchups les mieux mesurés entre
+   listes de référence (`lab\decks\meta\reference.json`, des centaines de matchs Limitless
+   chacun, 200 parties du bot par matchup) : l'écart moyen (RMSE) dit si le bot pilote les decks
+   comme les vrais joueurs. Puis le bot joue contre lui-même d'il y a 20 itérations
+   (`ladder.csv`) : au-dessus de 50 %, il progresse encore.
 
 Sur la machine de référence (2× RTX 5090, gros réseau), une itération prend ~12 minutes :
 150 itérations ≈ 30 heures.
@@ -153,7 +155,10 @@ Sur la machine de référence (2× RTX 5090, gros réseau), une itération prend
 - **`vs_e3`** : la progression. Lis-la en moyenne sur 5 itérations (le log l'affiche) : 400
   parties mesurent à ±5 %. Le score plafonne (la chance existe : même un joueur parfait ne gagne
   pas 100 % contre un faible), donc +1 point à 65 % vaut bien plus que +1 point à 50 %.
-- **RMSE** : l'écart aux vrais matchups, plus bas = mieux. `e3` est à ~11-12 points.
+- **RMSE** : l'écart aux vrais matchups, plus bas = mieux. Le log donne à côté l'écart que le
+  bruit seul produirait (les vrais matchs comme nos parties sont des échantillons) et celui d'`e3`
+  sur la même table (13,9 en octobre 2026). Un écart sur un matchup n'est pas forcément une
+  faute du bot : il peut jouer une carte mieux que les humains (Field Blower contre Dedenne).
 - **Pertes sur les parties de contrôle** : tant que la politique baisse, le réseau apprend encore.
 - Les moments forts après chaque auto-jeu (deck de l'itération, pépites hors méta, séries,
   exploits) sont pour le plaisir et pour repérer des decks.
@@ -338,7 +343,8 @@ Chaque outil écrit son avancement dans `results\live\<outil>-<nom>.json`.
 
 | Dossier | Contenu | Mise à jour |
 |---|---|---|
-| `lab\decks\meta\` | 17 listes Limitless de référence (validation, évaluation, pool d'entraînement) | à la main : fixes pour garder les mesures comparables |
+| `lab\decks\meta\` | 17 listes de référence : la liste la plus représentative de chaque archétype sur Limitless (validation, évaluation, pool d'entraînement) | `run.bat reference`, **entre deux runs** (c'est l'étalon d'un run) |
+| `lab\decks\meta\reference.json` | les vrais taux de victoire entre listes de référence (table Limitless de la période, corrigée des matchs en deux manches gagnantes), la part de chaque archétype, le repère `e3` | `run.bat reference` |
 | `lab\decks\sources\limitless\` | la liste du meilleur joueur de chaque archétype ≥ 1 % sur les tournois des 14 derniers jours (≥ 32 joueurs), avec part et taux de victoire | automatique |
 | `lab\decks\sources\game8\` | les listes de la tier list Game8 (tiers S et A) | automatique |
 | `lab\decks\sources\dotgg\shares.json` | les parts de méta de chaque archétype (ptcgpocket.gg) | automatique |

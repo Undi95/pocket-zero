@@ -144,7 +144,7 @@ pre{white-space:pre-wrap;font:12px ui-monospace,monospace;margin:0;color:var(--m
 <div class="box"><h2 data-i18n="force"></h2><div id="c_force"></div>
 <div class="leg"><span><i style="background:var(--acc)"></i><em data-i18n="leg_e3avg"></em></span><span><i style="background:var(--acc2)"></i><em data-i18n="leg_e2"></em></span><span><i style="background:var(--mut)"></i><em data-i18n="leg_e3raw"></em></span></div></div>
 <div class="box"><h2 data-i18n="rmse_t"></h2><div id="c_rmse"></div>
-<div class="leg"><span><i style="background:var(--acc)"></i>RMSE</span><span><i style="background:var(--warn)"></i><em data-i18n="leg_ref"></em></span></div></div>
+<div class="leg"><span><i style="background:var(--acc)"></i>RMSE</span><span><i style="background:var(--warn)"></i><em data-i18n="leg_ref"></em> <em id="refv"></em></span></div></div>
 <div class="box"><h2 data-i18n="loss_t"></h2><div id="c_loss"></div>
 <div class="leg"><span><i style="background:var(--acc)"></i><em data-i18n="leg_pol"></em></span><span><i style="background:var(--acc2)"></i><em data-i18n="leg_val"></em></span></div></div>
 <div class="box"><h2 id="val_t"></h2><div id="val"></div></div>
@@ -183,7 +183,8 @@ function kindLabel(label){return LANG=='fr'?label:label.replace(/\((méta|ligné
 function render(st){LAST=st;const m=st.metrics;const col=k=>m.filter(r=>r[k]!=null).map(r=>[r.iteration,r[k]]);
  const e3=col('vs_e3');
  $('c_force').innerHTML=chart([{pts:e3,c:'var(--mut)',w:1,o:.6},{pts:col('vs_e2'),c:'var(--acc2)',w:1.5},{pts:avg(e3,5),c:'var(--acc)',w:2.5}],{pct:1});
- $('c_rmse').innerHTML=chart([{pts:col('rmse_limitless'),c:'var(--acc)',dots:1}],{ref:11.5,lo:0});
+ const rref=st.rmse_ref||11.5;$('refv').textContent='('+rref.toLocaleString(loc())+')';
+ $('c_rmse').innerHTML=chart([{pts:col('rmse_limitless'),c:'var(--acc)',dots:1}],{ref:rref,lo:0});
  $('c_loss').innerHTML=chart([{pts:col('val_policy_loss'),c:'var(--acc)'},{pts:col('val_value_loss').map(p=>[p[0],p[1]*5]),c:'var(--acc2)'}]);
  const s=st.status;let h='';
  if(s){const best=e3.length?e3.reduce((a,b)=>b[1]>a[1]?b:a):null,last5=e3.slice(-5),m5=last5.length?last5.reduce((a,p)=>a+p[1],0)/last5.length:null;
@@ -325,7 +326,7 @@ to_train:'Entraînement en direct →',paste_ph:'Colle une decklist (format du m
 edit_hint:'Modifie le texte : la liste se met à jour. Lignes « # » = commentaires (sources). Clic sur une carte : zoom (flèches, Échap).',
 cards_n:'{0}/20 cartes',max2:'2 exemplaires max',basic:'Pokémon de base',unknown:'inconnues : ',energy:'Énergie : ',
 h_train:'pocket-zero · entraînement',back:'← Decklists',force:'Force du réseau',leg_e3avg:'contre e3 (moyenne 5)',leg_e2:'contre e2',leg_e3raw:'contre e3 (brut)',
-rmse_t:'Écart aux vrais matchups (RMSE, plus bas = mieux)',leg_ref:'référence e3 (11,5)',loss_t:'Pertes sur les parties de contrôle',leg_pol:'politique',leg_val:'valeur ×5',
+rmse_t:'Écart aux vrais matchups (RMSE, plus bas = mieux)',leg_ref:'référence e3',loss_t:'Pertes sur les parties de contrôle',leg_pol:'politique',leg_val:'valeur ×5',
 val_t:'Dernière validation',val_it:"Validation de l'itération {0}",top_t:'Decks qui gagnent le plus',win1:'dernière itération',win10:'10 dernières itérations',win0:'tout le run',
 k_all:'tous les decks',k_home:'maison (créés par le bot)',k_real:'vrais decks (méta, sources, forgés, devs)',min_n:'≥ {0} parties',th_wins:'Victoires',th_games:'Parties',th_rate:'Taux',
 top_note:"Résultats de l'auto-jeu contre tout le pool d'entraînement (decks faibles compris, avec un peu d'exploration) : un repérage, pas une preuve. Clique un deck pour voir ses cartes ; à confirmer avec la forge (<code>--deck</code>) ou le ranked.",
@@ -362,7 +363,7 @@ to_train:'Live training →',paste_ph:'Paste a decklist (engine format: "2 Orico
 edit_hint:'Edit the text: the list updates. "#" lines are comments (sources). Click a card to zoom (arrows, Esc).',
 cards_n:'{0}/20 cards',max2:'2 copies max',basic:'Basic Pokémon',unknown:'unknown: ',energy:'Energy: ',
 h_train:'pocket-zero · training',back:'← Decklists',force:'Network strength',leg_e3avg:'vs e3 (5-iteration mean)',leg_e2:'vs e2',leg_e3raw:'vs e3 (raw)',
-rmse_t:'Gap to real matchups (RMSE, lower is better)',leg_ref:'e3 reference (11.5)',loss_t:'Losses on held-out games',leg_pol:'policy',leg_val:'value ×5',
+rmse_t:'Gap to real matchups (RMSE, lower is better)',leg_ref:'e3 reference',loss_t:'Losses on held-out games',leg_pol:'policy',leg_val:'value ×5',
 val_t:'Latest validation',val_it:'Validation at iteration {0}',top_t:'Decks that win the most',win1:'last iteration',win10:'last 10 iterations',win0:'whole run',
 k_all:'all decks',k_home:'homemade (built by the bot)',k_real:'real decks (meta, sources, forged, devs)',min_n:'≥ {0} games',th_wins:'Wins',th_games:'Games',th_rate:'Rate',
 top_note:'Self-play results against the whole training pool (weak decks included, with a little exploration): a scouting tool, not a proof. Click a deck to see its cards; confirm with the forge (<code>--deck</code>) or the ranked simulation.',
@@ -474,7 +475,12 @@ def run_state(name):
     if status:
         catch_up(d, status['iteration'], status['selfplay_done'])
     stats_f = os.path.join(d, highlights_mod.STATS_FILE)
-    return {'status': status, 'validation': validation, 'highlights': highlights, 'metrics': metrics,
+    try:  # e3's RMSE on the current real matchup table (lab/tools/validate.py e3 100 --save-e3)
+        rmse_ref = json.load(open(os.path.join(engine.ROOT, 'lab', 'decks', 'meta', 'reference.json'),
+                                  encoding='utf-8')).get('e3_rmse')
+    except (OSError, ValueError):
+        rmse_ref = None
+    return {'status': status, 'rmse_ref': rmse_ref, 'validation': validation, 'highlights': highlights, 'metrics': metrics,
             'tail': [l[:200] for l in lines[-14:]],
             'stats_version': os.path.getmtime(stats_f) if os.path.exists(stats_f) else None}
 

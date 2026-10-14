@@ -20,29 +20,51 @@ import torch
 
 from . import engine, gpu_selfplay
 from .data import load_buffer, stale_shards
-from .decks import COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool, focus_pool
+from .decks import (COVERAGE_MARK, SOLO_MARK, add_solo_decks, add_source_decks, build_pool, deck_labels, extend_pool,
+                    focus_pool, refresh_meta_decks)
 from .highlights import record, summarize
 from .model import NET_SIZES, ZeroNet, export_weights, migrate_state_dict, sized
 from .train import train
 
 TD_LAMBDA = 0.9
 
-# Real Limitless winrates (format B4a), same as lab/tools/validate.py.
+# Real Limitless winrates (format B4a, start of the period): only used when
+# lab/decks/meta/reference.json (lab/tools/meta_reference.py) is missing.
 REAL = {('butterfree', 'lucario'): 62.4, ('butterfree', 'altaria'): 48.0, ('butterfree', 'dedenne'): 55.7,
         ('butterfree', 'hoopa'): 60.6, ('lucario', 'altaria'): 27.2, ('lucario', 'dedenne'): 64.4,
         ('lucario', 'hoopa'): 57.7, ('altaria', 'dedenne'): 48.4, ('altaria', 'hoopa'): 25.8,
         ('dedenne', 'hoopa'): 67.3}
 
 
-def validate(player, games, threads, log):
+def reference_matchups(min_matches=150, top=15):
+    """[(deck a, deck b, real win rate of a, its standard error)]: the best-measured matchups
+    between reference lists (lab/decks/meta/reference.json), else the old table."""
     meta = os.path.join(engine.ROOT, 'lab', 'decks', 'meta')
-    errs = []
-    for (a, b), real in REAL.items():
+    try:
+        ref = json.load(open(os.path.join(meta, 'reference.json'), encoding='utf-8'))
+    except (OSError, ValueError):
+        return [(a, b, real, None) for (a, b), real in REAL.items()], None
+    rows = [m for m in ref['matchups'] if m['matches'] >= min_matches
+            and all(os.path.exists(os.path.join(meta, d + '.txt')) for d in (m['a'], m['b']))]
+    return [(m['a'], m['b'], m['real'], m['se']) for m in rows[:top]], ref.get('e3_rmse')
+
+
+def validate(player, games, threads, log):
+    """Simulated against real win rates. Returns (RMSE, the RMSE that the sampling noise alone
+    would give: real matches and simulated games are both samples)."""
+    meta = os.path.join(engine.ROOT, 'lab', 'decks', 'meta')
+    errs, noise = [], []
+    pairs, _ = reference_matchups()
+    for a, b, real, se in pairs:
         r = engine.match(os.path.join(meta, a + '.txt'), os.path.join(meta, b + '.txt'), player, games, threads)
         sim = 100 * r['score_a']
         errs.append(sim - real)
-        log(f'    {a:10} vs {b:8} sim {sim:5.1f}  réel {real:5.1f}  écart {sim - real:+5.1f}')
-    return (sum(e * e for e in errs) / len(errs)) ** 0.5
+        p = min(max(sim / 100, 0.05), 0.95)
+        noise.append((se or 0) ** 2 + 1e4 * p * (1 - p) / games)
+        log(f'    {a:10} vs {b:8} sim {sim:5.1f}  réel {real:5.1f}  écart {sim - real:+5.1f}'
+            + (f'  (± {se:.1f})' if se else ''))
+    rmse = (sum(e * e for e in errs) / len(errs)) ** 0.5
+    return rmse, (sum(noise) / len(noise)) ** 0.5
 
 
 def compatible(old, new):
@@ -150,7 +172,7 @@ def main():
     ap.add_argument('--eval-games', type=int, default=400)
     ap.add_argument('--eval-sims', type=int, default=32)
     ap.add_argument('--validate-every', type=int, default=5, help='validation Limitless toutes les N itérations (0 = jamais)')
-    ap.add_argument('--validate-games', type=int, default=100)
+    ap.add_argument('--validate-games', type=int, default=200, help='parties par matchup de validation')
     a = ap.parse_args()
 
     run_dir = os.path.join(engine.ROOT, 'runs', a.run)
@@ -185,6 +207,7 @@ def main():
         if not os.path.exists(os.path.join(decks, SOLO_MARK)):
             add_solo_decks(decks, log=log)
 
+    refresh_meta_decks(decks, log=log)
     add_source_decks(decks, log=log)
     if a.add_decks:  # e.g. forged decks: the network learns to pilot them before they are judged
         added = [f for f in os.listdir(a.add_decks) if f.endswith('.txt')]
@@ -351,8 +374,23 @@ def main():
         rmse = ''
         if a.validate_every and (it + 1) % a.validate_every == 0:
             log('  validation contre les vrais matchups Limitless :')
-            rmse = validate(engine.zspec(a.eval_sims, latest), a.validate_games, threads, log)
-            log(f'  écart moyen (RMSE) : {rmse:.1f} points (référence e3 : 11-12)')
+            rmse, floor = validate(engine.zspec(a.eval_sims, latest), a.validate_games, threads, log)
+            e3_ref = reference_matchups()[1]
+            log(f'  écart moyen (RMSE) : {rmse:.1f} points (le bruit seul en donnerait {floor:.1f}'
+                + (f' ; e3 : {e3_ref:.1f})' if e3_ref else ' ; e3 : 11-12)'))
+            # Progress that e3 no longer shows (its score has a ceiling): against itself 20 iterations ago.
+            back = os.path.join(run_dir, 'weights', f'iter_{it - 20:03d}.bin')
+            if os.path.exists(back):
+                ladder = engine.arena(engine.zspec(a.eval_sims, latest), engine.zspec(a.eval_sims, back), meta,
+                                      a.eval_games, threads, seed=it)['a_score']
+                log(f"  contre lui-même il y a 20 itérations (itération {it - 19}) : {100 * ladder:.1f} % "
+                    "(au-dessus de 50 % : il progresse encore)")
+                ladder_f = os.path.join(run_dir, 'ladder.csv')
+                new_f = not os.path.exists(ladder_f)
+                with open(ladder_f, 'a', newline='') as lf:
+                    if new_f:
+                        lf.write('iteration,vs_minus_20\n')
+                    lf.write(f'{it + 1},{ladder:.3f}\n')
         with open(metrics_f, 'a', newline='') as mf:
             csv.writer(mf).writerow([it + 1, m['samples'], f'{m["policy_loss"]:.4f}', f'{m["value_loss"]:.4f}',
                                      f'{m.get("val_policy_loss", 0):.4f}', f'{m.get("val_value_loss", 0):.4f}',

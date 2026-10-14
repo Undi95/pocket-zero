@@ -7,6 +7,7 @@ rem   run.bat ranked  [options]   saison de ranked simulée / simulated ranked s
 rem   run.bat solo    [options]   decks du mode solo / solo mode decks (Poke Ball to Master Ball)
 rem   run.bat ui      [options]   interface / web UI: decklists + live training (/train), FR/EN
 rem   run.bat meta                met à jour la méta maintenant / refreshes the meta lists now
+rem   run.bat reference           listes de référence + vrais matchups (entre deux runs) / reference lists + real matchups (between runs)
 rem   run.bat update              dernière version / latest version (git pull, binaries, network)
 rem   run.bat publish FILE "note" publie un réseau pour tous / publishes a network for everyone
 rem   run.bat help                aide détaillée / detailed help
@@ -33,6 +34,7 @@ if /i "%CMD%"=="ranked" "%PY%" -m zero.ranked %ARGS% & exit /b
 if /i "%CMD%"=="ui"     "%PY%" -m zero.ui %ARGS% & exit /b
 if /i "%CMD%"=="meta"   "%PY%" lab\tools\meta_sources.py %ARGS% & exit /b
 if /i "%CMD%"=="publish" "%PY%" -m zero.publish %ARGS% & exit /b
+if /i "%CMD%"=="reference" "%PY%" lab\tools\meta_reference.py %ARGS% & exit /b
 if /i "%CMD%"=="update" (git pull && powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1") & exit /b
 chcp 65001 >nul
 findstr /b "rem" "%~f0"

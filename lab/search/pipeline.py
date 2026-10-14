@@ -46,10 +46,17 @@ def log(*a):
     if not _LOG: _LOG.append(open(os.path.join(RES, 'pipeline.log'), 'a', encoding='utf-8'))  # opened on first use only
     print(s, flush=True); _LOG[0].write(s + '\n'); _LOG[0].flush()
 
-# Meta share (Limitless B4a, adjusted for B4b trends). Filenames in lab/decks/meta.
+# Meta share of each reference list (file names of lab/decks/meta): the current shares of
+# lab/decks/meta/reference.json (lab/tools/meta_reference.py), else this fallback (B4a).
 WEIGHTS = {'altaria': 7.7, 'lucario': 7.7, 'butterfree': 5.2, 'vespiquen': 4.5, 'suicune': 4.2, 'rayquaza': 3.1,
            'hydreigon': 3.1, 'hoopa': 2.9, 'blaziken': 2.9, 'magnezone': 2.7, 'altaria-greninja': 2.6, 'weezing': 2.5,
            'charizard': 2.4, 'dedenne': 4.0, 'manectric': 2.1, 'sceptile-greninja': 1.8, 'flygon': 1.5}
+try:
+    _REF = json.load(open(os.path.join(META, 'reference.json'), encoding='utf-8'))['archetypes']
+    if _REF:
+        WEIGHTS = {k: round(100 * v['share'], 2) for k, v in _REF.items() if os.path.exists(os.path.join(META, k + '.txt'))}
+except (OSError, ValueError, KeyError):
+    pass
 POLISH = os.environ.get('PZ_POLISH', '1') != '0'  # card-level tuning of the finalists (paired games)
 # final score = (1 - FIELD_SHARE) * meta (weighted) + FIELD_SHARE * field (uniform). The field is
 # made of the search's own archetypes (mostly ex decks): at 50 % it rewarded Oricorio walls that

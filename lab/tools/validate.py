@@ -4,9 +4,15 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BIN=os.path.join(ROOT,'target/release/deckgym'); D=os.path.join(ROOT,'lab/decks/meta/')
-REAL={('butterfree','lucario'):62.4,('butterfree','altaria'):48.0,('butterfree','dedenne'):55.7,('butterfree','hoopa'):60.6,
-      ('lucario','altaria'):27.2,('lucario','dedenne'):64.4,('lucario','hoopa'):57.7,
-      ('altaria','dedenne'):48.4,('altaria','hoopa'):25.8,('dedenne','hoopa'):67.3}
+# Real win rates: the best-measured matchups of lab/decks/meta/reference.json (lab/tools/meta_reference.py).
+try:
+    REF=json.load(open(D+'reference.json',encoding='utf-8'))
+    REAL={(m['a'],m['b']):m['real'] for m in [m for m in REF['matchups'] if m['matches']>=150][:15]}
+except (OSError, ValueError):  # old table (B4a, start of the period)
+    REF={}
+    REAL={('butterfree','lucario'):62.4,('butterfree','altaria'):48.0,('butterfree','dedenne'):55.7,('butterfree','hoopa'):60.6,
+          ('lucario','altaria'):27.2,('lucario','dedenne'):64.4,('lucario','hoopa'):57.7,
+          ('altaria','dedenne'):48.4,('altaria','hoopa'):25.8,('dedenne','hoopa'):67.3}
 player=sys.argv[1]; n=int(sys.argv[2])
 def run(pair):
     a,b=pair
@@ -18,4 +24,7 @@ with ThreadPoolExecutor(2) as ex: res=list(ex.map(run,REAL))
 err=[]
 for (a,b),wr in res:
     e=wr-REAL[(a,b)]; err.append(e); print(f'{a:10} vs {b:8} sim {wr:5.1f}  réel {REAL[(a,b)]:5.1f}  écart {e:+5.1f}')
-print(f'[{player}] RMSE {(sum(x*x for x in err)/len(err))**.5:.1f}  biais {sum(err)/len(err):+.1f}')
+rmse=(sum(x*x for x in err)/len(err))**.5
+print(f'[{player}] RMSE {rmse:.1f}  biais {sum(err)/len(err):+.1f}')
+if '--save-e3' in sys.argv and player=='e3' and REF:  # the yardstick shown next to the bot's RMSE
+    REF['e3_rmse']=round(rmse,1); json.dump(REF,open(D+'reference.json','w',encoding='utf-8'),indent=1,ensure_ascii=False)

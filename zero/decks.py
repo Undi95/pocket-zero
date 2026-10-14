@@ -148,6 +148,22 @@ def add_solo_decks(out_dir, log=print):
     open(os.path.join(out_dir, SOLO_MARK), 'w').close()
     log(f'decks du mode solo : {n} decks des développeurs ajoutés (Poké Ball à Master Ball)')
     return n
+def refresh_meta_decks(out_dir, copies=15, log=print):
+    """The reference meta lists (lab/decks/meta) copied again at every start: a list corrected
+    after the run began (an energy, a card) reaches the next iterations instead of the copies
+    made when the run was created."""
+    p = _pipeline()
+    for f in os.listdir(out_dir):
+        if f.startswith('meta-') and f.endswith('.txt'):
+            os.remove(os.path.join(out_dir, f))
+    names = [f for f in sorted(os.listdir(p.META)) if f.endswith('.txt')]
+    for f in names:
+        for k in range(copies):
+            shutil.copy(os.path.join(p.META, f), os.path.join(out_dir, f'meta-{f[:-4]}-{k:02d}.txt'))
+    log(f'listes méta de référence : {len(names)} listes x{copies} recopiées depuis {p.META}')
+    return len(names)
+
+
 SOURCES_DIR = os.path.join(ROOT, 'lab', 'decks', 'sources')
 
 
