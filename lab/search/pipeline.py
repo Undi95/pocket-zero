@@ -164,7 +164,21 @@ def valid(d, lock=(), strict=True):
     if not any(is_basic(CARD[x]) for x in c): return False
     if not playable_lines(c): return False
     if strict and sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False  # screening shells may be leaner
+    if OFF_META and lead(d) in meta_leads(): return False
     return all(x in c for x in lock)
+
+
+OFF_META = bool(os.environ.get('PZ_OFF_META'))  # run.bat search --off-meta
+_META_LEADS = []
+
+
+def meta_leads():
+    """Both attackers of every reference meta list: with --off-meta no deck may be built around one
+    (Mega Altaria ex as well as the Dragonair line it shares the list with)."""
+    if not _META_LEADS:
+        _META_LEADS.append({a for f in os.listdir(META) if f.endswith('.txt')
+                            for a in species(parse_deck(os.path.join(META, f))).split(' + ')})
+    return _META_LEADS[0]
 
 def key(d): return ','.join(d['e']) + '#' + '|'.join(sorted(d['c']))
 

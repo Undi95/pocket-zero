@@ -34,6 +34,8 @@ def main():
     ap.add_argument('--field-share', type=float, default=0.2,
                     help='part du terrain (archétypes trouvés par la recherche) dans le score, le reste = méta réelle')
     ap.add_argument('--min-pokemon', type=int, default=4, help='Pokémon minimum par deck')
+    ap.add_argument('--off-meta', action='store_true',
+                    help="aucun deck construit autour de l'attaquant principal d'une liste méta : force la recherche hors méta")
     ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
     a = ap.parse_args()
 
@@ -48,6 +50,7 @@ def main():
         'PZ_RESULTS': os.path.join(ROOT, 'results', a.name),
         'PZ_FIELD_SHARE': str(a.field_share),
         'PZ_MIN_POKEMON': str(a.min_pokemon),
+        'PZ_OFF_META': '1' if a.off_meta else '',
     })
     if a.threads:
         env['THREADS'] = str(a.threads)
