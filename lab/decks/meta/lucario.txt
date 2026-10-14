@@ -1,16 +1,21 @@
+# archetype: Mega Lucario ex Lucario
+# limitless: mega-lucario-ex-b3-lucario-a2
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/gemugemuno/decklist
+# list: la plus représentative de 233 listes (84 % à 2 cartes près), gemugemuno, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Fighting pour 158 des 159 joueurs qui la déclarent
 Energy: Fighting
-2 Riolu B3 79
-2 Mega Lucario ex B3 81
+1 Hitmonlee A1 154
+2 Riolu A2 91
 1 Lucario A2 92
 1 Bonsly B3 78
-1 Hitmonlee A1 154
-2 Professor's Research P-A 007
-2 Copycat B1 225
-1 Korrina B3 149
-1 Pokémon Center Lady A2b 70
+2 Mega Lucario ex B3 81
 1 Cyrus A2 150
-2 Poké Ball P-A 005
+1 Pokémon Center Lady A2b 70
+2 Copycat B1 225
+1 Lucky Ice Pop B2 145
 1 Field Blower B3 147
-1 X Speed P-A 002
-1 Protective Poncho B2 147
+1 Korrina B3 149
 1 Arena of Antiquity B3 154
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

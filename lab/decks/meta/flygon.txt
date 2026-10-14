@@ -1,12 +1,18 @@
-Energy: Grass, Fighting
+# archetype: Flygon ex
+# limitless: flygon-ex-b3
+# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/pauk55/decklist
+# list: la plus représentative de 21 listes (76 % à 2 cartes près), pauk55, Umbreon99's Aura Sphere #8: $5 USD + Oak, 2026-10-09
+# energy: Fighting, Grass pour 17 des 17 joueurs qui la déclarent
+Energy: Fighting, Grass
 2 Trapinch B3 76
 2 Flygon ex B3 126
+1 Giant Cape A2 147
 2 Cyrus A2 150
-2 Copycat B1 225
-2 Professor's Research P-A 007
-1 Juliana B3a 71
 2 Rare Candy A3 144
+2 Copycat B1 225
 2 Lucky Ice Pop B2 145
+1 Juliana B3a 71
 2 Order Pad B4 145
-1 Poké Ball P-A 005
-2 Giant Cape A2 147
+1 Rainbow Cave B4 155
+1 Poké Ball P-A 5
+2 Professor's Research P-A 7

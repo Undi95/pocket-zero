@@ -1,12 +1,18 @@
+# archetype: Dedenne ex Indeedee ex
+# limitless: dedenne-ex-b3b-indeedee-ex-b1
+# source: https://play.limitlesstcg.com/tournament/6ab1739df127b1b52c27ed98/player/surdao123/decklist
+# list: la plus représentative de 118 listes (95 % à 2 cartes près), surdao123, PMPT #48 - TEAM ROCKETS ALTERCATION!!! | $100 USD, 2026-09-26
+# energy: Lightning pour 85 des 85 joueurs qui la déclarent
 Energy: Lightning
 2 Oricorio A3 66
-2 Dedenne ex B3b 24
 2 Indeedee ex B1 121
-1 Teal Mask Ogerpon ex B2 17
-2 Professor's Research P-A 007
-2 Copycat B1 225
-1 Cyrus A2 150
-2 Poké Ball P-A 005
+2 Dedenne ex B3b 24
 2 Giant Cape A2 147
+1 Cyrus A2 150
+2 Copycat B1 225
+1 Protective Poncho B2 147
+1 Starting Plains B2 154
 2 Small Balloon B3b 64
-2 Protective Poncho B2 147
+1 Clear Veil B4 149
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7
