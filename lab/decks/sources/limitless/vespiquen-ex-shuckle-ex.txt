@@ -1,12 +1,12 @@
 # archetype: Vespiquen ex Shuckle ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/zonice/decklist
-# retrieved: 2026-10-14
+# retrieved: 2026-10-15
 # published: 2026-10-12
-# share: 2.9 % des joueurs (61 sur 2137, 20 tournois de 14 jours)
-# win_rate: 49.0 %
+# share: 2.9 % des joueurs (61 sur 2085, 20 tournois de 14 jours)
+# win_rate: 48.9 %
 # list: zonice, 6e sur 188 (8-2-1), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Grass pour 46 des 46 joueurs qui la déclarent
+# energy: Grass pour 47 des 47 joueurs qui la déclarent
 Energy: Grass
 2 Shuckle ex A4 21
 1 Teal Mask Ogerpon ex B2 17

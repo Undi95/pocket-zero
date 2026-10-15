@@ -1,10 +1,10 @@
 # archetype: Dedenne ex Indeedee ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/golfermt/decklist
-# retrieved: 2026-10-14
+# retrieved: 2026-10-15
 # published: 2026-10-03
-# share: 4.0 % des joueurs (86 sur 2137, 20 tournois de 14 jours)
-# win_rate: 51.9 %
+# share: 4.0 % des joueurs (84 sur 2085, 20 tournois de 14 jours)
+# win_rate: 51.6 %
 # list: golfermt, 1e sur 181 (12-1-0), Dark League Pocket Tournament 100$usd
 # energy: Lightning pour 64 des 64 joueurs qui la déclarent
 Energy: Lightning

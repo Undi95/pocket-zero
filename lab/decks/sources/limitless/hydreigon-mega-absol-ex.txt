@@ -1,12 +1,12 @@
 # archetype: Hydreigon Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac563a4245696afb3517c84/player/warpis/decklist
-# retrieved: 2026-10-14
+# retrieved: 2026-10-15
 # published: 2026-10-06
-# share: 2.5 % des joueurs (53 sur 2137, 20 tournois de 14 jours)
-# win_rate: 46.7 %
+# share: 2.4 % des joueurs (51 sur 2085, 20 tournois de 14 jours)
+# win_rate: 46.5 %
 # list: warpis, 1e sur 74 (10-1-1), Dark League Pop Up 5$
-# energy: Darkness pour 38 des 39 joueurs qui la déclarent
+# energy: Darkness pour 41 des 42 joueurs qui la déclarent
 Energy: Darkness
 1 Mega Absol ex B1 151
 2 Deino B1 155

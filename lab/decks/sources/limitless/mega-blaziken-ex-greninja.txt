@@ -1,12 +1,12 @@
 # archetype: Mega Blaziken ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/stardast/decklist
-# retrieved: 2026-10-14
+# retrieved: 2026-10-15
 # published: 2026-10-12
-# share: 1.8 % des joueurs (38 sur 2137, 20 tournois de 14 jours)
-# win_rate: 49.1 %
+# share: 2.0 % des joueurs (41 sur 2085, 20 tournois de 14 jours)
+# win_rate: 50.4 %
 # list: stardast, 2e sur 188 (10-2-1), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Fire pour 33 des 33 joueurs qui la déclarent
+# energy: Fire pour 34 des 34 joueurs qui la déclarent
 Energy: Fire
 1 Froakie A1 87
 1 Greninja A1 89
