@@ -15,6 +15,23 @@ import webbrowser
 DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'results', 'live')
 
 
+def lower_priority():
+    """Below-normal priority for this process and the ones it starts (GPU workers, engine): a tool
+    that keeps every core busy for hours must not starve Windows itself."""
+    if os.name == 'nt':
+        try:
+            import ctypes
+            k = ctypes.windll.kernel32
+            k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)  # BELOW_NORMAL_PRIORITY_CLASS
+        except Exception:
+            pass
+    else:
+        try:
+            os.nice(5)
+        except OSError:
+            pass
+
+
 def open_ui(page='/live', port=8765):
     """Shows `page` of run.bat ui in the browser. The interface is started in its own window if it
     is not running yet: it stays open (and reachable from the local network) after the tool ends.

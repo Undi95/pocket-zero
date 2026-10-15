@@ -100,7 +100,7 @@ class GpuJudge:
         self.devices = devices or (env.split(',') if env else None) or \
             [f'cuda:{i}' for i in range(torch.cuda.device_count())] or ['cpu']
         ctx = mp.get_context('spawn')
-        threads = max(1, (os.cpu_count() or 4) // len(self.devices))
+        threads = max(1, ((os.cpu_count() or 4) - 2) // len(self.devices))  # two threads left to the system
         self.jobs = [ctx.Queue() for _ in self.devices]
         self.results = ctx.Queue()
         self.procs = [ctx.Process(target=_worker, args=(d, weights, info, threads, concurrency, q, self.results),

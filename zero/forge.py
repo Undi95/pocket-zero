@@ -34,7 +34,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from . import engine
-from .live import Live, Off, open_ui
+from .live import Live, Off, lower_priority, open_ui
 
 
 def setup(res, weights, climb, final):
@@ -253,6 +253,7 @@ def main():
     a = ap.parse_args()
     live = Live('forge', a.name, climb=a.climb, final=a.final)
     open_ui()
+    lower_priority()
     try:
         run(a, live)
     except BaseException as e:
