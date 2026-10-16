@@ -270,7 +270,8 @@ Pokémon (`--min-pokemon`).
 
 Résultat : `results\<nom>\RESULTATS_D.md`. Options : `--gens 25` (générations ; plus = plus
 fouillé), `--search z32` (plus fort, plus lent), `--lock` (cartes imposées, séparées par des
-virgules). La forge est en général plus fiable ; la recherche sert à explorer.
+virgules), `--energy "Grass"` (types d'énergie imposés ; avec `--lock`, par défaut ceux qu'il faut
+aux attaques des Pokémon imposés). La forge est en général plus fiable ; la recherche sert à explorer.
 
 ## 9. Le ranked simulé
 

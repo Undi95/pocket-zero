@@ -266,7 +266,8 @@ found by the search (`--field-share 0.2` to change the field's part). Validity r
 2), at least 4 Pokémon (`--min-pokemon`).
 
 Result: `results\<name>\RESULTATS_D.md`. Options: `--gens 25` (generations; more = more
-thorough), `--search z32` (stronger, slower), `--lock` (required cards, comma separated). The
+thorough), `--search z32` (stronger, slower), `--lock` (required cards, comma separated), `--energy "Grass"` (required Energy types; with
+`--lock` it defaults to the Energy the required Pokémon's attacks need). The
 forge is usually more reliable; the search is for exploring.
 
 ## 9. Simulated ranked

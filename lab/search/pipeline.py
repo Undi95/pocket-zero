@@ -139,7 +139,13 @@ def auto_energy(cards):
     return sorted([t for t, w in top if w >= 0.4 * top[0][1]])
 
 # A deck is {'e': [energy types], 'c': [20 card ids]}.
-def mk(cards, energy=None): return {'e': sorted(set(energy or auto_energy(cards))), 'c': list(cards)}
+def mk(cards, energy=None): return {'e': with_energy(energy or auto_energy(cards)), 'c': list(cards)}
+
+ENERGY = [t for t in os.environ.get('PZ_ENERGY', '').split(',') if t]  # required Energy types (--energy)
+
+def with_energy(e):
+    """The deck's Energy types with the required ones in (at most 3, the required first)."""
+    return sorted(list(dict.fromkeys(ENERGY + [t for t in e if t not in ENERGY]))[:3])
 
 def playable_lines(c):
     """Every evolution card can come into play: the card it evolves from is in the deck (any
@@ -165,6 +171,7 @@ def valid(d, lock=(), strict=True):
     if not playable_lines(c): return False
     if strict and sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False  # screening shells may be leaner
     if OFF_META and lead(d) in meta_leads(): return False
+    if strict and any(t not in d['e'] for t in ENERGY): return False
     return all(x in c for x in lock)
 
 
@@ -442,7 +449,7 @@ def mutate(d, rng, lock=()):
                 elif op < 0.8 and len(e) > 1: e.remove(rng.choice(e))
                 else: e[rng.randrange(len(e))] = rng.choice(E)
         if rng.random() < 0.3: e = auto_energy(c)
-        nd = {'e': sorted(set(e)), 'c': c}
+        nd = {'e': with_energy(e), 'c': c}
         if valid(nd, lock) and key(nd) != key(d): return nd
     return None
 
@@ -456,7 +463,7 @@ def crossover(a, b, rng, lock=()):
     for x in tr + tr2:
         if len(c) >= 20: break
         if sum(CARD[y]['name'] == CARD[x]['name'] for y in c) < 2: c.append(x)
-    nd = {'e': a['e'], 'c': c[:20]}
+    nd = {'e': with_energy(a['e']), 'c': c[:20]}
     return nd if valid(nd, lock) else None
 
 # ------------------------------------------------------------------ stages
@@ -704,6 +711,7 @@ def lock_seeds(pool, lock, n=24):
     Pinsir makes no valid deck on its own: too few Pokémon)."""
     out, seen = [], set()
     def add(d):
+        d = d and {'e': with_energy(d['e']), 'c': d['c']}
         if d and valid(d, lock) and key(d) not in seen: seen.add(key(d)); out.append(d)
     for d in pool:
         if all(c in d['c'] for c in lock): add(d)
@@ -731,7 +739,9 @@ def main(a, lock):
     tag = 'C' if not lock else 'C_lock'
     if lock:
         seeds = lock_seeds(pool, lock)
-        immigrants = [d for d in immigrants if valid(d, lock)] or seeds
+        immigrants = [d for d in immigrants if all(c in d['c'] for c in lock)] or seeds
+    if ENERGY:  # the screened decks predate the required Energy: give it to them
+        seeds, immigrants = ([{'e': with_energy(d['e']), 'c': d['c']} for d in x] for x in (seeds, immigrants))
     P = stage_C(seeds, immigrants, gens=a.gens, lock=lock, tag=tag)
     stage_D(P, tag='D' if not lock else 'D_lock', lock=lock)
     log(f'FINI en {(time.time()-t0)/3600:.1f} h')
@@ -740,6 +750,8 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--lock', default='', help='cartes imposées, ex "B1a 42,B1a 62"')
     ap.add_argument('--gens', type=int, default=25)
+    ap.add_argument('--energy', default=os.environ.get('PZ_ENERGY', ''),
+                    help='types d\'énergie imposés, ex. "Grass" ou "Grass,Fighting" (défaut : ceux des Pokémon imposés)')
     ap.add_argument('--check', action='store_true', help='diagnostic : un deck contre la méta, sortie brute du moteur')
     a = ap.parse_args()
     if a.check:
@@ -747,8 +759,17 @@ if __name__ == '__main__':
         raise SystemExit(0)
     lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
     lock = tuple(CANON.get(sig(CARD[c]), c) for c in lock)
+    if a.energy:
+        ENERGY[:] = [next((t for t in E if t.lower() == x.strip().lower()), None) for x in a.energy.split(',') if x.strip()]
+        if None in ENERGY or len(ENERGY) > 3:
+            raise SystemExit(f'--energy : 1 à 3 types parmi {", ".join(E)}')
+    elif lock:  # by default, the Energy the imposed Pokémon's attacks need
+        ENERGY[:] = list(dict.fromkeys(t for c in lock if is_poke(CARD[c])
+                                       for at in CARD[c].get('attacks') or [] for t in at['energy_required'] if t in E))[:3]
+    if ENERGY:
+        log('énergie imposée : ' + ', '.join(ENERGY))
     LIVE = Live('search', os.path.basename(os.path.normpath(RES)), screen=SCREEN, search=SEARCH, final=FINAL,
-                gens=a.gens, lock=a.lock)
+                gens=a.gens, lock=a.lock, energy=','.join(ENERGY))
     try:
         main(a, lock)
     except BaseException as e:

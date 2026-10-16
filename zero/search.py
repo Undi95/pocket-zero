@@ -30,6 +30,8 @@ def main():
     ap.add_argument('--final', default='z32', help='joueur de la validation finale (plus fort, plus lent)')
     ap.add_argument('--gens', type=int, default=25)
     ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
+    ap.add_argument('--energy', default='',
+                    help='types d\'énergie imposés, ex. "Grass" ou "Grass,Fighting" (défaut avec --lock : ceux des Pokémon imposés)')
     ap.add_argument('--threads', type=int, default=0)
     ap.add_argument('--field-share', type=float, default=0.2,
                     help='part du terrain (archétypes trouvés par la recherche) dans le score, le reste = méta réelle')
@@ -57,6 +59,8 @@ def main():
     cmd = [sys.executable, os.path.join(ROOT, 'lab', 'search', 'pipeline.py'), '--gens', str(a.gens)]
     if a.lock:
         cmd += ['--lock', a.lock]
+    if a.energy:
+        cmd += ['--energy', a.energy]
     if a.check:
         cmd += ['--check']
     print(f'Recherche "{a.name}" : criblage {a.screen}, génétique {a.search}, validation {a.final}, '
