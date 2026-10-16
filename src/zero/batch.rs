@@ -364,7 +364,20 @@ impl Slot {
             } else {
                 0.0
             };
-            let i = pick(&visits, temperature, &mut self.rng);
+            let i = if cfg.mcts.simulations == 0 {
+                let prior = |a: &Action| {
+                    d.root
+                        .priors
+                        .get(&action_key(&a.action))
+                        .copied()
+                        .unwrap_or(0.0)
+                };
+                (0..d.actions.len())
+                    .max_by(|&x, &y| prior(&d.actions[x]).total_cmp(&prior(&d.actions[y])))
+                    .unwrap_or(0)
+            } else {
+                pick(&visits, temperature, &mut self.rng)
+            };
             self.decisions += 1;
             apply_action(&mut self.rng, &mut self.state, &d.actions[i]);
         }
@@ -380,7 +393,10 @@ impl Slot {
             node.priors.insert(action_key(&a.action), *p);
         }
         node.expanded = true;
-        if req.path.is_empty() && node.n == 0 && cfg.mcts.gumbel {
+        if req.path.is_empty() && node.n == 0 && cfg.mcts.simulations == 0 {
+            // No search (z0): the move is the policy's favourite.
+            node.n = 1;
+        } else if req.path.is_empty() && node.n == 0 && cfg.mcts.gumbel {
             // Root of a new decision, Gumbel search: plan the simulations.
             node.n = 1;
             d.root_value = v_root;
@@ -646,18 +662,28 @@ mod tests {
     /// Drives the batched self-play with the bootstrap evaluator standing in for the GPU.
     #[test]
     fn test_batch_selfplay_completes_games() {
+        completes_games(8, "pz_batch_test");
+    }
+
+    /// z0 (no search, the policy's favourite move) is what the deck search screens with.
+    #[test]
+    fn test_batch_selfplay_without_search_completes_games() {
+        completes_games(0, "pz_batch_test_z0");
+    }
+
+    fn completes_games(simulations: usize, name: &str) {
         let deck = Deck::from_file("example_decks/venusaur-exeggutor.txt").unwrap();
-        let out = std::env::temp_dir().join("pz_batch_test.bin");
+        let out = std::env::temp_dir().join(format!("{name}.bin"));
         let cfg = SelfPlayConfig {
             mcts: MctsConfig {
-                simulations: 8,
+                simulations,
                 noise_frac: 0.25,
                 gumbel_noise: true,
                 ..MctsConfig::default()
             },
             temperature_moves: 5,
         };
-        let log = std::env::temp_dir().join("pz_batch_test.csv");
+        let log = std::env::temp_dir().join(format!("{name}.csv"));
         let mut bsp = BatchSelfPlay::new(
             cfg,
             vec![deck],

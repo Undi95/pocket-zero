@@ -245,7 +245,7 @@ _SEEDS = random.Random()  # its own generator: the stages' seeded generators sta
 def gpu_sims(player):
     """Simulations of a network player the GPUs can play (z8, z32...), else None: CPU engine."""
     m = re.fullmatch(r'z(\d+)', player)
-    if not m or int(m[1]) < 1 or os.environ.get('PZ_NO_GPU'):
+    if not m or os.environ.get('PZ_NO_GPU'):
         return None
     if not _JUDGE:
         from zero import engine, gpu_eval
@@ -256,6 +256,9 @@ def gpu_sims(player):
             log(f'parties {player} sur GPU : {", ".join(judge.devices)}')
         _JUDGE.append(judge)
     return int(m[1]) if _JUDGE[0] else None
+
+
+def on_gpu(player): return gpu_sims(player) is not None  # z0 = 0 simulations, still on the GPU
 
 
 def run_games_many(decks, per_opp, player, folder, seed=None, progress=None):
@@ -288,7 +291,7 @@ def run_games_many(decks, per_opp, player, folder, seed=None, progress=None):
 
 
 def run_games(d, per_opp, player, folder, seed=None):
-    if gpu_sims(player):
+    if on_gpu(player):
         return run_games_many([d], per_opp, player, folder, seed)[0]
     with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as f: path = f.name
     write_deck(d, path)
@@ -340,7 +343,7 @@ def evaluate(d, per_opp, player=SCREEN, folder=None):
 def evaluate_many(decks, per_opp, player, folder=None, progress=None):
     """evaluate() for many decks: a single GPU batch when the player runs on the GPUs."""
     decks = list(decks)
-    if not gpu_sims(player):
+    if not on_gpu(player):
         for i, d in enumerate(decks, 1):
             evaluate(d, per_opp, player, folder)
             if progress:
@@ -463,15 +466,20 @@ def stage_A(per_opp=4):
     if os.path.exists(stage_file('A')): return json.load(open(stage_file('A')))
     finals = attacker_finals(); log(f'A: {len(finals)} lignées')
     res = []
-    for i, f in enumerate(finals):
+    for f in finals:
         ch = chain(f)
         d = shell(line_cards(ch)) if ch else None
         if d and valid(d, strict=False):
-            s, n = score(d)
-            if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
-            res.append({'final': f, 'deck': d, 'score': s})
-        if i % 50 == 0 and res: log(f'A {i}/{len(finals)} best={max(r["score"] for r in res):.3f}')
-        if res: LIVE.set(phase='screen', progress=(i + 1, len(finals)), current={'lines': f'{i + 1}/{len(finals)}', 'best': round(max(r['score'] for r in res), 4)})
+            res.append({'final': f, 'deck': d})
+    todo = [r['deck'] for r in res if score(r['deck'])[1] < per_opp * len(WEIGHTS)]
+    for at in range(0, len(todo), 64):  # batches: the GPUs play many decks at once
+        evaluate_many(todo[at:at + 64], per_opp, SCREEN)
+        done = min(at + 64, len(todo))
+        best = max(score(d)[0] for d in todo[:done])
+        log(f'A {done}/{len(todo)} best={best:.3f}')
+        LIVE.set(phase='screen', progress=(done, len(todo)), current={'lines': f'{done}/{len(todo)}', 'best': round(best, 4)})
+    for r in res:
+        r['score'] = score(r['deck'])[0]
     res.sort(key=lambda r: -r['score'])
     json.dump(res, open(stage_file('A'), 'w')); save_cache(True)
     return res
@@ -485,13 +493,16 @@ def stage_B(A, top=30, per_opp=6):
         if len(finals) == top: break
     res = []
     for i in range(len(finals)):
+        row = []
         for j in range(i + 1, len(finals)):
             c1, c2 = chain(finals[i]), chain(finals[j])
             d = shell(line_cards(c1, True) + line_cards(c2, True))
             if not d or not valid(d, strict=False): continue
-            s, n = score(d)
-            if n < per_opp * len(WEIGHTS): s, n = evaluate(d, per_opp)
-            res.append({'finals': [finals[i], finals[j]], 'deck': d, 'score': s})
+            row.append({'finals': [finals[i], finals[j]], 'deck': d})
+        evaluate_many([r['deck'] for r in row if score(r['deck'])[1] < per_opp * len(WEIGHTS)], per_opp, SCREEN)
+        for r in row:
+            r['score'] = score(r['deck'])[0]
+        res += row
         log(f'B {i+1}/{len(finals)} best={max([r["score"] for r in res] or [0]):.3f}')
         LIVE.set(phase='pairs', progress=(i + 1, len(finals)), current={'best': round(max([r['score'] for r in res] or [0]), 4)})
     res.sort(key=lambda r: -r['score'])
