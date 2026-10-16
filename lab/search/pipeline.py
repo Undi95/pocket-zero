@@ -564,6 +564,9 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
     f = stage_file(tag)
     state = json.load(open(f)) if os.path.exists(f) else {'gen': 0, 'pop': seeds}
     P = [p for p in state['pop'] if valid(p, lock)]
+    if not P:
+        raise SystemExit(f'{tag} : aucun deck de départ valide' + (' avec les cartes imposées' if lock else '') +
+                         ' (trop peu de Pokémon, ou cartes incompatibles).')
 
     def measure(decks, n, what):  # a generation is long: show that it moves
         shown = [-1]
@@ -695,6 +698,25 @@ def report(out, refs, tag):
     open(os.path.join(RES, f'RESULTATS_{tag}.md'), 'w', encoding='utf-8').write('\n'.join(L))
     log(f'rapport écrit: RESULTATS_{tag}.md')
 
+def lock_seeds(pool, lock, n=24):
+    """Starting decks holding the imposed cards: the screened decks that already do, then the
+    imposed cards' lines grafted onto the Pokémon of the best screened decks (a lone Basic such as
+    Pinsir makes no valid deck on its own: too few Pokémon)."""
+    out, seen = [], set()
+    def add(d):
+        if d and valid(d, lock) and key(d) not in seen: seen.add(key(d)); out.append(d)
+    for d in pool:
+        if all(c in d['c'] for c in lock): add(d)
+    graft = []
+    for l in lock:
+        ch = chain(l) or [l]
+        graft += [c for c in line_cards(ch, True) if c not in graft or graft.count(c) < 2]
+    for d in pool:
+        if len(out) >= n: break
+        partner = [c for c in d['c'] if is_poke(CARD[c]) and CARD[c]['name'] not in {CARD[g]['name'] for g in graft}]
+        add(shell(graft + partner))
+    return out[:n]
+
 def main(a, lock):
     t0 = time.time()
     A = stage_A(); log(f'A terminé ({(time.time()-t0)/60:.0f} min) top: ' + ', '.join(CARD[r['final']]['name'] for r in A[:8]))
@@ -708,12 +730,8 @@ def main(a, lock):
     immigrants = [r['deck'] for r in A[:150]]
     tag = 'C' if not lock else 'C_lock'
     if lock:
-        seeds = [d for d in pool if all(c in d['c'] for c in lock)][:24]
-        immigrants = [d for d in immigrants if all(c in d['c'] for c in lock)]
-        if not seeds:
-            ch = [c for l in lock for c in (chain(l) or [l])]
-            base = shell(list(dict.fromkeys(ch)) * 2)
-            seeds = [base] if base and valid(base, lock) else []
+        seeds = lock_seeds(pool, lock)
+        immigrants = [d for d in immigrants if valid(d, lock)] or seeds
     P = stage_C(seeds, immigrants, gens=a.gens, lock=lock, tag=tag)
     stage_D(P, tag='D' if not lock else 'D_lock', lock=lock)
     log(f'FINI en {(time.time()-t0)/3600:.1f} h')
