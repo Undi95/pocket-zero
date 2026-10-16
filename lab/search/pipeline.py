@@ -24,7 +24,7 @@ import argparse, atexit, collections, json, os, random, re, shutil, subprocess, 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
-from zero.live import Live, Off  # live progress for run.bat ui (/live); Off when used as a library (forge)
+from zero.live import Live, Off, console_lang  # live progress for run.bat ui (/live); Off when used as a library (forge)
 LIVE = Off()
 _EXE = 'deckgym.exe' if os.name == 'nt' else 'deckgym'
 BIN = os.environ.get('PZ_DECKGYM') or next(
@@ -40,11 +40,36 @@ FINAL = os.environ.get('PZ_FINAL', SEARCH)  # stage D (final validation)
 GAUNTLET = os.path.normpath(os.path.join(RES, 'gauntlet'))  # meta decks + field decks, one folder for the simulator
 _LOG = []
 
-def log(*a):
+LANG = console_lang()
+_FR = []  # (regex, {English name: French name}), built on first use
+
+
+def fr_names(text):
+    """`text` with the English card names in French (lab/data/names_fr.json)."""
+    if not _FR:
+        try:
+            names = json.load(open(os.path.join(ROOT, 'lab', 'data', 'names_fr.json'), encoding='utf-8'))
+        except OSError:
+            names = {}
+        names = {k: v for k, v in names.items() if k != v}
+        alt = '|'.join(re.escape(k) for k in sorted(names, key=len, reverse=True))
+        _FR.append((re.compile(rf"(?<![\w'’-])(?:{alt})(?![\w'’-])") if names else None, names))
+    rx, names = _FR[0]
+    return rx.sub(lambda m: names[m[0]], text) if rx else text
+
+
+def log(fr, en=None):
+    """One line in both logs: pipeline.log in French (French card names), pipeline.en.log in
+    English; the console shows the system's language. `en` defaults to `fr` (numbers only)."""
     os.makedirs(RES, exist_ok=True)
-    s = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a)
-    if not _LOG: _LOG.append(open(os.path.join(RES, 'pipeline.log'), 'a', encoding='utf-8'))  # opened on first use only
-    print(s, flush=True); _LOG[0].write(s + '\n'); _LOG[0].flush()
+    t = time.strftime('%H:%M:%S ')
+    line = {'fr': t + fr_names(str(fr)), 'en': t + str(fr if en is None else en)}
+    if not _LOG:  # opened on first use only
+        _LOG.append({k: open(os.path.join(RES, f), 'a', encoding='utf-8')
+                     for k, f in (('fr', 'pipeline.log'), ('en', 'pipeline.en.log'))})
+    print(line[LANG], flush=True)
+    for k, f in _LOG[0].items():
+        f.write(line[k] + '\n'); f.flush()
 
 # Meta share of each reference list (file names of lab/decks/meta): the current shares of
 # lab/decks/meta/reference.json (lab/tools/meta_reference.py), else this fallback (B4a).
@@ -260,7 +285,7 @@ def gpu_sims(player):
             if gpu_eval.available() and os.environ.get('POCKET_ZERO_WEIGHTS') else None
         if judge:
             atexit.register(judge.close)
-            log(f'parties {player} sur GPU : {", ".join(judge.devices)}')
+            log(f'parties {player} sur GPU : {", ".join(judge.devices)}', f'{player} games on GPU: {", ".join(judge.devices)}')
         _JUDGE.append(judge)
     return int(m[1]) if _JUDGE[0] else None
 
@@ -471,7 +496,7 @@ def stage_file(s): return os.path.join(RES, f'stage_{s}.json')
 
 def stage_A(per_opp=4):
     if os.path.exists(stage_file('A')): return json.load(open(stage_file('A')))
-    finals = attacker_finals(); log(f'A: {len(finals)} lignées')
+    finals = attacker_finals(); log(f'A: {len(finals)} lignées', f'A: {len(finals)} lines')
     res = []
     for f in finals:
         ch = chain(f)
@@ -535,7 +560,8 @@ def stage_F(A, B, size=10):
     for i, r in enumerate(field):
         name = re.sub(r'[^a-z0-9]+', '-', r['species'].lower()).strip('-')
         write_deck(r['deck'], os.path.join(GAUNTLET, f'field-{i:02d}-{name}.txt'))
-    log('F: terrain = ' + ' | '.join(r['species'] for r in field))
+    field_txt = ' | '.join(r['species'] for r in field)
+    log('F: terrain = ' + field_txt, 'F: field = ' + field_txt)
     LIVE.event('terrain : ' + ' | '.join(r['species'] for r in field))
     return field
 
@@ -573,7 +599,9 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
     P = [p for p in state['pop'] if valid(p, lock)]
     if not P:
         raise SystemExit(f'{tag} : aucun deck de départ valide' + (' avec les cartes imposées' if lock else '') +
-                         ' (trop peu de Pokémon, ou cartes incompatibles).')
+                         ' (trop peu de Pokémon, ou cartes incompatibles).\n'
+                         f'{tag}: no valid starting deck' + (' with the required cards' if lock else '') +
+                         ' (too few Pokémon, or incompatible cards).')
 
     def measure(decks, n, what):  # a generation is long: show that it moves
         shown = [-1]
@@ -582,10 +610,10 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
             LIVE.set(progress=(i, t))
             if i == t or 10 * i // t > shown[0]:
                 shown[0] = 10 * i // t
-                log(f'{tag} {what} : {100 * i // t} %')
+                log(f'{tag} {what[0]} : {100 * i // t} %', f'{tag} {what[1]}: {100 * i // t} %')
         evaluate_many(decks, n, SEARCH, GAUNTLET, progress)
     if state['gen'] == 0:
-        measure(P, per_opp, 'départ')
+        measure(P, per_opp, ('départ', 'start'))
         P = select(P, pop)
     for g in range(state['gen'], gens):
         rng = random.Random(1234 + g)
@@ -596,13 +624,17 @@ def stage_C(seeds, immigrants_pool, gens=25, pop=16, kids=3, per_opp=4, lock=(),
                 if c: children.append(c)
         for c in rng.sample(immigrants_pool, min(2, len(immigrants_pool))):  # fresh blood from screening
             if valid(c, lock): children.append(c)
-        measure(children, per_opp, f'gen {g+1}/{gens}')
+        measure(children, per_opp, (f'gen {g+1}/{gens}',) * 2)
         evaluate_many(P, max(1, per_opp // 2), SEARCH, GAUNTLET)  # elites accumulate games -> less noise
         P = select({key(x): x for x in P + children}.values(), pop)
         b = P[0]; s = full_score(b, SEARCH)
+        tail = f'[{species(b)}] {",".join(b["e"])} | {short(b)}'
         log(f'{tag} gen {g+1}/{gens} best={s["total"]:.3f} (méta {s["meta"]:.3f}, terrain {s["field"] or 0:.3f}, '
-            f'{s["games"]} parties) [{species(b)}] {",".join(b["e"])} | {short(b)}')
-        log(f'{tag}   archétypes vivants: ' + ' | '.join(sorted({species(x) for x in P})))
+            f'{s["games"]} parties) {tail}',
+            f'{tag} gen {g+1}/{gens} best={s["total"]:.3f} (meta {s["meta"]:.3f}, field {s["field"] or 0:.3f}, '
+            f'{s["games"]} games) {tail}')
+        alive = ' | '.join(sorted({species(x) for x in P}))
+        log(f'{tag}   archétypes vivants: ' + alive, f'{tag}   archetypes alive: ' + alive)
         live_rows(P, SEARCH)
         LIVE.set(True, phase='genetic', progress=(g + 1, gens),
                  current={'gen': f'{g + 1}/{gens}', 'best': round(s['total'], 4), 'meta': round(s['meta'], 4),
@@ -648,12 +680,13 @@ def polish(d, lock=(), per_opp=6, n_alts=8, margin=0.01):
         if out in used or alt in used: continue
         cards = list(best['c']); cards.remove(out); cards.append(alt)
         v = mk(cards, best['e'])
-        if valid(v, lock): best = v; used |= {out, alt}; log(f'  polish : {CARD[out]["name"]} -> {CARD[alt]["name"]} (+{100 * g:.1f} pts)')
+        if valid(v, lock): best = v; used |= {out, alt}; log(f'  polissage : {CARD[out]["name"]} -> {CARD[alt]["name"]} (+{100 * g:.1f} pts)', f'  polish: {CARD[out]["name"]} -> {CARD[alt]["name"]} (+{100 * g:.1f} pts)')
     if best is d: return d
     seed = random.randrange(1 << 30)  # confirm the combination on games it was not chosen on
     a = score_of(run_games(d, per_opp * 2, SEARCH, GAUNTLET, seed))
     b = score_of(run_games(best, per_opp * 2, SEARCH, GAUNTLET, seed))
-    log(f'  polish : confirmation {100 * a:.1f} % -> {100 * b:.1f} %' + ('' if b > a else ' (refusé)'))
+    log(f'  polissage : confirmation {100 * a:.1f} % -> {100 * b:.1f} %' + ('' if b > a else ' (refusé)'),
+        f'  polish: confirmation {100 * a:.1f} % -> {100 * b:.1f} %' + ('' if b > a else ' (rejected)'))
     return best if b > a else d
 
 def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
@@ -662,11 +695,11 @@ def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
         if lead(d) in seen: continue
         seen.add(lead(d))
         if POLISH:
-            log(f'{tag}: polissage de {species(d)}')
+            log(f'{tag}: polissage de {species(d)}', f'{tag}: polishing {species(d)}')
             d = polish(d, lock)
         evaluate(d, per_opp, FINAL, GAUNTLET)
         out.append({'deck': d, **full_score(d, FINAL)})
-        log(f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} parties)')
+        log(f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} parties)', f'{tag}: {species(d)} -> {out[-1]["total"]:.3f} ({out[-1]["games"]} games)')
         LIVE.set(True, phase='final', progress=(len(out), top), current={'deck': species(d), 'best': round(max(r['total'] for r in out), 4)})
         LIVE.event(f'validation : {species(d)} {100 * out[-1]["total"]:.1f} %')
         if len(out) == top: break
@@ -679,7 +712,7 @@ def stage_D(P, top=6, per_opp=30, tag='D', lock=()):
     evaluate_many(ref_decks.values(), per_opp // 3, FINAL, GAUNTLET)
     for name, ref in ref_decks.items():
         refs[name] = {k: v for k, v in full_score(ref, FINAL).items() if k != 'per_opp'}
-        log(f'{tag}: réf {name} -> {refs[name]["total"]:.3f}')
+        log(f'{tag}: réf {name} -> {refs[name]["total"]:.3f}', f'{tag}: ref {name} -> {refs[name]["total"]:.3f}')
     json.dump({'top': out, 'refs': refs}, open(stage_file(tag), 'w'))
     report(out, refs, tag)
     return out
@@ -703,7 +736,7 @@ def report(out, refs, tag):
              ['', '| Adversaire | Victoires |', '|---|---|'] + \
              [f'| {o} | {v*100:.0f} % |' for o, v in sorted(r['per_opp'].items(), key=lambda x: (-WEIGHTS.get(x[0], 0), x[0]))] + ['']
     open(os.path.join(RES, f'RESULTATS_{tag}.md'), 'w', encoding='utf-8').write('\n'.join(L))
-    log(f'rapport écrit: RESULTATS_{tag}.md')
+    log(f'rapport écrit : RESULTATS_{tag}.md', f'report written: RESULTATS_{tag}.md')
 
 def lock_seeds(pool, lock, n=24):
     """Starting decks holding the imposed cards: the screened decks that already do, then the
@@ -727,8 +760,10 @@ def lock_seeds(pool, lock, n=24):
 
 def main(a, lock):
     t0 = time.time()
-    A = stage_A(); log(f'A terminé ({(time.time()-t0)/60:.0f} min) top: ' + ', '.join(CARD[r['final']]['name'] for r in A[:8]))
-    B = stage_B(A); log(f'B terminé ({(time.time()-t0)/60:.0f} min) top: ' + ' | '.join(' + '.join(CARD[f]['name'] for f in r['finals']) for r in B[:5]))
+    A = stage_A(); top = ', '.join(CARD[r['final']]['name'] for r in A[:8])
+    log(f'A terminé ({(time.time()-t0)/60:.0f} min) top : ' + top, f'A done ({(time.time()-t0)/60:.0f} min) top: ' + top)
+    B = stage_B(A); top = ' | '.join(' + '.join(CARD[f]['name'] for f in r['finals']) for r in B[:5])
+    log(f'B terminé ({(time.time()-t0)/60:.0f} min) top : ' + top, f'B done ({(time.time()-t0)/60:.0f} min) top: ' + top)
     stage_F(A, B)
     pool = [r['deck'] for r in B + A]
     seeds, seen = [], collections.Counter()
@@ -744,7 +779,7 @@ def main(a, lock):
         seeds, immigrants = ([{'e': with_energy(d['e']), 'c': d['c']} for d in x] for x in (seeds, immigrants))
     P = stage_C(seeds, immigrants, gens=a.gens, lock=lock, tag=tag)
     stage_D(P, tag='D' if not lock else 'D_lock', lock=lock)
-    log(f'FINI en {(time.time()-t0)/3600:.1f} h')
+    log(f'FINI en {(time.time()-t0)/3600:.1f} h', f'DONE in {(time.time()-t0)/3600:.1f} h')
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -762,12 +797,12 @@ if __name__ == '__main__':
     if a.energy:
         ENERGY[:] = [next((t for t in E if t.lower() == x.strip().lower()), None) for x in a.energy.split(',') if x.strip()]
         if None in ENERGY or len(ENERGY) > 3:
-            raise SystemExit(f'--energy : 1 à 3 types parmi {", ".join(E)}')
+            raise SystemExit(f'--energy : 1 à 3 types parmi / 1 to 3 types among {", ".join(E)}')
     elif lock:  # by default, the Energy the imposed Pokémon's attacks need
         ENERGY[:] = list(dict.fromkeys(t for c in lock if is_poke(CARD[c])
                                        for at in CARD[c].get('attacks') or [] for t in at['energy_required'] if t in E))[:3]
     if ENERGY:
-        log('énergie imposée : ' + ', '.join(ENERGY))
+        log('énergie imposée : ' + ', '.join(ENERGY), 'required Energy: ' + ', '.join(ENERGY))
     LIVE = Live('search', os.path.basename(os.path.normpath(RES)), screen=SCREEN, search=SEARCH, final=FINAL,
                 gens=a.gens, lock=a.lock, energy=','.join(ENERGY))
     try:

@@ -241,7 +241,7 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1
 table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:5px 6px;text-align:left;border-bottom:1px solid var(--grid)}
 th{color:var(--mut);font-weight:600;white-space:nowrap}td.n,th.n{text-align:right;white-space:nowrap}
 .ok{color:var(--ok)}.ko{color:var(--ko)}.warn{color:var(--warn)}.scroll{overflow-x:auto}
-.badge{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--grid);font-size:13px;margin-right:6px}
+abbr[title]{text-decoration:underline dotted;cursor:help}.badge{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--grid);font-size:13px;margin-right:6px}
 #events div{padding:3px 0;border-bottom:1px solid var(--grid);font-size:13px}#events span{color:var(--mut);margin-right:8px;font-family:ui-monospace,monospace}
 dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}dt{color:var(--mut)}dd{margin:0;font-weight:600}
 </style></head><body>
@@ -285,7 +285,7 @@ function render(j){LAST=j;if(!j){$('head').innerHTML=`<p class="mut">${t('no_job
   <div><span class="mut">${t('started_t')}</span><b>${new Date(j.started*1000).toLocaleString(loc(),{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><span class="mut">${st=='running'?t('since',dur(el)):dur(el)}</span></div>
   <div><span class="mut">${t('progress_t')}</span><b>${p?`${p.done} / ${p.total}`:'-'}</b><span class="mut">${eta}</span></div></div>
   ${frac!=null?`<div class="bar"><i style="width:${100*frac}%"></i></div>`:''}`;
- let CN={};fetch('/cards').then(r=>r.json()).then(j=>CN=j).catch(()=>{});
+ let CN={};fetch('/cards').then(r=>r.json()).then(j=>{CN=j;tick()}).catch(()=>{});
  const lockHtml=v=>String(v).split(',').map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.split(/\s+/),n=(CN[m[0]+' '+String(+m[1]).padStart(3,'0')]||{}).name;return n?`<abbr title="${esc(n)}">${esc(x)}</abbr>`:esc(x)}).join(', ');
  const kv=(o,pre)=>{const e=Object.entries(o||{}).filter(([,v])=>v!=null&&v!=='');return e.length?'<dl>'+e.map(([k,v])=>`<dt>${esc(tt(pre+k,k))}</dt><dd>${pre+k=='info_lock'?lockHtml(v):typeof v=='number'&&v>0&&v<1&&String(v).includes('.')?pct(v):esc(v)}</dd>`).join('')+'</dl>':'<p class="mut">-</p>'};
  $('now').innerHTML=kv(j.current,'cur_');$('info').innerHTML=kv(j.info,'info_');

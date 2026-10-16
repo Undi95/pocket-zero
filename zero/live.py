@@ -110,3 +110,17 @@ class Off:
     """Same interface, does nothing (a tool used as a library)."""
     def __getattr__(self, _):
         return lambda *a, **k: None
+
+
+def console_lang():
+    """Console language: PZ_LANG (fr/en), else the system's."""
+    if os.environ.get('PZ_LANG') in ('fr', 'en'):
+        return os.environ['PZ_LANG']
+    try:
+        if os.name == 'nt':
+            import ctypes
+            return 'fr' if ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF == 0x0C else 'en'
+        import locale
+        return 'fr' if (locale.getlocale()[0] or os.environ.get('LANG', '')).lower().startswith(('fr', 'french')) else 'en'
+    except Exception:
+        return 'en'

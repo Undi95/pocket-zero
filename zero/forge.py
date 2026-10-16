@@ -166,6 +166,11 @@ def mutations(P, d, rng, usage, lock, k):
     return out
 
 
+def en(text):
+    """A diff() for the English log."""
+    return text.replace('énergie ', 'Energy ').replace('aucun changement', 'no change')
+
+
 def diff(P, a, b):
     ca, cb = collections.Counter(a['c']), collections.Counter(b['c'])
     out = [f"-{n} {P.CARD[c]['name']}" for c, n in (ca - cb).items()] + [f"+{n} {P.CARD[c]['name']}" for c, n in (cb - ca).items()]
@@ -204,6 +209,8 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log, live=Off
                     keep.append(i)
             alive = keep
             log(f'    étape {step + 1}, graine {c + 1}/{chunks} : {len(alive)} variantes encore en course '
+                f'({(time.time() - t0) / 60:.0f} min)',
+                f'    step {step + 1}, seed {c + 1}/{chunks}: {len(alive)} variants still in the race '
                 f'({(time.time() - t0) / 60:.0f} min)')
             live.set(current={'deck': name, 'step': step + 1, 'seed': f'{c + 1}/{chunks}',
                               'alive': f'{len(alive)}/{len(variants)}', 'score': round(sc[0][0], 4)})
@@ -212,7 +219,7 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log, live=Off
                 winner = max(good, key=lambda i: stats(deltas[i])[0])
                 break
         if winner is None:
-            log(f'    plus aucun changement gagnant après {step + 1} étapes')
+            log(f'    plus aucun changement gagnant après {step + 1} étapes', f'    no winning change left after {step + 1} steps')
             live.event(f'{name} : plus aucun changement gagnant après {step + 1} étapes')
             break
         v = variants[winner]
@@ -221,14 +228,16 @@ def climb(P, J, d, rng, usage, lock, player, steps, cands, chunks, log, live=Off
         m = stats(deltas[winner])[0]
         if m2 > 0:
             changes.append((diff(P, best, v), m, m2))
-            log(f'    étape {step + 1} : {changes[-1][0]}  (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
+            log(f'    étape {step + 1} : {changes[-1][0]}  (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})',
+                f'    step {step + 1}: {en(changes[-1][0])}  (+{100 * m:.1f} pts, confirmed +{100 * m2:.1f})')
             live.event(f'{name}, étape {step + 1} : {changes[-1][0]} (+{100 * m:.1f} pts, confirmé +{100 * m2:.1f})')
             best = v
             live.row(name, changes=len(changes), last=changes[-1][0], gain=round(sum(c[2] for c in changes), 4))
             if save:
                 save(best)
         else:
-            log(f'    étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f}), on continue')
+            log(f'    étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f}), on continue',
+                f'    step {step + 1}: {en(diff(P, best, v))} not confirmed ({100 * m2:+.1f}), going on')
             live.event(f'{name}, étape {step + 1} : {diff(P, best, v)} non confirmé ({100 * m2:+.1f})')
     return best, changes
 
@@ -307,7 +316,9 @@ def run(a, live):
     state = json.load(open(state_f)) if os.path.exists(state_f) else {}
     rng = random.Random(a.seed)
     log(f'Forge "{a.name}" : {len(starts)} decks, amélioration {a.climb}, mesure finale {a.final}, '
-        f'{len(weights)} adversaires pondérés par la méta réelle, parties sur {log_engine}')
+        f'{len(weights)} adversaires pondérés par la méta réelle, parties sur {log_engine}',
+        f'Forge "{a.name}": {len(starts)} decks, climb {a.climb}, final measure {a.final}, '
+        f'{len(weights)} opponents weighted by the real meta, games on {log_engine.replace("processeur", "CPU")}')
     live.d['info'].update(opponents=len(weights), engine=log_engine, decks=len(starts))
     deck_path = lambda name: os.path.join(res, 'decks', name + '.txt')
     rel = lambda name: os.path.relpath(deck_path(name), engine.ROOT).replace(os.sep, '/')
@@ -333,7 +344,7 @@ def run(a, live):
         save(best)
         live.row(name, status='done', changes=len(changes))
 
-    log('== mesure finale')
+    log('== mesure finale', '== final measure')
     live.set(True, phase='final', progress=(0, len(state)), current={})
     live.event('== mesure finale')
     lines = [f'# Forge « {a.name} »', '',
@@ -383,7 +394,8 @@ def run(a, live):
     open(os.path.join(res, 'FORGE.md'), 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
     for sc, name, s in rows:
         log(f"  {name:40} {100 * sc:5.1f} %   gain {100 * s['final']['gain']:+.1f} pts")
-    log(f'Résultats : {os.path.join(res, "FORGE.md")} et {os.path.join(res, "decks")}')
+    log(f'Résultats : {os.path.join(res, "FORGE.md")} et {os.path.join(res, "decks")}',
+        f'Results: {os.path.join(res, "FORGE.md")} and {os.path.join(res, "decks")}')
     if gpu:
         gpu.close()
 

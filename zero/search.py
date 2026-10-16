@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from zero.live import lower_priority, open_ui  # noqa: E402
+from zero.live import console_lang, lower_priority, open_ui  # noqa: E402
 
 from . import engine
 from .engine import ROOT
@@ -64,7 +64,8 @@ def main():
     if a.check:
         cmd += ['--check']
     print(f'Recherche "{a.name}" : criblage {a.screen}, génétique {a.search}, validation {a.final}, '
-          f'réseau {a.weights}', flush=True)
+          f'réseau {a.weights}' if console_lang() == 'fr' else
+          f'Search "{a.name}": screening {a.screen}, genetic {a.search}, final {a.final}, network {a.weights}', flush=True)
     open_ui()
     lower_priority()  # inherited by the search and its GPU workers
     sys.exit(subprocess.call(cmd, env=env, cwd=ROOT))
