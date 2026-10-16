@@ -255,7 +255,7 @@ def main():
     ap.add_argument('--steps', type=int, default=12, help='changements maximum par deck')
     ap.add_argument('--cands', type=int, default=30, help='variantes essayées par étape')
     ap.add_argument('--chunks', type=int, default=8, help='graines maximum par comparaison')
-    ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
+    ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62" ; "1 A4 7" = exactement 1 exemplaire')
     ap.add_argument('--reeval', action='store_true', help='refait seulement la mesure finale (après réentraînement)')
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--engine', default='auto', choices=['auto', 'gpu', 'cpu'], help='où jouer les parties (auto : GPU si disponible)')
@@ -293,7 +293,8 @@ def run(a, live):
     for rel in files:
         for c in set(P.parse_deck(os.path.join(engine.ROOT, rel))['c']):
             usage[P.CARD[c]['name']] += 1
-    lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
+    lock, counts = P.parse_lock(a.lock)
+    P.COUNTS.update(counts)
 
     if a.deck:
         starts = [(os.path.splitext(os.path.basename(f))[0], P.parse_deck(f)) for f in a.deck]

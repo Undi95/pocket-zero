@@ -167,6 +167,26 @@ def auto_energy(cards):
 def mk(cards, energy=None): return {'e': with_energy(energy or auto_energy(cards)), 'c': list(cards)}
 
 ENERGY = [t for t in os.environ.get('PZ_ENERGY', '').split(',') if t]  # required Energy types (--energy)
+COUNTS = {}  # imposed card -> exact number of copies ("1 A4 7" in --lock)
+
+
+def parse_lock(text):
+    """--lock "A1 96, 1 A4 7": the imposed cards (canonical ids) and the exact counts given."""
+    lock, counts = [], {}
+    for x in text.split(','):
+        m = re.fullmatch(r'\s*(?:([12])\s*x?\s+)?(\S+)\s+0*(\d+)\s*', x)
+        if not x.strip():
+            continue
+        if not m:
+            raise SystemExit(f'--lock : "{x.strip()}" ? ex. "A1 96" ou "1 A4 7" (exactement 1) / e.g. "A1 96" or "1 A4 7" (exactly 1)')
+        cid = f'{m[2]} {int(m[3]):03d}'
+        if cid not in CARD:
+            raise SystemExit(f'--lock : carte inconnue / unknown card {cid}')
+        cid = CANON.get(sig(CARD[cid]), cid)
+        lock.append(cid)
+        if m[1]:
+            counts[cid] = int(m[1])
+    return tuple(dict.fromkeys(lock)), counts
 
 def with_energy(e):
     """The deck's Energy types with the required ones in (at most 3, the required first)."""
@@ -197,6 +217,7 @@ def valid(d, lock=(), strict=True):
     if strict and sum(is_poke(CARD[x]) for x in c) < MIN_POKEMON: return False  # screening shells may be leaner
     if OFF_META and lead(d) in meta_leads(): return False
     if strict and any(t not in d['e'] for t in ENERGY): return False
+    if lock and any(names[CARD[x]['name']] != n for x, n in COUNTS.items()): return False
     return all(x in c for x in lock)
 
 
@@ -484,7 +505,7 @@ def crossover(a, b, rng, lock=()):
     tr = [x for x in b['c'] if not (is_poke(CARD[x]) or is_fossil(CARD[x]))]
     tr2 = [x for x in a['c'] if not (is_poke(CARD[x]) or is_fossil(CARD[x]))]
     rng.shuffle(tr); rng.shuffle(tr2)
-    c = pk + [x for x in lock if x not in pk]
+    c = pk + [x for x in lock if x not in pk for _ in range(COUNTS.get(x, 1))]
     for x in tr + tr2:
         if len(c) >= 20: break
         if sum(CARD[y]['name'] == CARD[x]['name'] for y in c) < 2: c.append(x)
@@ -751,7 +772,8 @@ def lock_seeds(pool, lock, n=24):
     graft = []
     for l in lock:
         ch = chain(l) or [l]
-        graft += [c for c in line_cards(ch, True) if c not in graft or graft.count(c) < 2]
+        line = [c for c in line_cards(ch, True) if c != l] + [l] * COUNTS.get(l, 2)
+        graft += [c for c in line if graft.count(c) < 2]
     for d in pool:
         if len(out) >= n: break
         partner = [c for c in d['c'] if is_poke(CARD[c]) and CARD[c]['name'] not in {CARD[g]['name'] for g in graft}]
@@ -792,8 +814,8 @@ if __name__ == '__main__':
     if a.check:
         check()
         raise SystemExit(0)
-    lock = tuple(f'{x.split()[0]} {int(x.split()[1]):03d}' for x in a.lock.split(',') if x.strip())
-    lock = tuple(CANON.get(sig(CARD[c]), c) for c in lock)
+    lock, counts = parse_lock(a.lock)
+    COUNTS.update(counts)
     if a.energy:
         ENERGY[:] = [next((t for t in E if t.lower() == x.strip().lower()), None) for x in a.energy.split(',') if x.strip()]
         if None in ENERGY or len(ENERGY) > 3:

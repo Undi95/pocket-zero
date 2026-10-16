@@ -29,7 +29,7 @@ def main():
                     help="joueur de l'algorithme génétique (z8 : 8 simulations, déjà plus fort qu'e3)")
     ap.add_argument('--final', default='z32', help='joueur de la validation finale (plus fort, plus lent)')
     ap.add_argument('--gens', type=int, default=25)
-    ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62"')
+    ap.add_argument('--lock', default='', help='cartes imposées, ex. "B1a 42,B1a 62" ; "1 A4 7" = exactement 1 exemplaire')
     ap.add_argument('--energy', default='',
                     help='types d\'énergie imposés, ex. "Grass" ou "Grass,Fighting" (défaut avec --lock : ceux des Pokémon imposés)')
     ap.add_argument('--threads', type=int, default=0)

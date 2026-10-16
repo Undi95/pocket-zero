@@ -286,7 +286,7 @@ function render(j){LAST=j;if(!j){$('head').innerHTML=`<p class="mut">${t('no_job
   <div><span class="mut">${t('progress_t')}</span><b>${p?`${p.done} / ${p.total}`:'-'}</b><span class="mut">${eta}</span></div></div>
   ${frac!=null?`<div class="bar"><i style="width:${100*frac}%"></i></div>`:''}`;
  let CN={};fetch('/cards').then(r=>r.json()).then(j=>{CN=j;tick()}).catch(()=>{});
- const lockHtml=v=>String(v).split(',').map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.split(/\s+/),n=(CN[m[0]+' '+String(+m[1]).padStart(3,'0')]||{}).name;return n?`<abbr title="${esc(n)}">${esc(x)}</abbr>`:esc(x)}).join(', ');
+ const lockHtml=v=>String(v).split(',').map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/(\S+)\s+(\d+)$/)||[],n=(CN[m[1]+' '+String(+m[2]).padStart(3,'0')]||{}).name;return n?`<abbr title="${esc(n)}">${esc(x)}</abbr>`:esc(x)}).join(', ');
  const kv=(o,pre)=>{const e=Object.entries(o||{}).filter(([,v])=>v!=null&&v!=='');return e.length?'<dl>'+e.map(([k,v])=>`<dt>${esc(tt(pre+k,k))}</dt><dd>${pre+k=='info_lock'?lockHtml(v):typeof v=='number'&&v>0&&v<1&&String(v).includes('.')?pct(v):esc(v)}</dd>`).join('')+'</dl>':'<p class="mut">-</p>'};
  $('now').innerHTML=kv(j.current,'cur_');$('info').innerHTML=kv(j.info,'info_');
  const cols=COLS[j.tool]||Object.keys((j.rows||[])[0]||{}).filter(k=>k!='key'&&k!='path').map(k=>[k,k]);
