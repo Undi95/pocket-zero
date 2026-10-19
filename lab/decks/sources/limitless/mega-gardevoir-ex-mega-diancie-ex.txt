@@ -1,19 +1,19 @@
 # archetype: Mega Gardevoir ex Mega Diancie ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6abf6e31880ed327106e1948/player/hi1214/decklist
-# retrieved: 2026-10-15
-# published: 2026-10-03
-# share: 2.8 % des joueurs (58 sur 2085, 20 tournois de 14 jours)
-# win_rate: 47.1 %
-# list: hi1214, 2e sur 110 (8-2-1), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #14
-# energy: Psychic pour 43 des 43 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/jessicafknj/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-09
+# share: 2.7 % des joueurs (50 sur 1821, 20 tournois de 14 jours)
+# win_rate: 42.2 %
+# list: jessicafknj, 17e sur 158 (6-1-1), Umbreon99's Aura Sphere #8: $5 USD + Oak
+# energy: Psychic pour 40 des 40 joueurs qui la déclarent
 Energy: Psychic
-1 Comfey A3 80
 2 Ralts B2 63
 1 Kirlia B2 64
 2 Mega Gardevoir ex B2 66
 2 Meloetta B2 70
 1 Mega Diancie ex B3b 32
+1 Flutter Mane B3b 35
 1 Cyrus A2 150
 2 Rare Candy A3 144
 1 Copycat B1 225

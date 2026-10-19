@@ -1,23 +1,22 @@
 # archetype: Suicune ex Baxcalibur
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6abf6e31880ed327106e1948/player/hectordf/decklist
-# retrieved: 2026-10-15
-# published: 2026-10-03
-# share: 8.7 % des joueurs (182 sur 2085, 20 tournois de 14 jours)
-# win_rate: 50.3 %
-# list: hectordf, 1e sur 110 (10-0-1), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #14
-# energy: Water pour 144 des 144 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ac37d3a85920e4d25364422/player/pa1n/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-05
+# share: 9.1 % des joueurs (166 sur 1821, 20 tournois de 14 jours)
+# win_rate: 49.7 %
+# list: pa1n, 4e sur 117 (8-1-2), 🐧 PGX TOURNAMENT #2【 💰$25 USD + FA DELUXE ⭐⭐】
+# energy: Water pour 133 des 133 joueurs qui la déclarent
 Energy: Water
 2 Suicune ex A4a 20
 2 Frigibax B2a 34
 2 Baxcalibur B2a 36
 1 Chien-Pao ex B2a 37
 2 Giant Cape A2 147
-1 Cyrus A2 150
 1 Pokémon Center Lady A2b 70
 2 Rare Candy A3 144
 1 Inflatable Boat A4a 67
-1 Copycat B1 225
+2 Copycat B1 225
 1 Soothing Shore B4 154
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

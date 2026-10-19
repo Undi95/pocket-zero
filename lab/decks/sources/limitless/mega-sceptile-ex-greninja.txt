@@ -1,12 +1,12 @@
 # archetype: Mega Sceptile ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/dgs_epsilon/decklist
-# retrieved: 2026-10-15
+# retrieved: 2026-10-19
 # published: 2026-10-09
-# share: 1.7 % des joueurs (36 sur 2085, 20 tournois de 14 jours)
-# win_rate: 52.9 %
+# share: 1.8 % des joueurs (32 sur 1821, 20 tournois de 14 jours)
+# win_rate: 55.6 %
 # list: dgs_epsilon, 5e sur 158 (7-2-1), Umbreon99's Aura Sphere #8: $5 USD + Oak
-# energy: Grass pour 27 des 27 joueurs qui la déclarent
+# energy: Grass pour 23 des 23 joueurs qui la déclarent
 Energy: Grass
 1 Froakie A1 87
 1 Greninja A1 89

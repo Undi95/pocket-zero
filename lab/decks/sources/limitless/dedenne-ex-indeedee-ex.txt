@@ -1,12 +1,12 @@
 # archetype: Dedenne ex Indeedee ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/golfermt/decklist
-# retrieved: 2026-10-15
-# published: 2026-10-03
-# share: 4.0 % des joueurs (84 sur 2085, 20 tournois de 14 jours)
-# win_rate: 51.6 %
-# list: golfermt, 1e sur 181 (12-1-0), Dark League Pocket Tournament 100$usd
-# energy: Lightning pour 64 des 64 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/coffplays/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-16
+# share: 4.0 % des joueurs (72 sur 1821, 20 tournois de 14 jours)
+# win_rate: 50.1 %
+# list: coffplays, 1e sur 107 (9-1-1), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
+# energy: Lightning pour 58 des 58 joueurs qui la déclarent
 Energy: Lightning
 2 Oricorio A3 66
 2 Indeedee ex B1 121
@@ -14,8 +14,9 @@ Energy: Lightning
 2 Dedenne ex B3b 24
 2 Giant Cape A2 147
 1 Cyrus A2 150
+1 Leftovers A3b 67
 2 Copycat B1 225
-2 Protective Poncho B2 147
+1 Protective Poncho B2 147
 2 Small Balloon B3b 64
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

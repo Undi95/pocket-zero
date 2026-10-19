@@ -1,11 +1,11 @@
 # archetype: Zoroark ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6abb0d64880ed327106df0f3/player/preluxe/decklist
-# retrieved: 2026-10-15
-# published: 2026-10-03
-# share: 1.1 % des joueurs (23 sur 2085, 20 tournois de 14 jours)
-# win_rate: 45.7 %
-# list: preluxe, 2e sur 181 (9-2-2), Dark League Pocket Tournament 100$usd
+# source: https://play.limitlesstcg.com/tournament/6ac65a9f85920e4d25365ec5/player/boat_sensei/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-07
+# share: 1.2 % des joueurs (22 sur 1821, 20 tournois de 14 jours)
+# win_rate: 39.2 %
+# list: boat_sensei, 3e sur 57 (7-2-0), TBC's House of Horrors - DX Copycat + More
 # energy: Darkness pour 17 des 17 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110

@@ -1,0 +1,21 @@
+# archetype: Mega Garchomp ex Dragonair
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/tommyjuice/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-16
+# share: 1.0 % des joueurs (19 sur 1821, 20 tournois de 14 jours)
+# win_rate: 39.7 %
+# list: tommyjuice, 34e sur 107 (4-2-0), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
+# energy: Fighting, Water pour 10 des 10 joueurs qui la déclarent
+Energy: Water, Fighting
+2 Igglybuff A4a 59
+1 Darkrai B2b 40
+2 Dratini B4 116
+2 Dragonair B4 117
+2 Gible B4a 52
+2 Mega Garchomp ex P-B 99
+2 Rare Candy A3 144
+1 Copycat B1 225
+2 Rainbow Cave B4 155
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

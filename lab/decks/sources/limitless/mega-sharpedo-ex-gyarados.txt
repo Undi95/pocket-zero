@@ -1,0 +1,23 @@
+# archetype: Mega Sharpedo ex Gyarados
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ac563a4245696afb3517c84/player/shinra67/decklist
+# retrieved: 2026-10-19
+# published: 2026-10-06
+# share: 1.1 % des joueurs (20 sur 1821, 20 tournois de 14 jours)
+# win_rate: 50.9 %
+# list: shinra67, 9e sur 74 (6-1-2), Dark League Pop Up 5$
+# energy: Water pour 15 des 15 joueurs qui la déclarent
+Energy: Water
+2 Magikarp A1a 17
+2 Gyarados A4 45
+2 Mantyke A4a 23
+1 Chien-Pao ex B2a 37
+2 Carvanha B4 34
+2 Mega Sharpedo ex B4 35
+1 Copycat B1 225
+1 Lisia B1 226
+1 Training Area B2 153
+1 Field Blower B3 147
+2 Wallace B3b 68
+1 Poké Ball P-A 5
+2 Professor's Research P-A 7

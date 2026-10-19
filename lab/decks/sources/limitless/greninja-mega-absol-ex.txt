@@ -1,12 +1,12 @@
 # archetype: Greninja Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/kiddangel/decklist
-# retrieved: 2026-10-15
+# retrieved: 2026-10-19
 # published: 2026-10-12
-# share: 1.2 % des joueurs (24 sur 2085, 20 tournois de 14 jours)
-# win_rate: 59.0 %
+# share: 1.0 % des joueurs (19 sur 1821, 20 tournois de 14 jours)
+# win_rate: 58.1 %
 # list: kiddangel, 12e sur 188 (7-2-1), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Darkness pour 17 des 17 joueurs qui la déclarent
+# energy: Darkness pour 14 des 14 joueurs qui la déclarent
 Energy: Darkness
 2 Froakie A1 87
 2 Greninja A1 89

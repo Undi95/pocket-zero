@@ -1,12 +1,12 @@
 # archetype: Mega Lucario ex Lucario
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acb97868a8383117e3e9789/player/adi1906/decklist
-# retrieved: 2026-10-15
+# retrieved: 2026-10-19
 # published: 2026-10-11
-# share: 7.1 % des joueurs (147 sur 2085, 20 tournois de 14 jours)
-# win_rate: 46.6 %
+# share: 6.6 % des joueurs (121 sur 1821, 20 tournois de 14 jours)
+# win_rate: 46.2 %
 # list: adi1906, 1e sur 79 (9-1-0), KnowticeTkO x TBC $20 pop-up
-# energy: Fighting pour 113 des 114 joueurs qui la déclarent
+# energy: Fighting pour 91 des 92 joueurs qui la déclarent
 Energy: Fighting
 1 Hitmonlee A1 154
 1 Lucario A2 92

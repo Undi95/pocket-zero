@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/snub/decklist
-# retrieved: 2026-10-15
+# retrieved: 2026-10-19
 # published: 2026-10-12
-# share: 2.7 % des joueurs (56 sur 2085, 20 tournois de 14 jours)
-# win_rate: 49.2 %
+# share: 3.2 % des joueurs (58 sur 1821, 20 tournois de 14 jours)
+# win_rate: 51.4 %
 # list: snub, 1e sur 188 (12-1-0), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Psychic pour 39 des 39 joueurs qui la déclarent
+# energy: Psychic pour 38 des 39 joueurs qui la déclarent
 Energy: Psychic
 2 Froakie A1 87
 2 Greninja A1 89

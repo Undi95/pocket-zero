@@ -1,12 +1,12 @@
 # archetype: Mega Blaziken ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acde535115c12b73a5a2d57/player/coffplays/decklist
-# retrieved: 2026-10-15
+# retrieved: 2026-10-19
 # published: 2026-10-13
-# share: 1.9 % des joueurs (39 sur 2085, 20 tournois de 14 jours)
-# win_rate: 48.1 %
+# share: 1.3 % des joueurs (24 sur 1821, 20 tournois de 14 jours)
+# win_rate: 53.1 %
 # list: coffplays, 3e sur 103 (8-1-1), Block Dragon ~ Perfect Order Format: $5 + FA Card
-# energy: Fire pour 34 des 34 joueurs qui la déclarent
+# energy: Fire pour 18 des 18 joueurs qui la déclarent
 Energy: Fire
 2 Torchic B1 33
 2 Mega Blaziken ex B1 36
