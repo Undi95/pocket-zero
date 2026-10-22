@@ -1,12 +1,12 @@
 # archetype: Mega Gardevoir ex Mega Diancie ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/jessicafknj/decklist
-# retrieved: 2026-10-19
+# retrieved: 2026-10-22
 # published: 2026-10-09
-# share: 2.7 % des joueurs (50 sur 1821, 20 tournois de 14 jours)
-# win_rate: 42.2 %
+# share: 1.9 % des joueurs (31 sur 1642, 20 tournois de 14 jours)
+# win_rate: 41.8 %
 # list: jessicafknj, 17e sur 158 (6-1-1), Umbreon99's Aura Sphere #8: $5 USD + Oak
-# energy: Psychic pour 40 des 40 joueurs qui la déclarent
+# energy: Psychic pour 22 des 22 joueurs qui la déclarent
 Energy: Psychic
 2 Ralts B2 63
 1 Kirlia B2 64

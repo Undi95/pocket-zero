@@ -1,0 +1,22 @@
+# archetype: Rotom ex Oricorio
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6acb97868a8383117e3e9789/player/hakitcgp/decklist
+# retrieved: 2026-10-22
+# published: 2026-10-11
+# share: 1.3 % des joueurs (21 sur 1642, 20 tournois de 14 jours)
+# win_rate: 47.3 %
+# list: hakitcgp, 3e sur 79 (6-1-2), KnowticeTkO x TBC $20 pop-up
+# energy: Lightning pour 15 des 15 joueurs qui la déclarent
+Energy: Lightning
+2 Oricorio A3 66
+2 Rotom ex B4 55
+1 Prank Spinner B1 213
+2 Copycat B1 225
+2 Electric Generator B2a 86
+1 Hiking Trail B2b 69
+2 Order Pad B4 145
+2 Team Rocket's Thieving Machine B4a 67
+1 Team Rocket's Goo-zooka B4a 68
+2 X Speed P-A 2
+2 Poké Ball P-A 5
+1 Red Card P-A 6

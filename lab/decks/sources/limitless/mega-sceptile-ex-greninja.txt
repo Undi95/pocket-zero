@@ -1,17 +1,16 @@
 # archetype: Mega Sceptile ex Greninja
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/dgs_epsilon/decklist
-# retrieved: 2026-10-19
-# published: 2026-10-09
-# share: 1.8 % des joueurs (32 sur 1821, 20 tournois de 14 jours)
-# win_rate: 55.6 %
-# list: dgs_epsilon, 5e sur 158 (7-2-1), Umbreon99's Aura Sphere #8: $5 USD + Oak
-# energy: Grass pour 23 des 23 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ad63a18115c12b73a5a7a01/player/kaizenmoon/decklist
+# retrieved: 2026-10-22
+# published: 2026-10-19
+# share: 2.1 % des joueurs (34 sur 1642, 20 tournois de 14 jours)
+# win_rate: 56.8 %
+# list: kaizenmoon, 9e sur 64 (7-1-0), The Dark League Tournament |CASH AND CARD PRIZES
+# energy: Grass pour 22 des 22 joueurs qui la déclarent
 Energy: Grass
 1 Froakie A1 87
 1 Greninja A1 89
-1 Pheromosa A3a 7
-1 Furfrou B1a 65
+2 Pheromosa A3a 7
 2 Treecko B3 5
 1 Grovyle B3 6
 2 Mega Sceptile ex B3 8

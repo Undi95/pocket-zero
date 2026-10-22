@@ -1,23 +1,24 @@
 # archetype: Zoroark ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac65a9f85920e4d25365ec5/player/boat_sensei/decklist
-# retrieved: 2026-10-19
-# published: 2026-10-07
-# share: 1.2 % des joueurs (22 sur 1821, 20 tournois de 14 jours)
-# win_rate: 39.2 %
-# list: boat_sensei, 3e sur 57 (7-2-0), TBC's House of Horrors - DX Copycat + More
-# energy: Darkness pour 17 des 17 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aca6fa0115c12b73a5a0b4b/player/dashmd/decklist
+# retrieved: 2026-10-22
+# published: 2026-10-11
+# share: 1.1 % des joueurs (18 sur 1642, 20 tournois de 14 jours)
+# win_rate: 38.2 %
+# list: dashmd, 6e sur 39 (5-3-0), Dark League Pop Up
+# energy: Darkness pour 13 des 13 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
 2 Zorua B3 105
 2 Zoroark ex B3 106
 1 Bombirdier B3 115
+1 Hoopa ex B4 103
 1 Sabrina A1 225
 1 Giant Cape A2 147
 1 Cyrus A2 150
 1 Pokémon Center Lady A2b 70
-2 Copycat B1 225
+1 Copycat B1 225
 1 Lucky Ice Pop B2 145
 2 Deceptive Needle B4 148
 2 Poké Ball P-A 5

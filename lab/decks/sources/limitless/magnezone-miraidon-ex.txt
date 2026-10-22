@@ -1,24 +1,22 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6acde154115c12b73a5a2d4f/player/eccho/decklist
-# retrieved: 2026-10-19
-# published: 2026-10-16
-# share: 4.7 % des joueurs (85 sur 1821, 20 tournois de 14 jours)
-# win_rate: 54.5 %
-# list: eccho, 3e sur 103 (9-1-0), DELUXE PRIZES︱ $20 BEC'S WEEKLY ⭐️
-# energy: Lightning pour 72 des 72 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ad32aa5115c12b73a5a5e88/player/garchomplucario123/decklist
+# retrieved: 2026-10-22
+# published: 2026-10-17
+# share: 4.6 % des joueurs (76 sur 1642, 20 tournois de 14 jours)
+# win_rate: 53.7 %
+# list: garchomplucario123, 1e sur 34 (9-0-0), Dark league Tournament 10$
+# energy: Lightning pour 61 des 61 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66
+1 Goomy B1 177
 2 Magnemite B1a 24
 2 Magnezone B1a 26
 1 Miraidon ex B3a 19
+1 Giant Cape A2 147
 1 Cyrus A2 150
-1 Pokémon Center Lady A2b 70
-1 Copycat B1 225
-1 Lisia B1 226
-1 Clemont B1a 68
-1 Lucky Ice Pop B2 145
-1 Professor Turo B3a 73
+2 Lisia B1 226
+2 Clemont B1a 68
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

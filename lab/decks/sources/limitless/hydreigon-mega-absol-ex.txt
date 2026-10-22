@@ -1,12 +1,12 @@
 # archetype: Hydreigon Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac563a4245696afb3517c84/player/warpis/decklist
-# retrieved: 2026-10-19
-# published: 2026-10-06
-# share: 2.9 % des joueurs (52 sur 1821, 20 tournois de 14 jours)
-# win_rate: 49.1 %
-# list: warpis, 1e sur 74 (10-1-1), Dark League Pop Up 5$
-# energy: Darkness pour 45 des 45 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ac4980885920e4d253652af/player/lanora/decklist
+# retrieved: 2026-10-22
+# published: 2026-10-09
+# share: 3.0 % des joueurs (50 sur 1642, 20 tournois de 14 jours)
+# win_rate: 47.1 %
+# list: lanora, 1e sur 46 (8-1-1), MEGA EX Society Tournament #1
+# energy: Darkness pour 42 des 42 joueurs qui la déclarent
 Energy: Darkness
 1 Mega Absol ex B1 151
 2 Deino B1 155

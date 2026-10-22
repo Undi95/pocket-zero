@@ -1,10 +1,10 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acde535115c12b73a5a2d57/player/nop/decklist
-# retrieved: 2026-10-19
+# retrieved: 2026-10-22
 # published: 2026-10-13
-# share: 2.3 % des joueurs (41 sur 1821, 20 tournois de 14 jours)
-# win_rate: 51.7 %
+# share: 2.8 % des joueurs (46 sur 1642, 20 tournois de 14 jours)
+# win_rate: 51.1 %
 # list: nop, 1e sur 103 (10-0-1), Block Dragon ~ Perfect Order Format: $5 + FA Card
 # energy: Lightning pour 29 des 30 joueurs qui la déclarent
 Energy: Lightning
