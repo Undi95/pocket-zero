@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Espeon
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acde154115c12b73a5a2d4f/player/mikel132465/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-16
-# share: 9.0 % des joueurs (148 sur 1642, 20 tournois de 14 jours)
-# win_rate: 49.0 %
+# share: 9.4 % des joueurs (116 sur 1236, 16 tournois de 14 jours)
+# win_rate: 49.2 %
 # list: mikel132465, 1e sur 103 (10-1-0), DELUXE PRIZES︱ $20 BEC'S WEEKLY ⭐️
-# energy: Psychic pour 102 des 103 joueurs qui la déclarent
+# energy: Psychic pour 80 des 80 joueurs qui la déclarent
 Energy: Psychic
 1 Igglybuff A4a 59
 1 Mega Altaria ex B1 102

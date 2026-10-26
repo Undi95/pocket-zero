@@ -1,12 +1,12 @@
 # archetype: Butterfree Mega Sceptile ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/soap728/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-12
-# share: 3.8 % des joueurs (63 sur 1642, 20 tournois de 14 jours)
-# win_rate: 45.6 %
+# share: 4.7 % des joueurs (58 sur 1236, 16 tournois de 14 jours)
+# win_rate: 45.9 %
 # list: soap728, 4e sur 188 (9-3-0), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Grass pour 47 des 47 joueurs qui la déclarent
+# energy: Grass pour 39 des 39 joueurs qui la déclarent
 Energy: Grass
 1 Treecko B3 5
 1 Grovyle B3 6

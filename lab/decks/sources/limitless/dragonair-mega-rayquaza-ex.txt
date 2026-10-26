@@ -1,15 +1,15 @@
 # archetype: Dragonair Mega Rayquaza ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6acab16e115c12b73a5a0e1f/player/soap728/decklist
-# retrieved: 2026-10-22
-# published: 2026-10-11
-# share: 6.0 % des joueurs (98 sur 1642, 20 tournois de 14 jours)
-# win_rate: 50.6 %
-# list: soap728, 1e sur 117 (9-1-1), Umbreon99's Sunday Showdown: $5 USD + (Top 4 FA)
-# energy: Fire, Lightning pour 77 des 77 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/supreme13/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-16
+# share: 4.8 % des joueurs (59 sur 1236, 16 tournois de 14 jours)
+# win_rate: 49.0 %
+# list: supreme13, 5e sur 107 (7-2-0), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
+# energy: Fire, Lightning pour 44 des 44 joueurs qui la déclarent
 Energy: Fire, Lightning
-2 Dratini B2b 51
 2 Gouging Fire B3a 54
+2 Dratini B4 116
 2 Dragonair B4 117
 1 Mega Rayquaza ex B4 120
 1 Sabrina A1 225

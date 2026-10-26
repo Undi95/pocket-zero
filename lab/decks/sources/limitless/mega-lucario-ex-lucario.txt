@@ -1,25 +1,26 @@
 # archetype: Mega Lucario ex Lucario
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6acb97868a8383117e3e9789/player/adi1906/decklist
-# retrieved: 2026-10-22
-# published: 2026-10-11
-# share: 6.5 % des joueurs (107 sur 1642, 20 tournois de 14 jours)
-# win_rate: 47.0 %
-# list: adi1906, 1e sur 79 (9-1-0), KnowticeTkO x TBC $20 pop-up
-# energy: Fighting pour 80 des 81 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ad9144e115c12b73a5a9311/player/ishaan/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-23
+# share: 6.0 % des joueurs (74 sur 1236, 16 tournois de 14 jours)
+# win_rate: 48.3 %
+# list: ishaan, 2e sur 45 (9-1-0), 𝑿𝑻𝑹𝑬𝑴 n°3 Community Choice 5$+Copycat 🌟🌟+FA
+# energy: Fighting pour 53 des 53 joueurs qui la déclarent
 Energy: Fighting
 1 Hitmonlee A1 154
+2 Riolu A2 91
 1 Lucario A2 92
-1 Bonsly B3 78
-2 Riolu B3 79
+1 Hitmonlee A2b 40
 2 Mega Lucario ex B3 81
-1 Cyrus A2 150
+1 Sabrina A1 225
+1 Mars A2 155
 1 Pokémon Center Lady A2b 70
-2 Copycat B1 225
-1 Lucky Ice Pop B2 145
 1 Field Blower B3 147
+1 Lucky Egg B3 148
 1 Korrina B3 149
 1 Arena of Antiquity B3 154
+1 Elegant Cape B3b 65
 1 X Speed P-A 2
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

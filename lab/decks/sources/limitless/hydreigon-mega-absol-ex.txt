@@ -1,12 +1,12 @@
 # archetype: Hydreigon Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac4980885920e4d253652af/player/lanora/decklist
-# retrieved: 2026-10-22
-# published: 2026-10-09
-# share: 3.0 % des joueurs (50 sur 1642, 20 tournois de 14 jours)
-# win_rate: 47.1 %
-# list: lanora, 1e sur 46 (8-1-1), MEGA EX Society Tournament #1
-# energy: Darkness pour 42 des 42 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adb555791617679e849ed37/player/whiterabbit/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-24
+# share: 3.4 % des joueurs (42 sur 1236, 16 tournois de 14 jours)
+# win_rate: 51.5 %
+# list: whiterabbit, 3e sur 95 (8-2-0), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #16
+# energy: Darkness pour 34 des 34 joueurs qui la déclarent
 Energy: Darkness
 1 Mega Absol ex B1 151
 2 Deino B1 155

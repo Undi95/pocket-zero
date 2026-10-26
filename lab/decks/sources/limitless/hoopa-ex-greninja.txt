@@ -1,0 +1,22 @@
+# archetype: Hoopa ex Greninja
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ad79bc7115c12b73a5a85d7/player/flameking3/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-21
+# share: 1.6 % des joueurs (20 sur 1236, 16 tournois de 14 jours)
+# win_rate: 52.7 %
+# list: flameking3, 1e sur 33 (8-1-0), Pop Up Series 10 || 2 FA OAKS - WINNER TAKES ALL!!
+# energy: Darkness pour 15 des 16 joueurs qui la déclarent
+Energy: Darkness
+2 Froakie A1 87
+2 Greninja A1 89
+1 Mega Absol ex B1 151
+2 Hoopa ex B4 103
+1 Cyrus A2 150
+2 Rare Candy A3 144
+2 Copycat B1 225
+1 Field Blower B3 147
+2 Deceptive Needle B4 148
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

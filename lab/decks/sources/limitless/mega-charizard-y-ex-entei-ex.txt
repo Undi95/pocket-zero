@@ -1,12 +1,12 @@
 # archetype: Mega Charizard Y ex Entei ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/albuus_00/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-12
-# share: 1.6 % des joueurs (26 sur 1642, 20 tournois de 14 jours)
-# win_rate: 47.4 %
+# share: 1.4 % des joueurs (17 sur 1236, 16 tournois de 14 jours)
+# win_rate: 50.5 %
 # list: albuus_00, 17e sur 188 (7-2-0), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Fire pour 23 des 23 joueurs qui la déclarent
+# energy: Fire pour 16 des 16 joueurs qui la déclarent
 Energy: Fire
 2 Entei ex A4a 10
 1 Charizard B1a 13

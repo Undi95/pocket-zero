@@ -1,23 +1,25 @@
 # archetype: Mega Gardevoir ex Mega Diancie ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/jessicafknj/decklist
-# retrieved: 2026-10-22
-# published: 2026-10-09
-# share: 1.9 % des joueurs (31 sur 1642, 20 tournois de 14 jours)
-# win_rate: 41.8 %
-# list: jessicafknj, 17e sur 158 (6-1-1), Umbreon99's Aura Sphere #8: $5 USD + Oak
-# energy: Psychic pour 22 des 22 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ac941e9115c12b73a59ff37/player/lionking/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-14
+# share: 1.5 % des joueurs (18 sur 1236, 16 tournois de 14 jours)
+# win_rate: 45.6 %
+# list: lionking, 4e sur 58 (6-3-0), THE BREAKFAST CLUB KELP CLASSIC #11 - DX FA CHOICE
+# energy: Psychic pour 12 des 12 joueurs qui la déclarent
 Energy: Psychic
-2 Ralts B2 63
-1 Kirlia B2 64
-2 Mega Gardevoir ex B2 66
+1 Ralts A2 68
+1 Comfey A3 80
+1 Ralts B2 63
+1 Gardevoir B2 65
+1 Mega Gardevoir ex B2 66
 2 Meloetta B2 70
 1 Mega Diancie ex B3b 32
-1 Flutter Mane B3b 35
 1 Cyrus A2 150
 2 Rare Candy A3 144
 1 Copycat B1 225
-2 Diantha B2 149
+1 Lucky Ice Pop B2 145
+1 Diantha B2 149
 2 Peculiar Plaza B2 155
-1 Poké Ball P-A 5
+2 Poké Ball P-A 5
 2 Professor's Research P-A 7

@@ -1,12 +1,12 @@
 # archetype: Dedenne ex Indeedee ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/coffplays/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-16
-# share: 3.8 % des joueurs (62 sur 1642, 20 tournois de 14 jours)
-# win_rate: 48.6 %
+# share: 3.2 % des joueurs (39 sur 1236, 16 tournois de 14 jours)
+# win_rate: 52.1 %
 # list: coffplays, 1e sur 107 (9-1-1), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
-# energy: Lightning pour 48 des 48 joueurs qui la déclarent
+# energy: Lightning pour 29 des 29 joueurs qui la déclarent
 Energy: Lightning
 2 Oricorio A3 66
 2 Indeedee ex B1 121

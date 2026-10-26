@@ -1,23 +1,22 @@
 # archetype: Mega Sharpedo ex Gyarados
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aadba89f127b1b52c27c525/player/preluxe/decklist
-# retrieved: 2026-10-22
-# published: 2026-10-09
-# share: 1.0 % des joueurs (17 sur 1642, 20 tournois de 14 jours)
-# win_rate: 48.0 %
-# list: preluxe, 19e sur 158 (6-2-0), Umbreon99's Aura Sphere #8: $5 USD + Oak
-# energy: Water pour 14 des 14 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ad9144e115c12b73a5a9311/player/warpis/decklist
+# retrieved: 2026-10-26
+# published: 2026-10-23
+# share: 1.1 % des joueurs (14 sur 1236, 16 tournois de 14 jours)
+# win_rate: 48.9 %
+# list: warpis, 1e sur 45 (8-1-1), 𝑿𝑻𝑹𝑬𝑴 n°3 Community Choice 5$+Copycat 🌟🌟+FA
+# energy: Water pour 11 des 11 joueurs qui la déclarent
 Energy: Water
-2 Magikarp A1a 17
+2 Magikarp A4 44
 2 Gyarados A4 45
 2 Mantyke A4a 23
 1 Chien-Pao ex B2a 37
 2 Carvanha B4 34
 2 Mega Sharpedo ex B4 35
-1 Copycat B1 225
 1 Lisia B1 226
 1 Training Area B2 153
 1 Field Blower B3 147
 2 Wallace B3b 68
-1 Poké Ball P-A 5
+2 Poké Ball P-A 5
 2 Professor's Research P-A 7

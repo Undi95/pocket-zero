@@ -1,12 +1,12 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad32aa5115c12b73a5a5e88/player/garchomplucario123/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-17
-# share: 4.6 % des joueurs (76 sur 1642, 20 tournois de 14 jours)
-# win_rate: 53.7 %
+# share: 5.8 % des joueurs (72 sur 1236, 16 tournois de 14 jours)
+# win_rate: 52.4 %
 # list: garchomplucario123, 1e sur 34 (9-0-0), Dark league Tournament 10$
-# energy: Lightning pour 61 des 61 joueurs qui la déclarent
+# energy: Lightning pour 53 des 55 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66

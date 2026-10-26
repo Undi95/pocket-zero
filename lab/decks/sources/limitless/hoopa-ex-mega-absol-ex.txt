@@ -1,12 +1,12 @@
 # archetype: Hoopa ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acb660e115c12b73a5a1246/player/victorssito/decklist
-# retrieved: 2026-10-22
+# retrieved: 2026-10-26
 # published: 2026-10-14
-# share: 4.0 % des joueurs (66 sur 1642, 20 tournois de 14 jours)
-# win_rate: 51.0 %
+# share: 4.0 % des joueurs (49 sur 1236, 16 tournois de 14 jours)
+# win_rate: 52.5 %
 # list: victorssito, 1e sur 58 (9-1-0), MEGA EX Society Tournament #2
-# energy: Darkness pour 44 des 45 joueurs qui la déclarent
+# energy: Darkness pour 29 des 29 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
