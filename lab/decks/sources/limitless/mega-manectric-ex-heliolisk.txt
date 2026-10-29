@@ -1,12 +1,12 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6acde535115c12b73a5a2d57/player/nop/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-13
-# share: 3.1 % des joueurs (38 sur 1236, 16 tournois de 14 jours)
-# win_rate: 54.0 %
-# list: nop, 1e sur 103 (10-0-1), Block Dragon ~ Perfect Order Format: $5 + FA Card
-# energy: Lightning pour 22 des 23 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aded0c691617679e84a1153/player/estehlegitea/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-26
+# share: 3.0 % des joueurs (32 sur 1074, 15 tournois de 14 jours)
+# win_rate: 52.3 %
+# list: estehlegitea, 5e sur 78 (7-1-2), Dark League Tournament 10$ to the Winner
+# energy: Lightning pour 14 des 15 joueurs qui la déclarent
 Energy: Lightning
 2 Helioptile B1a 28
 1 Electrike B2b 26

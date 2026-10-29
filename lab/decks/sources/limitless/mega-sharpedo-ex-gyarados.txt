@@ -1,12 +1,12 @@
 # archetype: Mega Sharpedo ex Gyarados
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad9144e115c12b73a5a9311/player/warpis/decklist
-# retrieved: 2026-10-26
+# retrieved: 2026-10-29
 # published: 2026-10-23
-# share: 1.1 % des joueurs (14 sur 1236, 16 tournois de 14 jours)
-# win_rate: 48.9 %
+# share: 1.0 % des joueurs (11 sur 1074, 15 tournois de 14 jours)
+# win_rate: 52.2 %
 # list: warpis, 1e sur 45 (8-1-1), 𝑿𝑻𝑹𝑬𝑴 n°3 Community Choice 5$+Copycat 🌟🌟+FA
-# energy: Water pour 11 des 11 joueurs qui la déclarent
+# energy: Water pour 6 des 6 joueurs qui la déclarent
 Energy: Water
 2 Magikarp A4 44
 2 Gyarados A4 45

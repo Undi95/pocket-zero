@@ -1,18 +1,18 @@
 # archetype: Mega Blaziken ex Greninja
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/stardast/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-12
-# share: 1.9 % des joueurs (24 sur 1236, 16 tournois de 14 jours)
-# win_rate: 51.4 %
-# list: stardast, 2e sur 188 (10-2-1), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Fire pour 13 des 13 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ae25e2222fd412b92a4ee06/player/mamas/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-29
+# share: 1.2 % des joueurs (13 sur 1074, 15 tournois de 14 jours)
+# win_rate: 44.3 %
+# list: mamas, 14e sur 123 (6-3-0), The Dankest C Series Pop Up! [$50 Prize + FAs]
+# energy: Fire pour 6 des 6 joueurs qui la déclarent
 Energy: Fire
 1 Froakie A1 87
 1 Greninja A1 89
 2 Torchic B1 33
 1 Combusken B1 34
-1 Mega Blaziken ex B1 36
+2 Mega Blaziken ex B1 36
 1 Heatmor B1 44
 1 Castform Sunny Form B3 24
 1 Cyrus A2 150
@@ -20,6 +20,5 @@ Energy: Fire
 1 Flame Patch B1 217
 2 Copycat B1 225
 1 Hiking Trail B2b 69
-1 Juliana B3a 71
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

@@ -1,24 +1,21 @@
 # archetype: Mega Gardevoir ex Mega Diancie ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac941e9115c12b73a59ff37/player/lionking/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-14
-# share: 1.5 % des joueurs (18 sur 1236, 16 tournois de 14 jours)
-# win_rate: 45.6 %
-# list: lionking, 4e sur 58 (6-3-0), THE BREAKFAST CLUB KELP CLASSIC #11 - DX FA CHOICE
-# energy: Psychic pour 12 des 12 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ade369f91617679e84a0c06/player/avelino_off/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-25
+# share: 1.4 % des joueurs (15 sur 1074, 15 tournois de 14 jours)
+# win_rate: 42.0 %
+# list: avelino_off, 9e sur 35 (4-2-1), Dark League Pop Up 5$ to the Winner
+# energy: Psychic pour 9 des 9 joueurs qui la déclarent
 Energy: Psychic
-1 Ralts A2 68
+2 Ralts A2 68
 1 Comfey A3 80
-1 Ralts B2 63
-1 Gardevoir B2 65
-1 Mega Gardevoir ex B2 66
+2 Mega Gardevoir ex B2 66
 2 Meloetta B2 70
 1 Mega Diancie ex B3b 32
 1 Cyrus A2 150
 2 Rare Candy A3 144
-1 Copycat B1 225
-1 Lucky Ice Pop B2 145
+2 Copycat B1 225
 1 Diantha B2 149
 2 Peculiar Plaza B2 155
 2 Poké Ball P-A 5

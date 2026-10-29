@@ -1,12 +1,12 @@
 # archetype: Suicune ex Baxcalibur
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/victorssito/decklist
-# retrieved: 2026-10-26
+# retrieved: 2026-10-29
 # published: 2026-10-16
-# share: 5.7 % des joueurs (71 sur 1236, 16 tournois de 14 jours)
-# win_rate: 47.1 %
+# share: 3.4 % des joueurs (36 sur 1074, 15 tournois de 14 jours)
+# win_rate: 45.2 %
 # list: victorssito, 2e sur 107 (8-2-1), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
-# energy: Water pour 53 des 53 joueurs qui la déclarent
+# energy: Water pour 21 des 21 joueurs qui la déclarent
 Energy: Water
 2 Suicune ex A4a 20
 2 Frigibax B2a 34

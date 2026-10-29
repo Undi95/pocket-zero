@@ -1,23 +1,23 @@
 # archetype: Hydreigon Mega Sableye ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac45749245696afb3517517/player/yuehidden/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-23
-# share: 1.1 % des joueurs (14 sur 1236, 16 tournois de 14 jours)
-# win_rate: 45.6 %
-# list: yuehidden, 1e sur 107 (9-2-0), Umbreon99's Aura Sphere #10: $5 USD
-# energy: Darkness pour 8 des 8 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6aded0c691617679e84a1153/player/luckyex888/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-26
+# share: 1.8 % des joueurs (19 sur 1074, 15 tournois de 14 jours)
+# win_rate: 52.1 %
+# list: luckyex888, 1e sur 78 (10-1-1), Dark League Tournament 10$ to the Winner
+# energy: Darkness pour 7 des 7 joueurs qui la déclarent
 Energy: Darkness
 2 Deino B1 155
 2 Hydreigon B1 157
 1 Bombirdier B3 115
 1 Mega Sableye ex B3b 41
 1 Sabrina A1 225
+1 Rocky Helmet A2 148
 1 Cyrus A2 150
 2 Rare Candy A3 144
 2 Copycat B1 225
-1 Lucky Ice Pop B2 145
-1 Hiking Trail B2b 69
-2 Deceptive Needle B4 148
+2 Lucky Ice Pop B2 145
+1 Deceptive Needle B4 148
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

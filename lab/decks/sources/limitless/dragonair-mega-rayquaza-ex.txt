@@ -1,15 +1,15 @@
 # archetype: Dragonair Mega Rayquaza ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aba8811783097f8dcb728f0/player/supreme13/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-16
-# share: 4.8 % des joueurs (59 sur 1236, 16 tournois de 14 jours)
-# win_rate: 49.0 %
-# list: supreme13, 5e sur 107 (7-2-0), Umbreon99's Aura Sphere #9: $5 USD + (Top 2 FA)
-# energy: Fire, Lightning pour 44 des 44 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ae25e2222fd412b92a4ee06/player/gobztcg/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-29
+# share: 3.4 % des joueurs (36 sur 1074, 15 tournois de 14 jours)
+# win_rate: 47.9 %
+# list: gobztcg, 3e sur 123 (9-1-1), The Dankest C Series Pop Up! [$50 Prize + FAs]
+# energy: Fire, Lightning pour 23 des 23 joueurs qui la déclarent
 Energy: Fire, Lightning
+2 Dratini A1 183
 2 Gouging Fire B3a 54
-2 Dratini B4 116
 2 Dragonair B4 117
 1 Mega Rayquaza ex B4 120
 1 Sabrina A1 225

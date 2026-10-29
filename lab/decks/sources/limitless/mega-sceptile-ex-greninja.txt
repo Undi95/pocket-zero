@@ -1,12 +1,12 @@
 # archetype: Mega Sceptile ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad63a18115c12b73a5a7a01/player/kaizenmoon/decklist
-# retrieved: 2026-10-26
+# retrieved: 2026-10-29
 # published: 2026-10-19
-# share: 1.7 % des joueurs (21 sur 1236, 16 tournois de 14 jours)
-# win_rate: 56.2 %
+# share: 1.2 % des joueurs (13 sur 1074, 15 tournois de 14 jours)
+# win_rate: 52.4 %
 # list: kaizenmoon, 9e sur 64 (7-1-0), The Dark League Tournament |CASH AND CARD PRIZES
-# energy: Grass pour 11 des 11 joueurs qui la déclarent
+# energy: Grass pour 4 des 4 joueurs qui la déclarent
 Energy: Grass
 1 Froakie A1 87
 1 Greninja A1 89

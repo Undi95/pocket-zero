@@ -1,12 +1,12 @@
 # archetype: Miraidon ex Magnezone
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6adb555791617679e849ed37/player/sirus/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-24
-# share: 1.3 % des joueurs (16 sur 1236, 16 tournois de 14 jours)
-# win_rate: 35.6 %
-# list: sirus, 5e sur 95 (8-1-0), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #16
-# energy: Lightning pour 11 des 11 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ae25e2222fd412b92a4ee06/player/brendon68/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-29
+# share: 1.1 % des joueurs (12 sur 1074, 15 tournois de 14 jours)
+# win_rate: 53.1 %
+# list: brendon68, 1e sur 123 (12-0-0), The Dankest C Series Pop Up! [$50 Prize + FAs]
+# energy: Lightning pour 7 des 7 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Zeraora A3a 21

@@ -1,0 +1,24 @@
+# archetype: Mega Garchomp ex Garchomp
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ac45749245696afb3517517/player/pauk55/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-23
+# share: 1.1 % des joueurs (12 sur 1074, 15 tournois de 14 jours)
+# win_rate: 46.2 %
+# list: pauk55, 20e sur 107 (5-2-0), Umbreon99's Aura Sphere #10: $5 USD
+# energy: Fighting, Water pour 9 des 9 joueurs qui la déclarent
+Energy: Water, Fighting
+1 Dratini A1 183
+2 Gible A2 121
+2 Goomy B1 177
+1 Dragonair B4 117
+1 Garchomp B4a 54
+1 Mega Garchomp ex P-B 99
+1 Cynthia A2 152
+2 Rare Candy A3 144
+1 May B1 223
+2 Copycat B1 225
+1 Juliana B3a 71
+1 Rainbow Cave B4 155
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

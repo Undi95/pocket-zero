@@ -1,12 +1,12 @@
 # archetype: Mega Lucario ex Lucario
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad9144e115c12b73a5a9311/player/ishaan/decklist
-# retrieved: 2026-10-26
+# retrieved: 2026-10-29
 # published: 2026-10-23
-# share: 6.0 % des joueurs (74 sur 1236, 16 tournois de 14 jours)
-# win_rate: 48.3 %
+# share: 4.7 % des joueurs (51 sur 1074, 15 tournois de 14 jours)
+# win_rate: 49.8 %
 # list: ishaan, 2e sur 45 (9-1-0), 𝑿𝑻𝑹𝑬𝑴 n°3 Community Choice 5$+Copycat 🌟🌟+FA
-# energy: Fighting pour 53 des 53 joueurs qui la déclarent
+# energy: Fighting pour 25 des 25 joueurs qui la déclarent
 Energy: Fighting
 1 Hitmonlee A1 154
 2 Riolu A2 91

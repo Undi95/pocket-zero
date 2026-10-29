@@ -1,0 +1,23 @@
+# archetype: Mega Blaziken ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6acde154115c12b73a5a2d4f/player/tommykamikace/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-16
+# share: 1.0 % des joueurs (11 sur 1074, 15 tournois de 14 jours)
+# win_rate: 45.2 %
+# list: tommykamikace, 18e sur 103 (4-2-1), DELUXE PRIZES︱ $20 BEC'S WEEKLY ⭐️
+# energy: Fire pour 5 des 5 joueurs qui la déclarent
+Energy: Fire
+2 Torchic B1 33
+2 Mega Blaziken ex B1 36
+1 Heatmor B1 44
+1 Castform Sunny Form B3 24
+1 Rocky Helmet A2 148
+1 Cyrus A2 150
+2 Rare Candy A3 144
+2 Flame Patch B1 217
+2 Copycat B1 225
+1 Hiking Trail B2b 69
+1 Field Blower B3 147
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

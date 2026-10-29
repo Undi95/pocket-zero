@@ -1,12 +1,12 @@
 # archetype: Hoopa ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6acb660e115c12b73a5a1246/player/victorssito/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-14
-# share: 4.0 % des joueurs (49 sur 1236, 16 tournois de 14 jours)
-# win_rate: 52.5 %
-# list: victorssito, 1e sur 58 (9-1-0), MEGA EX Society Tournament #2
-# energy: Darkness pour 29 des 29 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ade369f91617679e84a0c06/player/guunnz/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-25
+# share: 4.9 % des joueurs (53 sur 1074, 15 tournois de 14 jours)
+# win_rate: 52.0 %
+# list: guunnz, 1e sur 35 (8-2-0), Dark League Pop Up 5$ to the Winner
+# energy: Darkness pour 20 des 20 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
@@ -14,11 +14,11 @@ Energy: Darkness
 2 Cyrus A2 150
 1 Mars A2 155
 1 Pokémon Center Lady A2b 70
+1 Repel A3a 64
 1 Copycat B1 225
 2 Lucky Ice Pop B2 145
 1 Field Blower B3 147
 2 Deceptive Needle B4 148
 1 X Speed P-A 2
 2 Poké Ball P-A 5
-1 Red Card P-A 6
 2 Professor's Research P-A 7

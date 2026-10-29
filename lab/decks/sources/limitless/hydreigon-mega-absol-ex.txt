@@ -1,12 +1,12 @@
 # archetype: Hydreigon Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6adb555791617679e849ed37/player/whiterabbit/decklist
-# retrieved: 2026-10-26
+# retrieved: 2026-10-29
 # published: 2026-10-24
-# share: 3.4 % des joueurs (42 sur 1236, 16 tournois de 14 jours)
-# win_rate: 51.5 %
+# share: 3.2 % des joueurs (34 sur 1074, 15 tournois de 14 jours)
+# win_rate: 55.0 %
 # list: whiterabbit, 3e sur 95 (8-2-0), 10USD + FA | 巫獅對戰塔盃 LeoWizard BattleTower Cup #16
-# energy: Darkness pour 34 des 34 joueurs qui la déclarent
+# energy: Darkness pour 20 des 20 joueurs qui la déclarent
 Energy: Darkness
 1 Mega Absol ex B1 151
 2 Deino B1 155

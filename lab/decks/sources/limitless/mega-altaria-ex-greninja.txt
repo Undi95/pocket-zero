@@ -1,21 +1,21 @@
 # archetype: Mega Altaria ex Greninja
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ac4228f245696afb3517190/player/snub/decklist
-# retrieved: 2026-10-26
-# published: 2026-10-12
-# share: 4.1 % des joueurs (51 sur 1236, 16 tournois de 14 jours)
-# win_rate: 56.1 %
-# list: snub, 1e sur 188 (12-1-0), 🐧 PGX TOURNAMENT #3【 💰$25 USD + FA DELUXE ⭐⭐】
-# energy: Psychic pour 34 des 35 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adce05797e21d82e5c6e4e3/player/hamuou/decklist
+# retrieved: 2026-10-29
+# published: 2026-10-24
+# share: 3.9 % des joueurs (42 sur 1074, 15 tournois de 14 jours)
+# win_rate: 56.2 %
+# list: hamuou, 5e sur 66 (8-1-0), Dark League Pocket Tournament 20$ + DX Cards
+# energy: Psychic pour 21 des 22 joueurs qui la déclarent
 Energy: Psychic
 2 Froakie A1 87
 2 Greninja A1 89
-1 Mega Altaria ex B1 102
+2 Mega Altaria ex B1 102
 2 Chingling B1 109
 2 Swablu B1 196
-1 Cyrus A2 150
+2 Cyrus A2 150
 2 Rare Candy A3 144
 2 Copycat B1 225
-2 Lucky Egg B3 148
-2 Poké Ball P-A 5
+1 Lisia B1 226
+1 Poké Ball P-A 5
 2 Professor's Research P-A 7
