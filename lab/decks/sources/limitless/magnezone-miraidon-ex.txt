@@ -1,22 +1,24 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ad32aa5115c12b73a5a5e88/player/garchomplucario123/decklist
-# retrieved: 2026-10-29
-# published: 2026-10-17
-# share: 6.6 % des joueurs (71 sur 1074, 15 tournois de 14 jours)
-# win_rate: 52.4 %
-# list: garchomplucario123, 1e sur 34 (9-0-0), Dark league Tournament 10$
-# energy: Lightning pour 44 des 46 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6ad63a18115c12b73a5a7a01/player/victorssito/decklist
+# retrieved: 2026-11-02
+# published: 2026-10-19
+# share: 2.5 % des joueurs (60 sur 2447, 20 tournois de 14 jours)
+# win_rate: 48.5 %
+# list: victorssito, 1e sur 64 (9-1-1), The Dark League Tournament |CASH AND CARD PRIZES
+# energy: Lightning pour 40 des 42 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
-2 Oricorio A3 66
-1 Goomy B1 177
+1 Oricorio A3 66
+2 Zeraora A3a 21
 2 Magnemite B1a 24
 2 Magnezone B1a 26
 1 Miraidon ex B3a 19
 1 Giant Cape A2 147
 1 Cyrus A2 150
-2 Lisia B1 226
-2 Clemont B1a 68
+1 Copycat B1 225
+1 Lisia B1 226
+1 Clemont B1a 68
+1 Professor Turo B3a 73
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

@@ -1,23 +1,23 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aded0c691617679e84a1153/player/estehlegitea/decklist
-# retrieved: 2026-10-29
-# published: 2026-10-26
-# share: 3.0 % des joueurs (32 sur 1074, 15 tournois de 14 jours)
-# win_rate: 52.3 %
-# list: estehlegitea, 5e sur 78 (7-1-2), Dark League Tournament 10$ to the Winner
-# energy: Lightning pour 14 des 15 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adf974322fd412b92a4d595/player/naoki/decklist
+# retrieved: 2026-11-02
+# published: 2026-10-31
+# share: 2.5 % des joueurs (61 sur 2447, 20 tournois de 14 jours)
+# win_rate: 55.9 %
+# list: naoki, 1e sur 547 (12-1-1), PMPT #49 - DUAL FUSION!!! | $250 USD
+# energy: Lightning pour 40 des 41 joueurs qui la déclarent
 Energy: Lightning
 2 Helioptile B1a 28
-1 Electrike B2b 26
 2 Mega Manectric ex B2b 27
 2 Heliolisk B4 61
+1 Electrike P-B 43
+1 Sabrina A1 225
 1 Cyrus A2 150
 1 Copycat B1 225
 2 Clemont's Backpack B1a 66
 2 Clemont B1a 68
 1 Training Area B2 153
-1 Field Blower B3 147
 1 Elegant Cape B3b 65
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

@@ -1,12 +1,12 @@
 # archetype: Butterfree Mega Sceptile ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad63a18115c12b73a5a7a01/player/njjord7/decklist
-# retrieved: 2026-10-29
+# retrieved: 2026-11-02
 # published: 2026-10-19
-# share: 4.5 % des joueurs (48 sur 1074, 15 tournois de 14 jours)
-# win_rate: 48.3 %
+# share: 1.3 % des joueurs (32 sur 2447, 20 tournois de 14 jours)
+# win_rate: 42.8 %
 # list: njjord7, 6e sur 64 (6-1-2), The Dark League Tournament |CASH AND CARD PRIZES
-# energy: Grass pour 27 des 27 joueurs qui la déclarent
+# energy: Grass pour 20 des 20 joueurs qui la déclarent
 Energy: Grass
 1 Treecko B3 5
 1 Grovyle B3 6

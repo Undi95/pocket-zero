@@ -1,12 +1,12 @@
 # archetype: Vespiquen ex Shuckle ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6acfaa61115c12b73a5a3dd9/player/adi1906/decklist
-# retrieved: 2026-10-29
+# retrieved: 2026-11-02
 # published: 2026-10-22
-# share: 4.1 % des joueurs (44 sur 1074, 15 tournois de 14 jours)
-# win_rate: 51.3 %
+# share: 1.4 % des joueurs (35 sur 2447, 20 tournois de 14 jours)
+# win_rate: 52.0 %
 # list: adi1906, 2e sur 57 (7-2-1), MEGA EX Society Tournament #3
-# energy: Grass pour 25 des 25 joueurs qui la déclarent
+# energy: Grass pour 24 des 24 joueurs qui la déclarent
 Energy: Grass
 2 Shuckle ex A4 21
 1 Teal Mask Ogerpon ex B2 17
