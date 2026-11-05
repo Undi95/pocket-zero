@@ -1,0 +1,24 @@
+# archetype: Hoopa ex Mega Absol ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6ae7f6340d00101b48bf453d/player/douka/decklist
+# retrieved: 2026-11-05
+# published: 2026-11-02
+# share: 3.3 % des joueurs (106 sur 3170, 20 tournois de 14 jours)
+# win_rate: 52.5 %
+# list: douka, 1e sur 304 (13-1-1), Dark League Tournament | $50 Prize Pool
+# energy: Darkness pour 50 des 50 joueurs qui la déclarent
+Energy: Darkness
+1 Darkrai ex A2 110
+1 Mega Absol ex B1 151
+2 Hoopa ex B4 103
+2 Cyrus A2 150
+1 Mars A2 155
+1 Pokémon Center Lady A2b 70
+1 Repel A3a 64
+1 Copycat B1 225
+2 Lucky Ice Pop B2 145
+1 Field Blower B3 147
+2 Deceptive Needle B4 148
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

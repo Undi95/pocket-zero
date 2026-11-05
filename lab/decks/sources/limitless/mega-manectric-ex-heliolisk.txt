@@ -1,12 +1,12 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6adf974322fd412b92a4d595/player/naoki/decklist
-# retrieved: 2026-11-02
+# retrieved: 2026-11-05
 # published: 2026-10-31
-# share: 2.5 % des joueurs (61 sur 2447, 20 tournois de 14 jours)
-# win_rate: 55.9 %
+# share: 2.8 % des joueurs (89 sur 3170, 20 tournois de 14 jours)
+# win_rate: 53.6 %
 # list: naoki, 1e sur 547 (12-1-1), PMPT #49 - DUAL FUSION!!! | $250 USD
-# energy: Lightning pour 40 des 41 joueurs qui la déclarent
+# energy: Lightning pour 52 des 53 joueurs qui la déclarent
 Energy: Lightning
 2 Helioptile B1a 28
 2 Mega Manectric ex B2b 27
