@@ -1,12 +1,12 @@
 # archetype: Miraidon ex Magnezone
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ae25e2222fd412b92a4ee06/player/brendon68/decklist
-# retrieved: 2026-11-05
+# retrieved: 2026-11-09
 # published: 2026-10-29
-# share: 1.4 % des joueurs (44 sur 3170, 20 tournois de 14 jours)
-# win_rate: 52.7 %
+# share: 1.5 % des joueurs (48 sur 3286, 20 tournois de 14 jours)
+# win_rate: 52.5 %
 # list: brendon68, 1e sur 123 (12-0-0), The Dankest C Series Pop Up! [$50 Prize + FAs]
-# energy: Lightning pour 21 des 21 joueurs qui la déclarent
+# energy: Lightning pour 22 des 22 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Zeraora A3a 21

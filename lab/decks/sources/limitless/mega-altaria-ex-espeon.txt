@@ -1,20 +1,21 @@
 # archetype: Mega Altaria ex Espeon
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6aeb28380c463890f304b17d/player/ojittik/decklist
-# retrieved: 2026-11-05
-# published: 2026-11-04
-# share: 2.8 % des joueurs (88 sur 3170, 20 tournois de 14 jours)
-# win_rate: 54.7 %
-# list: ojittik, 2e sur 171 (11-1-0), Icetea hometown pocket 50$
-# energy: Psychic pour 60 des 61 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adb946e97e21d82e5c6d561/player/velu/decklist
+# retrieved: 2026-11-09
+# published: 2026-11-06
+# share: 2.7 % des joueurs (90 sur 3286, 20 tournois de 14 jours)
+# win_rate: 56.6 %
+# list: velu, 1e sur 231 (11-1-2), Umbreon99's Aura Sphere #12: $5 USD + FA
+# energy: Psychic pour 50 des 51 joueurs qui la déclarent
 Energy: Psychic
 1 Igglybuff A4a 59
 1 Mega Altaria ex B1 102
 2 Eevee B1 184
-2 Swablu B1 196
+1 Swablu B1 196
 2 Darkrai B2b 40
 2 Espeon B3a 20
 1 Sabrina A1 225
+1 Cyrus A2 150
 2 Copycat B1 225
 1 Training Area B2 153
 1 Field Blower B3 147

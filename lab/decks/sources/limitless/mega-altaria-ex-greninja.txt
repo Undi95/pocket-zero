@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Greninja
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6adf974322fd412b92a4d595/player/popay/decklist
-# retrieved: 2026-11-05
-# published: 2026-10-31
-# share: 1.8 % des joueurs (58 sur 3170, 20 tournois de 14 jours)
-# win_rate: 58.9 %
-# list: popay, 3e sur 547 (10-2-1), PMPT #49 - DUAL FUSION!!! | $250 USD
-# energy: Psychic pour 34 des 34 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adb946e97e21d82e5c6d561/player/joshuasutherland21/decklist
+# retrieved: 2026-11-09
+# published: 2026-11-06
+# share: 2.3 % des joueurs (76 sur 3286, 20 tournois de 14 jours)
+# win_rate: 56.3 %
+# list: joshuasutherland21, 2e sur 231 (11-2-1), Umbreon99's Aura Sphere #12: $5 USD + FA
+# energy: Psychic pour 37 des 37 joueurs qui la déclarent
 Energy: Psychic
 2 Froakie A1 87
 2 Greninja A1 89
