@@ -1,12 +1,12 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ae6b6910d00101b48bf3b1c/player/garchomplucario123/decklist
-# retrieved: 2026-11-09
+# retrieved: 2026-11-12
 # published: 2026-11-04
-# share: 1.9 % des joueurs (63 sur 3286, 20 tournois de 14 jours)
-# win_rate: 56.0 %
+# share: 2.7 % des joueurs (97 sur 3536, 20 tournois de 14 jours)
+# win_rate: 56.3 %
 # list: garchomplucario123, 2e sur 273 (11-2-1), Umbreon99's Wednesday Fusion: $15 USD + Top 4 FA
-# energy: Lightning pour 29 des 29 joueurs qui la déclarent
+# energy: Lightning pour 69 des 70 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66

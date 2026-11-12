@@ -1,12 +1,12 @@
 # archetype: Umbreon Hydreigon
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6ad2a63e8a8383117e3ed624/player/stardast/decklist
-# retrieved: 2026-11-09
+# retrieved: 2026-11-12
 # published: 2026-10-30
-# share: 5.8 % des joueurs (192 sur 3286, 20 tournois de 14 jours)
-# win_rate: 46.1 %
+# share: 5.9 % des joueurs (207 sur 3536, 20 tournois de 14 jours)
+# win_rate: 45.6 %
 # list: stardast, 3e sur 234 (10-2-1), Umbreon99's Aura Sphere #11: $10 USD + Top 4 FA
-# energy: Darkness pour 113 des 113 joueurs qui la déclarent
+# energy: Darkness pour 133 des 133 joueurs qui la déclarent
 Energy: Darkness
 2 Umbreon A3b 43
 1 Mega Absol ex B1 151

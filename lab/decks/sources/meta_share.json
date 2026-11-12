@@ -1,36 +1,42 @@
 {
  "archetypes": {
   "Mega Charizard Y ex Entei ex": {
-   "share": 0.0711,
+   "share": 0.0716,
    "decks": [
     "lab/decks/meta/charizard.txt"
    ]
   },
-  "Miraidon ex Magnezone": {
-   "share": 0.0593,
-   "decks": [
-    "lab/decks/meta/magnezone.txt",
-    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
-    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt",
-    "lab/decks/sources/limitless/miraidon-ex-magnezone.txt"
-   ]
-  },
-  "Dragonair": {
-   "share": 0.0435,
-   "decks": [
-    "lab/decks/meta/rayquaza.txt",
-    "lab/decks/sources/game8/mega-rayquaza-ex-and-gouging-fire.txt"
-   ]
-  },
-  "Suicune ex": {
-   "share": 0.0435,
+  "Suicune ex Mega Greninja ex": {
+   "share": 0.0579,
    "decks": [
     "lab/decks/meta/suicune.txt",
     "lab/decks/sources/game8/chien-pao-ex-and-baxcalibur.txt"
    ]
   },
+  "Mega Lucario ex": {
+   "share": 0.0565,
+   "decks": [
+    "lab/decks/meta/lucario.txt",
+    "lab/decks/sources/game8/mega-lucario-ex-and-hitmonlee.txt"
+   ]
+  },
+  "Suicune ex": {
+   "share": 0.0482,
+   "decks": [
+    "lab/decks/meta/suicune.txt",
+    "lab/decks/sources/game8/chien-pao-ex-and-baxcalibur.txt"
+   ]
+  },
+  "Miraidon ex Magnezone": {
+   "share": 0.0331,
+   "decks": [
+    "lab/decks/meta/magnezone.txt",
+    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
+    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt"
+   ]
+  },
   "Hoopa ex Mega Absol ex": {
-   "share": 0.0435,
+   "share": 0.0317,
    "decks": [
     "lab/decks/meta/hoopa.txt",
     "lab/decks/meta/weezing.txt",
@@ -38,16 +44,126 @@
     "lab/decks/sources/limitless/hoopa-ex-mega-absol-ex.txt"
    ]
   },
+  "Hydreigon Umbreon": {
+   "share": 0.0289,
+   "decks": [
+    "lab/decks/sources/limitless/umbreon-hydreigon.txt"
+   ]
+  },
+  "Mega Altaria ex Greninja": {
+   "share": 0.0234,
+   "decks": [
+    "lab/decks/meta/altaria-greninja.txt",
+    "lab/decks/sources/limitless/mega-altaria-ex-greninja.txt"
+   ]
+  },
+  "Dragonair": {
+   "share": 0.0207,
+   "decks": [
+    "lab/decks/meta/rayquaza.txt",
+    "lab/decks/sources/game8/mega-rayquaza-ex-and-gouging-fire.txt"
+   ]
+  },
+  "Hydreigon": {
+   "share": 0.0207,
+   "decks": [
+    "lab/decks/meta/hydreigon.txt",
+    "lab/decks/sources/limitless/umbreon-hydreigon.txt"
+   ]
+  },
+  "Vespiquen ex Teal Mask Ogerpon ex": {
+   "share": 0.0207,
+   "decks": [
+    "lab/decks/meta/vespiquen.txt",
+    "lab/decks/sources/game8/vespiquen-ex-and-shuckle-ex.txt"
+   ]
+  },
+  "Entei ex Charizard": {
+   "share": 0.0193,
+   "decks": [
+    "lab/decks/meta/charizard.txt"
+   ]
+  },
+  "Mega Sceptile ex Greninja": {
+   "share": 0.0165,
+   "decks": [
+    "lab/decks/meta/sceptile-greninja.txt"
+   ]
+  },
+  "Mega Manectric ex": {
+   "share": 0.0152,
+   "decks": [
+    "lab/decks/meta/manectric.txt",
+    "lab/decks/sources/limitless/mega-manectric-ex-heliolisk.txt"
+   ]
+  },
+  "Mega Absol ex Umbreon": {
+   "share": 0.0152,
+   "decks": [
+    "lab/decks/sources/limitless/umbreon-hydreigon.txt"
+   ]
+  },
+  "Dedenne ex": {
+   "share": 0.0124,
+   "decks": [
+    "lab/decks/meta/dedenne.txt"
+   ]
+  },
+  "Mega Blaziken ex": {
+   "share": 0.0124,
+   "decks": [
+    "lab/decks/meta/blaziken.txt"
+   ]
+  },
   "Mega Sceptile ex": {
-   "share": 0.0395,
+   "share": 0.011,
    "decks": [
     "lab/decks/meta/butterfree.txt",
     "lab/decks/meta/sceptile-greninja.txt",
     "lab/decks/sources/game8/mega-sceptile-ex-and-ew-butterfree.txt"
    ]
   },
+  "Darkrai ex": {
+   "share": 0.0096,
+   "decks": [
+    "lab/decks/meta/hoopa.txt",
+    "lab/decks/sources/game8/hoopa-ex-and-darkrai-ex.txt",
+    "lab/decks/sources/limitless/hoopa-ex-mega-absol-ex.txt"
+   ]
+  },
+  "Mega Altaria ex Espeon": {
+   "share": 0.0096,
+   "decks": [
+    "lab/decks/meta/altaria.txt",
+    "lab/decks/sources/game8/mega-altaria-ex-and-pd-espeon.txt",
+    "lab/decks/sources/limitless/mega-altaria-ex-espeon.txt"
+   ]
+  },
+  "Hoopa ex": {
+   "share": 0.0069,
+   "decks": [
+    "lab/decks/meta/hoopa.txt",
+    "lab/decks/meta/weezing.txt",
+    "lab/decks/sources/game8/hoopa-ex-and-darkrai-ex.txt",
+    "lab/decks/sources/limitless/hoopa-ex-mega-absol-ex.txt"
+   ]
+  },
+  "Entei ex": {
+   "share": 0.0055,
+   "decks": [
+    "lab/decks/meta/charizard.txt"
+   ]
+  },
+  "Miraidon ex": {
+   "share": 0.0055,
+   "decks": [
+    "lab/decks/meta/magnezone.txt",
+    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
+    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt"
+   ]
+  },
   "Mega Altaria ex": {
-   "share": 0.0395,
+   "share": 0.0055,
    "decks": [
     "lab/decks/meta/altaria-greninja.txt",
     "lab/decks/meta/altaria.txt",
@@ -56,48 +172,28 @@
     "lab/decks/sources/limitless/mega-altaria-ex-greninja.txt"
    ]
   },
-  "Hydreigon": {
-   "share": 0.0395,
-   "decks": [
-    "lab/decks/meta/hydreigon.txt",
-    "lab/decks/sources/limitless/umbreon-hydreigon.txt"
-   ]
-  },
-  "Mega Lucario ex": {
-   "share": 0.0356,
-   "decks": [
-    "lab/decks/meta/lucario.txt",
-    "lab/decks/sources/game8/mega-lucario-ex-and-hitmonlee.txt"
-   ]
-  },
-  "Mega Manectric ex": {
-   "share": 0.0277,
-   "decks": [
-    "lab/decks/meta/manectric.txt",
-    "lab/decks/sources/limitless/mega-manectric-ex-heliolisk.txt"
-   ]
-  },
-  "Entei ex": {
-   "share": 0.0198,
+  "Mega Charizard Y ex": {
+   "share": 0.0041,
    "decks": [
     "lab/decks/meta/charizard.txt"
    ]
   },
-  "Vespiquen ex": {
-   "share": 0.0198,
+  "Indeedee ex": {
+   "share": 0.0041,
    "decks": [
-    "lab/decks/meta/vespiquen.txt",
-    "lab/decks/sources/game8/vespiquen-ex-and-shuckle-ex.txt"
+    "lab/decks/meta/dedenne.txt"
    ]
   },
-  "Mega Blaziken ex": {
-   "share": 0.0158,
+  "Greninja": {
+   "share": 0.0041,
    "decks": [
-    "lab/decks/meta/blaziken.txt"
+    "lab/decks/meta/altaria-greninja.txt",
+    "lab/decks/meta/sceptile-greninja.txt",
+    "lab/decks/sources/limitless/mega-altaria-ex-greninja.txt"
    ]
   },
   "Mega Absol ex": {
-   "share": 0.0119,
+   "share": 0.0028,
    "decks": [
     "lab/decks/meta/hoopa.txt",
     "lab/decks/meta/hydreigon.txt",
@@ -107,95 +203,123 @@
     "lab/decks/sources/limitless/umbreon-hydreigon.txt"
    ]
   },
-  "Miraidon ex": {
-   "share": 0.0079,
+  "Vespiquen ex": {
+   "share": 0.0028,
    "decks": [
-    "lab/decks/meta/magnezone.txt",
-    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
-    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt",
-    "lab/decks/sources/limitless/miraidon-ex-magnezone.txt"
+    "lab/decks/meta/vespiquen.txt",
+    "lab/decks/sources/game8/vespiquen-ex-and-shuckle-ex.txt"
    ]
   },
-  "Indeedee ex": {
-   "share": 0.0079,
+  "Butterfree": {
+   "share": 0.0028,
    "decks": [
-    "lab/decks/meta/dedenne.txt"
+    "lab/decks/meta/butterfree.txt",
+    "lab/decks/sources/game8/mega-sceptile-ex-and-ew-butterfree.txt"
    ]
   },
   "Umbreon": {
-   "share": 0.004,
+   "share": 0.0014,
    "decks": [
     "lab/decks/sources/limitless/umbreon-hydreigon.txt"
    ]
   },
-  "Mega Charizard Y ex": {
-   "share": 0.004,
-   "decks": [
-    "lab/decks/meta/charizard.txt"
-   ]
-  },
-  "Hoopa ex": {
-   "share": 0.004,
-   "decks": [
-    "lab/decks/meta/hoopa.txt",
-    "lab/decks/meta/weezing.txt",
-    "lab/decks/sources/game8/hoopa-ex-and-darkrai-ex.txt",
-    "lab/decks/sources/limitless/hoopa-ex-mega-absol-ex.txt"
-   ]
-  },
-  "Dedenne ex": {
-   "share": 0.004,
-   "decks": [
-    "lab/decks/meta/dedenne.txt"
-   ]
-  },
   "Charizard": {
-   "share": 0.004,
+   "share": 0.0014,
    "decks": [
     "lab/decks/meta/charizard.txt"
+   ]
+  },
+  "Mega Rayquaza ex": {
+   "share": 0.0014,
+   "decks": [
+    "lab/decks/meta/rayquaza.txt",
+    "lab/decks/sources/game8/mega-rayquaza-ex-and-gouging-fire.txt"
+   ]
+  },
+  "Teal Mask Ogerpon ex": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/meta/vespiquen.txt",
+    "lab/decks/sources/game8/vespiquen-ex-and-shuckle-ex.txt"
+   ]
+  },
+  "Lopunny": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/sources/limitless/lopunny-raboot.txt"
+   ]
+  },
+  "Flygon ex": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/meta/flygon.txt"
+   ]
+  },
+  "Oricorio": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/meta/altaria-greninja.txt",
+    "lab/decks/meta/dedenne.txt",
+    "lab/decks/meta/magnezone.txt",
+    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
+    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt"
+   ]
+  },
+  "Azumarill": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/sources/limitless/lopunny-raboot.txt"
+   ]
+  },
+  "Miraidon ex Oricorio": {
+   "share": 0.0,
+   "decks": [
+    "lab/decks/meta/magnezone.txt",
+    "lab/decks/sources/game8/miraidon-ex-and-cb-magnezone.txt",
+    "lab/decks/sources/limitless/magnezone-miraidon-ex.txt"
    ]
   }
  },
  "unmatched": [
-  "Mega Greninja ex",
-  "Mega Mewtwo X ex",
-  "Mega Dragonite ex",
   "Mega Tyranitar ex",
-  "Fuecoco ex",
-  "Pidgeot",
+  "Mega Mewtwo X ex",
   "Mega Venusaur ex",
+  "Mega Mewtwo X ex Mew ex",
+  "Mega Dragonite ex",
+  "Dragonair Giratina ex",
   "Pikachu ex",
-  "Gengar",
+  "Mega Skarmory ex",
+  "Fuecoco ex",
   "Mega Sableye ex",
-  "Lycanroc ex",
+  "Mega Mewtwo X ex Mega Diancie ex",
+  "Gengar",
+  "Mega Greninja ex",
+  "Mega Diancie ex",
+  "Zoroark ex",
   "Wigglytuff ex",
   "Alolan Exeggutor ex",
-  "Zoroark ex",
-  "Mega Skarmory ex",
+  "Mega Pidgeot ex",
+  "Blastoise",
+  "Lycanroc ex",
+  "Jolteon ex",
+  "Milotic ex",
+  "Raikou ex",
   "Mega Sharpedo ex",
-  "Wugtrio ex",
-  "Greninja ex",
+  "Armarouge ex",
+  "Mega Mawile ex",
+  "Solgaleo ex",
   "Ribombee",
   "Flareon ex",
-  "Giratina ex",
-  "Armarouge ex",
-  "Blastoise",
+  "Umbreon ex",
+  "Mega Scizor ex",
+  "Serperior",
   "Mega Lopunny ex",
-  "Dialga ex",
-  "Moltres ex",
   "Mega Steelix ex",
-  "Mega Mawile ex",
-  "Gengar ex",
-  "Jolteon ex",
-  "Raikou ex",
-  "Mega Gardevoir ex",
-  "Infernape ex",
-  "Mega Diancie ex",
-  "Meowscarada ex",
-  "Milotic ex",
-  "Mega Gengar ex",
-  "Exeggutor ex",
-  "Arceus ex",
-  "Meowscarada"
+  "Wugtrio ex",
+  "Greninja ex",
+  "Rotom ex",
+  "Mega Gallade ex",
+  "Decidueye ex",
+  "Galvantula"
  ]
 }

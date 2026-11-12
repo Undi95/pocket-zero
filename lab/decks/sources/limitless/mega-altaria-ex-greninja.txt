@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6adb946e97e21d82e5c6d561/player/joshuasutherland21/decklist
-# retrieved: 2026-11-09
+# retrieved: 2026-11-12
 # published: 2026-11-06
-# share: 2.3 % des joueurs (76 sur 3286, 20 tournois de 14 jours)
-# win_rate: 56.3 %
+# share: 2.4 % des joueurs (84 sur 3536, 20 tournois de 14 jours)
+# win_rate: 55.9 %
 # list: joshuasutherland21, 2e sur 231 (11-2-1), Umbreon99's Aura Sphere #12: $5 USD + FA
-# energy: Psychic pour 37 des 37 joueurs qui la déclarent
+# energy: Psychic pour 52 des 52 joueurs qui la déclarent
 Energy: Psychic
 2 Froakie A1 87
 2 Greninja A1 89
