@@ -1,0 +1,24 @@
+# archetype: Umbreon Mega Absol ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6aeebbdae99f3235a75e2b7f/player/luksa/decklist
+# retrieved: 2026-11-16
+# published: 2026-11-08
+# share: 1.1 % des joueurs (32 sur 2810, 20 tournois de 14 jours)
+# win_rate: 53.0 %
+# list: luksa, 5e sur 128 (9-2-0), The Dark League Tournament | CARD PRIZES !!!
+# energy: Darkness pour 23 des 23 joueurs qui la déclarent
+Energy: Darkness
+2 Umbreon A3b 43
+1 Mega Absol ex B1 151
+2 Eevee B1 184
+1 Cyrus A2 150
+1 Pokémon Center Lady A2b 70
+1 Repel A3a 64
+2 Copycat B1 225
+1 Lucky Ice Pop B2 145
+1 Sightseer B2 150
+1 Field Blower B3 147
+2 Deceptive Needle B4 148
+1 X Speed P-A 2
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7

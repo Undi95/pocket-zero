@@ -1,22 +1,24 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ae6b6910d00101b48bf3b1c/player/garchomplucario123/decklist
-# retrieved: 2026-11-12
-# published: 2026-11-04
-# share: 2.7 % des joueurs (97 sur 3536, 20 tournois de 14 jours)
-# win_rate: 56.3 %
-# list: garchomplucario123, 2e sur 273 (11-2-1), Umbreon99's Wednesday Fusion: $15 USD + Top 4 FA
-# energy: Lightning pour 69 des 70 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6adfaf4022fd412b92a4d7e5/player/nx_nemu/decklist
+# retrieved: 2026-11-16
+# published: 2026-11-13
+# share: 3.9 % des joueurs (110 sur 2810, 20 tournois de 14 jours)
+# win_rate: 56.8 %
+# list: nx_nemu, 2e sur 242 (13-1-0), Umbreon99's Aura Sphere #13: $5 USD + Top 2 FA
+# energy: Lightning pour 67 des 68 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66
-1 Goomy B1 177
 2 Magnemite B1a 24
 2 Magnezone B1a 26
 1 Miraidon ex B3a 19
+1 Giant Cape A2 147
 1 Cyrus A2 150
-1 May B1 223
-2 Lisia B1 226
-2 Clemont B1a 68
+2 Copycat B1 225
+1 Lisia B1 226
+1 Clemont B1a 68
+1 Lucky Ice Pop B2 145
+1 Professor Turo B3a 73
 2 Poké Ball P-A 5
-2 Professor's Research P-A 7
+1 Professor's Research P-A 7
