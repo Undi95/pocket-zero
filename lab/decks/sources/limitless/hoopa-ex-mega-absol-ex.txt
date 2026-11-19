@@ -1,12 +1,12 @@
 # archetype: Hoopa ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6ae7f6340d00101b48bf453d/player/douka/decklist
-# retrieved: 2026-11-16
-# published: 2026-11-02
-# share: 5.2 % des joueurs (146 sur 2810, 20 tournois de 14 jours)
-# win_rate: 53.2 %
-# list: douka, 1e sur 304 (13-1-1), Dark League Tournament | $50 Prize Pool
-# energy: Darkness pour 74 des 74 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6af97dbaee43ef7891475378/player/h1kak1nsqie/decklist
+# retrieved: 2026-11-19
+# published: 2026-11-16
+# share: 6.4 % des joueurs (163 sur 2541, 20 tournois de 14 jours)
+# win_rate: 53.6 %
+# list: h1kak1nsqie, 1e sur 179 (11-1-1), xPabsy Cup #14 - $20
+# energy: Darkness pour 132 des 132 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151
