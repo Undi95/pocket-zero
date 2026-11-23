@@ -1,22 +1,23 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6adb946e97e21d82e5c6d561/player/jaxtcgp/decklist
-# retrieved: 2026-11-19
-# published: 2026-11-06
-# share: 2.0 % des joueurs (51 sur 2541, 20 tournois de 14 jours)
-# win_rate: 49.5 %
-# list: jaxtcgp, 22e sur 231 (7-3-0), Umbreon99's Aura Sphere #12: $5 USD + FA
-# energy: Lightning pour 31 des 31 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6afc6869ee43ef7891477155/player/portlandpoliwags/decklist
+# retrieved: 2026-11-23
+# published: 2026-11-17
+# share: 1.4 % des joueurs (36 sur 2499, 20 tournois de 14 jours)
+# win_rate: 46.6 %
+# list: portlandpoliwags, 11e sur 145 (6-2-1), 🐧 PGX TOURNAMENT #6【 💰$5 USD + FA ⭐⭐】
+# energy: Lightning pour 25 des 25 joueurs qui la déclarent
 Energy: Lightning
 2 Helioptile B1a 28
 2 Mega Manectric ex B2b 27
 2 Heliolisk B4 61
-2 Electrike P-B 43
+1 Electrike P-B 43
+1 Sabrina A1 225
 1 Cyrus A2 150
 1 Copycat B1 225
 2 Clemont's Backpack B1a 66
 2 Clemont B1a 68
-1 Field Blower B3 147
+1 Training Area B2 153
 1 Elegant Cape B3b 65
 2 Poké Ball P-A 5
 2 Professor's Research P-A 7

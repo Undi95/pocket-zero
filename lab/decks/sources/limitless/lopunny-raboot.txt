@@ -1,12 +1,12 @@
 # archetype: Lopunny Raboot
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6aeb20970c463890f304b137/player/nanutcg/decklist
-# retrieved: 2026-11-19
+# retrieved: 2026-11-23
 # published: 2026-11-10
-# share: 1.5 % des joueurs (38 sur 2541, 20 tournois de 14 jours)
-# win_rate: 44.1 %
+# share: 1.8 % des joueurs (44 sur 2499, 20 tournois de 14 jours)
+# win_rate: 44.9 %
 # list: nanutcg, 5e sur 245 (9-2-1), 🐧 PGX TOURNAMENT #4【 💰$15 USD + FA ⭐⭐ 】
-# energy: Psychic pour 32 des 32 joueurs qui la déclarent
+# energy: Psychic pour 33 des 33 joueurs qui la déclarent
 Energy: Psychic
 2 Buneary A2 137
 2 Lopunny A2 138

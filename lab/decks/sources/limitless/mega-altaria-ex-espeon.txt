@@ -1,21 +1,20 @@
 # archetype: Mega Altaria ex Espeon
 # site: Limitless (play.limitlesstcg.com)
-# source: https://play.limitlesstcg.com/tournament/6adb946e97e21d82e5c6d561/player/velu/decklist
-# retrieved: 2026-11-19
-# published: 2026-11-06
-# share: 4.5 % des joueurs (115 sur 2541, 20 tournois de 14 jours)
-# win_rate: 52.1 %
-# list: velu, 1e sur 231 (11-1-2), Umbreon99's Aura Sphere #12: $5 USD + FA
-# energy: Psychic pour 88 des 88 joueurs qui la déclarent
+# source: https://play.limitlesstcg.com/tournament/6af9a33cee43ef78914754c8/player/yeriana/decklist
+# retrieved: 2026-11-23
+# published: 2026-11-15
+# share: 5.4 % des joueurs (134 sur 2499, 20 tournois de 14 jours)
+# win_rate: 53.0 %
+# list: yeriana, 1e sur 137 (10-1-1), 🐧 PGX TOURNAMENT #5【 💰$5 USD + FA ⭐⭐】
+# energy: Psychic pour 100 des 101 joueurs qui la déclarent
 Energy: Psychic
 1 Igglybuff A4a 59
 1 Mega Altaria ex B1 102
 2 Eevee B1 184
-1 Swablu B1 196
+2 Swablu B1 196
 2 Darkrai B2b 40
 2 Espeon B3a 20
 1 Sabrina A1 225
-1 Cyrus A2 150
 2 Copycat B1 225
 1 Training Area B2 153
 1 Field Blower B3 147

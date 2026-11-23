@@ -1,0 +1,21 @@
+# archetype: Milotic ex Eevee ex
+# site: Limitless (play.limitlesstcg.com)
+# source: https://play.limitlesstcg.com/tournament/6afc6869ee43ef7891477155/player/golfermt/decklist
+# retrieved: 2026-11-23
+# published: 2026-11-17
+# share: 1.1 % des joueurs (27 sur 2499, 20 tournois de 14 jours)
+# win_rate: 49.4 %
+# list: golfermt, 1e sur 145 (10-2-0), 🐧 PGX TOURNAMENT #6【 💰$5 USD + FA ⭐⭐】
+# energy: Water pour 26 des 26 joueurs qui la déclarent
+Energy: Water
+2 Vaporeon A1a 19
+2 Eevee ex A3b 56
+2 Chien-Pao ex B2a 37
+2 Milotic ex B3b 15
+2 Feebas P-B 72
+2 Giant Cape A2 147
+2 Copycat B1 225
+1 Field Blower B3 147
+1 Wallace B3b 68
+2 Poké Ball P-A 5
+2 Professor's Research P-A 7
