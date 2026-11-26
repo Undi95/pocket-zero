@@ -1,12 +1,12 @@
 # archetype: Hoopa ex Mega Absol ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6af97dbaee43ef7891475378/player/h1kak1nsqie/decklist
-# retrieved: 2026-11-23
+# retrieved: 2026-11-26
 # published: 2026-11-16
-# share: 7.1 % des joueurs (177 sur 2499, 20 tournois de 14 jours)
-# win_rate: 53.2 %
+# share: 7.8 % des joueurs (174 sur 2244, 20 tournois de 14 jours)
+# win_rate: 53.1 %
 # list: h1kak1nsqie, 1e sur 179 (11-1-1), xPabsy Cup #14 - $20
-# energy: Darkness pour 140 des 140 joueurs qui la déclarent
+# energy: Darkness pour 121 des 121 joueurs qui la déclarent
 Energy: Darkness
 1 Darkrai ex A2 110
 1 Mega Absol ex B1 151

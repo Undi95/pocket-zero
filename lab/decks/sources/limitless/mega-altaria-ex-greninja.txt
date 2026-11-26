@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Greninja
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6af7f847b2fccaf0272d1d2b/player/darkcharrow/decklist
-# retrieved: 2026-11-23
+# retrieved: 2026-11-26
 # published: 2026-11-14
-# share: 6.4 % des joueurs (161 sur 2499, 20 tournois de 14 jours)
-# win_rate: 52.6 %
+# share: 7.1 % des joueurs (160 sur 2244, 20 tournois de 14 jours)
+# win_rate: 52.7 %
 # list: darkcharrow, 1e sur 169 (10-0-2), Underground pocket pop up 50$$
-# energy: Psychic pour 123 des 124 joueurs qui la déclarent
+# energy: Psychic pour 111 des 112 joueurs qui la déclarent
 Energy: Psychic
 2 Froakie A1 87
 2 Greninja A1 89

@@ -1,12 +1,12 @@
 # archetype: Mega Altaria ex Espeon
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6af9a33cee43ef78914754c8/player/yeriana/decklist
-# retrieved: 2026-11-23
+# retrieved: 2026-11-26
 # published: 2026-11-15
-# share: 5.4 % des joueurs (134 sur 2499, 20 tournois de 14 jours)
-# win_rate: 53.0 %
+# share: 6.3 % des joueurs (141 sur 2244, 20 tournois de 14 jours)
+# win_rate: 51.9 %
 # list: yeriana, 1e sur 137 (10-1-1), 🐧 PGX TOURNAMENT #5【 💰$5 USD + FA ⭐⭐】
-# energy: Psychic pour 100 des 101 joueurs qui la déclarent
+# energy: Psychic pour 92 des 93 joueurs qui la déclarent
 Energy: Psychic
 1 Igglybuff A4a 59
 1 Mega Altaria ex B1 102

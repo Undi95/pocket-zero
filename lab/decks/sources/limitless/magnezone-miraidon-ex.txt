@@ -1,12 +1,12 @@
 # archetype: Magnezone Miraidon ex
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6adfaf4022fd412b92a4d7e5/player/nx_nemu/decklist
-# retrieved: 2026-11-23
+# retrieved: 2026-11-26
 # published: 2026-11-13
-# share: 5.4 % des joueurs (136 sur 2499, 20 tournois de 14 jours)
-# win_rate: 53.3 %
+# share: 4.9 % des joueurs (111 sur 2244, 20 tournois de 14 jours)
+# win_rate: 51.5 %
 # list: nx_nemu, 2e sur 242 (13-1-0), Umbreon99's Aura Sphere #13: $5 USD + Top 2 FA
-# energy: Lightning pour 103 des 103 joueurs qui la déclarent
+# energy: Lightning pour 75 des 75 joueurs qui la déclarent
 Energy: Lightning
 2 Magneton A1 98
 2 Oricorio A3 66

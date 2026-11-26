@@ -1,12 +1,12 @@
 # archetype: Mega Manectric ex Heliolisk
 # site: Limitless (play.limitlesstcg.com)
 # source: https://play.limitlesstcg.com/tournament/6afc6869ee43ef7891477155/player/portlandpoliwags/decklist
-# retrieved: 2026-11-23
+# retrieved: 2026-11-26
 # published: 2026-11-17
-# share: 1.4 % des joueurs (36 sur 2499, 20 tournois de 14 jours)
-# win_rate: 46.6 %
+# share: 1.5 % des joueurs (33 sur 2244, 20 tournois de 14 jours)
+# win_rate: 48.4 %
 # list: portlandpoliwags, 11e sur 145 (6-2-1), 🐧 PGX TOURNAMENT #6【 💰$5 USD + FA ⭐⭐】
-# energy: Lightning pour 25 des 25 joueurs qui la déclarent
+# energy: Lightning pour 20 des 20 joueurs qui la déclarent
 Energy: Lightning
 2 Helioptile B1a 28
 2 Mega Manectric ex B2b 27
